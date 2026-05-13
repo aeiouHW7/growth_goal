@@ -1,0 +1,77 @@
+# Domain 标准目录结构
+
+```
+{{DOMAIN_NAME}}/
+├── .ace/
+│   └── config.json           # Domain 本地配置
+│
+├── 10_DOCS/                  # 📚 文档目录
+│   ├── api/                  # API 文档
+│   ├── business/             # 业务文档
+│   ├── technical/            # 技术文档
+│   └── init/                 # 初始化脚本（SQL、配置等）
+│       └── schema.sql        # 数据库初始化脚本
+│
+├── 20_SPECS/                 # 📋 规格说明
+│   ├── requirements/         # 需求文档
+│   ├── design/               # 设计文档
+│   └── architecture/         # 架构文档
+│
+├── 30_CODE/                  # 💻 源代码
+│   ├── backend/              # 后端代码
+│   │   ├── src/
+│   │   ├── package.json
+│   │   └── Dockerfile
+│   │
+│   └── frontend/             # 前端代码
+│       ├── src/
+│       ├── package.json
+│       └── Dockerfile
+│
+├── 40_TESTS/                 # 🧪 测试文件
+│   ├── unit/                 # 单元测试
+│   ├── integration/          # 集成测试
+│   └── e2e/                  # 端到端测试
+│
+├── 50_ASSETS/                # 🎨 静态资源
+│   ├── images/
+│   ├── fonts/
+│   └── styles/
+│
+├── 90_PLANNING/              # 📅 规划文档
+│   ├── roadmap.md            # 路线图
+│   ├── sprints/              # 迭代计划
+│   └── meetings/             # 会议记录
+│
+├── openspec/                 # 🔄 OpenSpec 变更管理
+│   ├── changes/              # 变更记录
+│   └── config.yaml           # OpenSpec 配置
+│
+├── domain.yaml               # Domain 配置文件
+├── docker-compose.generated.yml  # 自动生成的 Docker 配置
+├── docker-compose.app.yml    # 应用服务 Docker 配置（可选）
+└── README.md                 # 项目说明
+```
+
+## 📝 目录说明
+
+### 10_DOCS - 文档
+存放所有项目文档，按类型分类。
+
+### 20_SPECS - 规格
+存放需求、设计、架构等规格说明文档。
+
+### 30_CODE - 代码
+存放实际的源代码，前后端分离。
+
+### 40_TESTS - 测试
+存放各类测试代码。
+
+### 50_ASSETS - 资源
+存放图片、字体等静态资源。
+
+### 90_PLANNING - 规划
+存放项目管理相关文档。
+
+### openspec/ - 变更管理
+OpenSpec 工具的工作目录。

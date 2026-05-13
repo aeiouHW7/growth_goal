@@ -1,0 +1,250 @@
+# ACE Engine Skills 适配策略
+
+## 核心差异：ai-drive-engine vs ACE Engine
+
+### 1. 项目结构
+
+**ai-drive-engine** (单 agent 模式):
+```
+wms-agent/
+├── 10_DOCS/
+├── e2e-tests/
+├── openspec/
+│   └── config.yaml
+└── .ai-state/
+```
+
+**ACE Engine** (多 domain 模式):
+```
+AI-Coding-Engine/
+├── domains/
+│   ├── todo-app/          # 独立项目
+│   │   ├── 10_DOCS/
+│   │   ├── domain.yaml    # 替代 openspec/config.yaml
+│   │   ├── backend/
+│   │   │   └── tests/     # 替代 e2e-tests/
+│   │   ├── frontend/
+│   │   └── openspec/
+│   └── my-blog/           # 另一个项目
+└── .claude/               # 全局状态
+```
+
+---
+
+## 适配映射表
+
+| ai-drive-engine 路径 | ACE Engine 路径 | 说明 |
+|---------------------|----------------|------|
+| `{agent}/10_DOCS/` | `10_DOCS/` | 当前在 domains/{project}/ 内执行 |
+| `openspec/config.yaml` | `domain.yaml` | 项目配置文件 |
+| `{agent}/e2e-tests/` | `backend/tests/` | 测试目录 |
+| `{agent}/.ai-state/` | `.claude/state/` | 状态记录 |
+| `.engine/active-agent` | ❌ 不需要 | ACE 在子目录内工作，不需要切换 |
+| `local-dev.sh verify` | `./start.sh` | ACE 用 start.sh 启动验证 |
+
+---
+
+## Skills 适配策略
+
+### 第一类：直接继承官方（薄封装）
+
+这些 Skills 官方已有，ACE 只需增强：
+
+#### ace-explore
+- **基础**: 官方 openspec-explore
+- **增强**:
+  - 自动读取 `domain.yaml` 获取项目配置
+  - 自动浏览 `10_DOCS/` 获取业务背景
+  - 主动建议调用 `dialectical-thinking` Skill
+  - 检查 `rules/` 目录（根目录全局规则）
+- **状态**: ✅ 已创建
+
+#### ace-propose
+- **基础**: 官方 openspec-propose
+- **增强**:
+  - 生成提案前，先调用 `ace-doctor` 检查环境
+  - 遵循 `rules/code-quality.md` 的编码规范
+  - 在 proposal.md 中引用 `domain.yaml` 的技术栈
+  - 自动在 tasks.md 末尾添加「测试准备」分组（review + verify）
+- **状态**: 待创建
+
+#### ace-apply
+- **基础**: 官方 openspec-apply
+- **增强**:
+  - 完成功能 tasks 后，自动调用 `review` Skill
+  - review 通过后，自动调用 `verify` Skill
+  - 失败时，记录到 `.claude/state/apply-log.jsonl`
+- **状态**: 待创建
+
+#### ace-archive
+- **基础**: 官方 openspec-archive
+- **增强**:
+  - 归档时，将关键设计决策沉淀到 `10_DOCS/architecture/`
+  - 更新 `10_DOCS/CHANGELOG.md`
+  - 生成本次变更的回归测试用例索引
+- **状态**: 待创建
+
+---
+
+### 第二类：适配你的独有 Skills
+
+这些 Skills 官方没有，需要从 ai-drive-engine 适配：
+
+#### review（代码审查）
+**原路径**:
+```bash
+# ai-drive-engine
+- openspec/config.yaml          # 编码规范
+- {agent}/10_DOCS/business/     # 业务文档
+- {agent}/.ai-state/review-log.jsonl  # 状态记录
+```
+
+**ACE Engine 适配**:
+```bash
+# ACE Engine
+- domain.yaml                   # 编码规范（新增 coding_standards 字段）
+- 10_DOCS/business/             # 业务文档（相对路径）
+- .claude/state/review-log.jsonl  # 状态记录（全局）
+- ../../rules/code-quality.md  # 全局编码规范（根目录）
+```
+
+**关键修改**:
+1. 规范来源：`domain.yaml` + `../../rules/code-quality.md`
+2. 业务文档：`10_DOCS/business/`（相对路径）
+3. 状态记录：`.claude/state/review-log.jsonl`
+4. 去除 GitLab 集成（ACE 不需要）
+
+#### verify（构建验证 + E2E 测试）
+**原路径**:
+```bash
+# ai-drive-engine
+- {agent}/10_DOCS/testing/<version>/  # 测试用例
+- {agent}/e2e-tests/                  # 测试脚本
+- local-dev.sh verify                 # 构建脚本
+- .engine/active-agent                # agent 切换
+```
+
+**ACE Engine 适配**:
+```bash
+# ACE Engine
+- 10_DOCS/testing/<version>/          # 测试用例（相对路径）
+- backend/tests/                      # 测试脚本（修改路径）
+- npm test                            # 构建命令（使用 package.json）
+- ❌ 无需 agent 切换                  # 直接在项目内工作
+```
+
+**关键修改**:
+1. 测试脚本路径：`backend/tests/` 而非 `e2e-tests/`
+2. 构建命令：`npm test` 而非 `local-dev.sh verify`
+3. 去除 `{agent}` 占位符，改为相对路径
+4. 去除 `.engine/active-agent` 检测逻辑
+5. 去除 GitLab Issue 集成
+
+#### plan（实现规划）
+**ai-drive-engine**: 已完善
+**ACE Engine 适配**:
+- 读取 `domain.yaml` 了解技术栈
+- 参考 `../../templates/domain-react-ts/` 了解项目结构
+- 检查 `rules/architecture.md` 遵循架构原则
+
+#### investigate（问题调查）
+**ai-drive-engine**: 已完善
+**ACE Engine 适配**:
+- 调查时自动检查 `start.sh` 启动状态
+- 查看 `/tmp/{project}-backend.log` 和 `/tmp/{project}-frontend.log`
+- 检查 Docker 容器状态（`docker ps | grep {project}`）
+
+#### retro（复盘总结）
+**ai-drive-engine**: 已完善
+**ACE Engine 适配**:
+- 将复盘结果沉淀到 `10_DOCS/retrospectives/<date>.md`
+- 更新 `10_DOCS/decisions.md` 记录重要决策
+
+---
+
+## 实现顺序
+
+### Phase 1: 核心工作流（本周）
+
+1. ✅ **ace-explore** - 已创建
+2. **ace-propose** - 明天
+3. **ace-apply** - 明天
+4. **review** - 适配版（后天）
+5. **verify** - 适配版（后天）
+
+### Phase 2: 增强能力（下周）
+
+6. **ace-archive** - 归档增强
+7. **plan** - 规划辅助
+8. **investigate** - 问题调查
+
+### Phase 3: 团队协作（可选）
+
+9. **retro** - 复盘总结
+10. **release** - 发布管理
+
+---
+
+## domain.yaml 扩展字段
+
+为了支持 review 和 verify，需要在 domain.yaml 添加：
+
+```yaml
+# domains/todo-app/domain.yaml
+project:
+  name: todo-app
+  title: TODO App
+  description: 示例 TODO 应用
+
+database:
+  type: postgres
+  port: 5432
+
+# 新增：编码规范（供 review 使用）
+coding_standards:
+  backend:
+    - 使用 TypeScript strict 模式
+    - 所有 API 必须有错误处理
+    - 遵循 RESTful 规范
+  frontend:
+    - 函数式组件 + Hooks
+    - 使用 CSS Modules
+  api:
+    - 统一响应格式: { success, data, error }
+
+# 新增：测试要求（供 verify 使用）
+testing:
+  unit_test_coverage: 80
+  e2e_test_required: true
+  test_framework: vitest
+```
+
+---
+
+## 状态记录统一
+
+所有 Skills 的状态记录统一到：
+
+```bash
+.claude/state/
+├── review-log.jsonl      # review Skill 日志
+├── verify-log.jsonl      # verify Skill 日志
+├── apply-log.jsonl       # apply Skill 日志
+└── explore-log.jsonl     # explore Skill 日志
+```
+
+格式：
+```json
+{"ts":"2026-05-12T11:00:00Z","skill":"review","event":"completed","change":"add-auth","auto_fixed":3,"asked":1}
+```
+
+---
+
+## 下一步
+
+你要我继续创建哪个 Skill？
+
+**A. ace-propose** - 生成提案，自动添加测试任务  
+**B. review** - 适配你的代码审查逻辑  
+**C. verify** - 适配你的测试验证逻辑  
+**D. 先完善 domain.yaml 扩展方案**

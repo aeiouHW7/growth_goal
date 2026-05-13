@@ -1,0 +1,35 @@
+domain_name: {{PROJECT_NAME}}
+project_title: {{PROJECT_TITLE}}
+owner: {{OWNER}}
+version: 0.1.0
+schema: spec-driven
+
+infrastructure:
+  db: postgres      # PostgreSQL 15
+  cache: none       # 暂不使用缓存
+
+description: |
+  基于 ACE Engine 创建的全栈应用
+  - 后端: Node.js + Express + TypeScript + Prisma
+  - 前端: React 18 + TypeScript + Vite
+  - 数据库: PostgreSQL 15
+
+tech_stack:
+  backend: node     # Node.js + Express + TypeScript
+  frontend: react   # React 18 + Vite
+  mobile: none
+
+env:
+  development:
+    db_host: localhost
+    db_port: ${DB_PORT:-5432}
+    db_name: {{PROJECT_NAME}}_db
+    db_user: {{PROJECT_NAME}}_user
+    db_password: {{PROJECT_NAME}}_pass
+
+  production:
+    db_host: prod-db.example.com
+    db_port: 5432
+    db_name: {{PROJECT_NAME}}_db
+    db_user: {{PROJECT_NAME}}_user
+    db_password: # 生产环境请使用环境变量

@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# {{PROJECT_NAME}} - 一键启动脚本
+# 用途: 准备开发环境（Docker + 依赖 + 数据库）
+
+set -e  # 遇到错误立即退出
+
+echo "🚀 {{PROJECT_NAME}} 启动准备..."
+echo ""
+
+# 1. 启动 Docker
+echo "1️⃣ 启动基础设施..."
+cd ../..
+npm run ace:up > /dev/null 2>&1
+echo "✅ Docker 服务已启动"
+
+# 等待服务就绪
+echo "⏳ 等待服务就绪（5秒）..."
+sleep 5
+
+# 2. 后端准备
+echo ""
+echo "2️⃣ 准备后端..."
+cd domains/{{PROJECT_NAME}}/backend
+
+if [ ! -d "node_modules" ]; then
+  echo "   安装后端依赖..."
+  npm install > /dev/null 2>&1
+fi
+
+echo "   运行数据库迁移..."
+npx prisma migrate deploy > /dev/null 2>&1 || npx prisma migrate dev --name init > /dev/null 2>&1
+
+echo "   填充示例数据..."
+npx prisma db seed > /dev/null 2>&1 || echo "   (已有数据，跳过)"
+
+echo "✅ 后端就绪"
+
+# 3. 前端准备
+echo ""
+echo "3️⃣ 准备前端..."
+cd ../frontend
+
+if [ ! -d "node_modules" ]; then
+  echo "   安装前端依赖..."
+  npm install > /dev/null 2>&1
+fi
+
+echo "✅ 前端就绪"
+
+# 完成
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ 准备完成！"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "📝 下一步（需要两个终端）："
+echo ""
+echo "   终端 1:"
+echo "   $ cd domains/{{PROJECT_NAME}}/backend && npm run dev"
+echo ""
+echo "   终端 2:"
+echo "   $ cd domains/{{PROJECT_NAME}}/frontend && npm run dev"
+echo ""
+echo "   然后访问: http://localhost:5173"
+echo ""

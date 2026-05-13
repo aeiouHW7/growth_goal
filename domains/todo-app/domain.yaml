@@ -1,0 +1,75 @@
+name: todo-app
+description: A simple TODO application demonstrating ACE Engine capabilities
+version: 0.1.0
+
+tech_stack:
+  frontend: react-ts
+  backend: node-ts-prisma
+  database: postgresql
+
+services:
+  database:
+    type: postgresql
+    port: 5432
+    environment:
+      POSTGRES_DB: todoapp
+      POSTGRES_USER: todouser
+      POSTGRES_PASSWORD: todopass
+
+  backend:
+    port: 3000
+    dependencies:
+      - database
+    environment:
+      DATABASE_URL: postgresql://todouser:todopass@localhost:5432/todoapp
+      PORT: 3000
+
+  frontend:
+    port: 5173
+    dependencies:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:3000
+
+scripts:
+  # Development scripts
+  dev:frontend: "cd frontend && npm run dev"
+  dev:backend: "cd backend && npm run dev"
+
+  # Database scripts
+  db:migrate: "cd backend && npx prisma migrate dev"
+  db:studio: "cd backend && npx prisma studio"
+  db:seed: "cd backend && npx prisma db seed"
+
+  # Build scripts
+  build:frontend: "cd frontend && npm run build"
+  build:backend: "cd backend && npm run build"
+
+  # Test scripts
+  test:frontend: "cd frontend && npm run test"
+  test:backend: "cd backend && npm run test"
+
+# ACE Engine 扩展字段
+coding_standards:
+  backend:
+    - "使用 TypeScript strict 模式"
+    - "所有 API 必须有错误处理 (try-catch)"
+    - "数据库查询必须有事务支持"
+    - "使用 Prisma ORM，禁止原生 SQL"
+  frontend:
+    - "函数式组件 + React Hooks"
+    - "使用 TypeScript 类型定义 props"
+    - "组件文件命名：PascalCase.tsx"
+  api:
+    - "统一响应格式: { success: boolean, data?: any, error?: string }"
+    - "RESTful 风格：GET/POST/PUT/DELETE"
+    - "错误码：400 客户端错误，500 服务端错误"
+
+testing:
+  unit_test_coverage: 80
+  e2e_test_required: false
+  test_framework: vitest
+  test_commands:
+    unit: "npm run test"
+    integration: "npm run test:integration"
+

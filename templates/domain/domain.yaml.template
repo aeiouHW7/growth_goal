@@ -1,0 +1,30 @@
+domain_name: {{DOMAIN_NAME}}
+project_title: {{PROJECT_TITLE}}
+owner: {{OWNER}}
+version: 0.1.0
+schema: spec-driven
+
+infrastructure:
+  db: mysql         # 可选: mysql, postgres, none
+  cache: redis      # 可选: redis, memcached, none
+
+description: |
+  项目描述
+
+tech_stack:
+  backend: node     # 可选: node, python, java, go
+  frontend: react   # 可选: react, vue, angular, none
+  mobile: none      # 可选: react-native, flutter, none
+
+env:
+  development:
+    db_host: localhost
+    db_port: 3306
+    redis_host: localhost
+    redis_port: 6379
+
+  production:
+    db_host: prod-db.example.com
+    db_port: 3306
+    redis_host: prod-redis.example.com
+    redis_port: 6379
