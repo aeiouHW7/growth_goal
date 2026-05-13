@@ -90,12 +90,12 @@ pkill -f 'vite|tsx.*todo-app'
 
 **适合**: 学习 AI-First 工作流，体验 ACE Engine 核心能力
 
-**步骤 1: 初始化环境**
+**步骤 1: 部署环境**
 
 对 AI（Claude Code 或 Cursor）说：
 
 ```
-"初始化开发环境"
+"初始化环境"
 ```
 
 AI 会自动：
@@ -354,7 +354,7 @@ tail -f /tmp/todo-frontend.log
 
 ```bash
 # 对 AI 说（无需记忆命令）
-"初始化环境"           # 检查并安装工具
+"初始化环境"           # 部署环境（检查/安装工具）
 "创建项目 my-app"      # 生成新项目
 "检查系统健康"         # 诊断问题
 ```
