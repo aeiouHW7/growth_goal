@@ -79,6 +79,10 @@ openspec status --change "<name>" --json | jq '.artifacts[] | select(.id=="tasks
 
 在归档前，自动提取知识并沉淀到项目文档。
 
+**目录检查**：
+- 如果 `10_DOCS/` 不存在，询问用户："10_DOCS/ 目录不存在，是否创建并开始沉淀知识？(y/n)"
+- 用户确认后创建目录，否则跳过知识沉淀步骤
+
 **识别沉淀类型**（从 proposal.md 和 design.md 关键词）：
 - 提到 "API" → 10_DOCS/api/
 - 提到 "业务规则" → 10_DOCS/business/

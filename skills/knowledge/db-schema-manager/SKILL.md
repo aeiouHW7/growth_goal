@@ -71,21 +71,33 @@ version: "1.0"
 
 ### 分组规则
 
+根据表名前缀和 COMMENT 关键词自动推断模块分组。
+
+**默认规则**：
+- 表名前缀相同的表归为一组（如 `user_*` → 用户管理）
+- COMMENT 包含相同关键词的表归为一组
+- 未匹配的表归入"其他"分类
+
+**通用示例**：
+
 | 表名前缀/关键词 | 模块 |
 |-----------------|------|
-| base_warehouse*, base_material*, base_vendor*, base_car_model*, base_shipper*, base_document*, base_shelf_strategy*, owner_info, material_procurement_info, package_type | 基础数据 |
-| inventory_* | 库存管理 |
-| receipt_order* | 入库管理 |
-| shipment_order* | 出库管理 |
-| backflush_* | 倒冲管理 |
-| repack_* | 翻包管理 |
-| pull_order*, replenishment_*, shipment_apply_* | 拉动/备货/发货 |
-| put_on_shelf_* | 上架任务 |
-| pda_user*, platform_pda_user, role*, permission_*, base_user_warehouse*, mbp_*, org_system_config, tenant_config, user_timezone_config, value_set, sys_param | 系统/权限 |
-| api_*, event_fail_record, failed_event, outside_system_config, voucher_retransmission_queue | 接口/集成 |
-| sys_i18n* | 多语言 |
-| box_label_*, flipped_package_label | 标签 |
-| business_operation_record | 业务记录 |
+| user_*, account_* | 用户管理 |
+| order_*, payment_* | 订单管理 |
+| product_*, category_* | 商品管理 |
+| sys_*, config_* | 系统配置 |
+
+**自定义分组**：
+可通过 `domain.yaml` 的 `database.schema_groups` 配置自定义分组规则：
+
+```yaml
+database:
+  schema_groups:
+    - name: 用户管理
+      patterns: ["user_*", "account_*", "role_*"]
+    - name: 订单管理
+      patterns: ["order_*", "payment_*"]
+```
 
 ### 输出
 

@@ -49,8 +49,16 @@ metadata:
 # 读取配置
 cat domain.yaml | grep "name:\|type:"
 
-# 列出文档
-find 10_DOCS -type f -name "*.md" | wc -l
+# 列出文档（如果存在）
+DOCS_COUNT=0
+if [ -d "10_DOCS" ]; then
+  DOCS_COUNT=$(find 10_DOCS -type f -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+fi
+if [ "$DOCS_COUNT" -eq 0 ]; then
+  echo "0 (项目暂无知识库，建议后续运行 docs-extractor)"
+else
+  echo "$DOCS_COUNT"
+fi
 
 # 检查规则
 ls ../../rules/

@@ -99,10 +99,10 @@ git diff <start-commit>..<end-commit> --stat
 
 **规划阶段**：
 - 提前识别了复杂度（复杂变更）
-- design.md 中的 JWT 设计清晰，实现时无返工
+- design.md 中的认证设计清晰，实现时无返工
 
 **实现阶段**：
-- 单例模式（utils/prisma.ts）避免重复实例化
+- 单例模式（数据库连接池、缓存客户端等）避免重复实例化
 - review 自动发现并修复了 3 个潜在问题
 
 **流程工具**：
@@ -156,11 +156,11 @@ git diff <start-commit>..<end-commit> --stat
 **流程经验**：
 - 复杂变更必须完整流程（propose → apply → review → verify → archive）
 - 环境变量应在 proposal 阶段明确（.env.example 同步更新）
-- review 自动修复能力强，但需人工确认（单例模式自动创建很准确）
+- review 自动修复能力强，但需人工确认
 
-**可复用模式**：
-- 单例工具类：utils/prisma.ts、utils/redis.ts（模板）
-- JWT 中间件：可作为 10_DOCS/patterns/ 沉淀
+**可复用模式**（根据技术栈沉淀）：
+- 单例工具类（数据库连接池、缓存客户端等）
+- 中间件模式：可作为 10_DOCS/patterns/ 沉淀
 ```
 
 #### 3.4 Decisions to Make 🎯

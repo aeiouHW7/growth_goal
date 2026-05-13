@@ -26,7 +26,11 @@ metadata:
 
 **查找工具**：
 - 查代码：`grep` / `search_symbols` / `find_references`
-- 查数据库：检查 `backend/prisma/schema.prisma` 或 `init SQL` 文件
+- 查数据库schema文件（根据项目技术栈）：
+  - Node.js: `backend/prisma/schema.prisma` 或 `src/models/*.ts` (TypeORM)
+  - Go: `internal/db/schema.sql` 或 `migrations/*.sql`
+  - Python: `models.py` 或 `alembic/versions/*.py`
+  - Java: `src/main/resources/schema.sql` 或 JPA entities
 
 ---
 
@@ -37,7 +41,11 @@ metadata:
 1. **直接 grep**：用业务术语、中文名、英文名多试几个关键词
 2. **读 `10_DOCS/business/`**：从业务文档找到正确的技术术语或模块名，再回去 grep
 3. **读 `openspec/specs/`**：历史规格记录往往包含相关模块的改动，顺着找到代码位置
-4. **读目录结构**：看 `backend/src/` 或 `frontend/src/` 的目录结构，从模块名推断划分
+4. **读目录结构**（根据项目语言）：
+   - Node.js: `backend/src/`, `frontend/src/`
+   - Go: `internal/`, `pkg/`, `cmd/`
+   - Python: `app/`, `src/`
+   - Java: `src/main/java/`
 5. **顺链路读**：找到入口后，用 `goto_definition` / `find_references` 从 Controller → Service → Repository 完整走一遍
 
 ---
@@ -70,7 +78,11 @@ metadata:
 
 - [ ] **知识库检索**：查 `10_DOCS/business/` 相关业务文档，了解业务背景和已有规则
 - [ ] **找到相关模块的现有代码**：按上方"代码定位策略"找到涉及的 Service/Controller/组件
-- [ ] **了解现有数据模型**：检查 `backend/prisma/schema.prisma` 或数据库 DDL 文件，了解现有字段和关联关系
+- [ ] **了解现有数据模型**（根据项目技术栈）：
+  - Node.js: `backend/prisma/schema.prisma` (Prisma) 或 `src/models/*.ts` (TypeORM)
+  - Go: `internal/db/schema.sql` 或 `migrations/*.sql`
+  - Python: `models.py` 或 `alembic/versions/*.py`
+  - Java: `src/main/resources/schema.sql` 或 JPA entities
 - [ ] **识别约束和技术债**：现有实现中有哪些限制会影响新需求的方案方向
 
 ---

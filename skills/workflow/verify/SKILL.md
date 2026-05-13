@@ -93,20 +93,48 @@ python -m build
 
 **层次 1: 单元测试**
 ```bash
-# 运行单元测试（快速）
-npm test -- --coverage
+# 从 domain.yaml 读取测试命令（如果配置存在）
+if [ -f "domain.yaml" ]; then
+  TEST_CMD=$(cat domain.yaml | yq '.testing.test_commands.unit' 2>/dev/null)
+  if [ -n "$TEST_CMD" ] && [ "$TEST_CMD" != "null" ]; then
+    eval "$TEST_CMD"
+  else
+    echo "⚠️ domain.yaml 未配置单元测试命令，请根据技术栈手动执行"
+  fi
+else
+  echo "⚠️ domain.yaml 不存在，请根据技术栈手动执行单元测试"
+fi
+
+# 或根据项目技术栈手动执行：
+# Node.js: npm test -- --coverage
+# Go: go test ./... -cover
+# Python: pytest --cov
 ```
 
 **层次 2: 集成测试**
 ```bash
-# 运行集成测试（中等）
-npm run test:integration
+# 从 domain.yaml 读取
+if [ -f "domain.yaml" ]; then
+  INTEGRATION_CMD=$(cat domain.yaml | yq '.testing.test_commands.integration' 2>/dev/null)
+  if [ -n "$INTEGRATION_CMD" ] && [ "$INTEGRATION_CMD" != "null" ]; then
+    eval "$INTEGRATION_CMD"
+  fi
+fi
+
+# 或手动：npm run test:integration / go test -tags=integration
 ```
 
 **层次 3: E2E 测试**
 ```bash
-# 运行端到端测试（慢速）
-npm run test:e2e
+# 从 domain.yaml 读取
+if [ -f "domain.yaml" ]; then
+  E2E_CMD=$(cat domain.yaml | yq '.testing.test_commands.e2e' 2>/dev/null)
+  if [ -n "$E2E_CMD" ] && [ "$E2E_CMD" != "null" ]; then
+    eval "$E2E_CMD"
+  fi
+fi
+
+# 或手动：npm run test:e2e / pytest tests/e2e
 ```
 
 ### 4. 检查测试覆盖率

@@ -88,14 +88,24 @@ top -l 1 | head -20
 docker exec -it <db-container> psql -U <user> -d <db> -c "SELECT * FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;"
 ```
 
-**数据问题**：
+**数据问题**（根据项目使用的 ORM 工具）：
 ```bash
-# 数据库状态
+# Prisma (Node.js)
 npx prisma db pull
 npx prisma migrate status
+npx prisma studio  # 可视化查看
 
-# 数据快照
-npx prisma studio  # 手动检查
+# TypeORM (Node.js)
+npm run typeorm migration:show
+npm run typeorm query "SELECT * FROM migrations"
+
+# Go Migrate
+migrate -path migrations -database "postgres://..." version
+migrate -path migrations -database "postgres://..." up
+
+# Alembic (Python)
+alembic current
+alembic history
 ```
 
 ### 3. 复现路径
@@ -169,14 +179,18 @@ Level 3 (根本原因):
 ```
 ✅ 假设验证
 
-假设：缺少 Prisma 单例导致问题
+假设：缺少数据库连接池单例导致连接泄漏
 
-验证方法：
-1. 创建 utils/prisma.ts 单例
-2. 修改 health.ts 导入单例
-3. 重启后端测试
+验证方法（根据技术栈）：
+1. 创建单例工具类：
+   - Node.js: utils/db.ts 或 lib/database.js
+   - Go: internal/db/conn.go
+   - Python: utils/db.py
+   - Java: utils/DatabaseUtil.java
+2. 修改相关代码导入单例
+3. 重启服务测试
 
-结果：✅ 问题消失，API 返回 200
+结果：✅ 问题消失，连接数稳定
 ```
 
 ### 6. 生成诊断报告
@@ -244,7 +258,7 @@ EOF
 ```
 ✅ 问题已解决
 
-修复内容：创建 Prisma 单例
+修复内容：创建数据库连接池单例
 
 💡 建议：
 1. 更新 10_DOCS/architecture/database.md（记录单例模式）
@@ -255,7 +269,10 @@ EOF
 ```
 ✅ 根因已定位
 
-诊断报告：90_PLANNING/investigations/20260512-prisma-performance.md
+诊断报告路径：
+- 优先：90_PLANNING/investigations/20260512-{问题描述}.md
+- 回退：openspec/changes/{change-name}/investigations/{问题描述}.md
+  （如果 90_PLANNING/ 目录不存在）
 
 💡 建议：
 1. 创建提案解决根本问题：

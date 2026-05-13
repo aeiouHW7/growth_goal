@@ -143,21 +143,31 @@ bash skills/common/cross-review/scripts/setup.sh --auto
 
 ### Provider 路由（三级降级）
 
-按优先级依次尝试，前一级不可用时自动降级：
+按优先级依次尝试，前一级不可用时自动降级。**降级时向用户显示当前使用的审查模式。**
 
-**Level 1：MCP 工具**
+**Level 1：MCP 工具**（最高质量）
 
 读取 `config.yaml` 的 `mcp_tool`，调用对应 MCP 工具，将完整 Prompt 作为 Query 传入。
 
 `mcp_tool: none` 或工具调用返回错误/超时 → 触发降级。
 
-**Level 2：Subagent**
+**提示格式**：
+```
+🔍 代码审查（使用 MCP 工具：{工具名}）
+```
+
+**Level 2：Subagent**（中等质量）
 
 读取 `config.yaml` 的 `subagent_name`，通过 `use_subagent` 派发：
 - `subagent_name` 非空 → 指定专用审核 agent（Kiro 用 `agent_name` 参数，Claude Code 用 `@agent-name` mention）
 - `subagent_name` 为空 → 使用 default subagent
 
 专用审核 agent 由 `setup.sh` 自动创建，配置了只读工具。`--auto` 模式默认使用 haiku（速度优先），交互模式可选择更强模型（sonnet/opus）。
+
+**提示格式**：
+```
+🔍 代码审查（使用 Subagent 模式，MCP 工具不可用）
+```
 
 ```
 query: |
@@ -171,13 +181,21 @@ agent_name: {config.yaml 的 subagent_name，为空则不传}
 
 Subagent 返回后，主 agent 按"独立分析规则"逐条处理。
 
-**Level 3：自审（兜底）**
+**Level 3：自审（兜底）**（基础质量）
 
 Subagent 不可用时，复用 `self_review` 逻辑执行，但标注缺少独立视角：
 
-`⚠️ 交叉审核降级为自审（缺少独立视角，建议人工重点复核）`
+**提示格式**：
+```
+🔍 代码审查（使用 self-review 模式，MCP 和 Subagent 不可用）
+⚠️ 交叉审核降级为自审（缺少独立视角，建议人工重点复核）
+```
 
 **降级记录**：降级发生时在报告中记录 `📌 能力降级：{能力名} 从 {原provider} 降级到 {实际provider}，原因：{错误信息}`
+
+**如何启用更高质量审查**：
+- MCP 工具：配置 .mcp.json 中的审查工具（review/audit/check 相关）
+- Subagent：运行 `bash skills/common/cross-review/scripts/setup.sh` 初始化
 
 ### 收敛检测规则
 
