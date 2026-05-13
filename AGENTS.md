@@ -2,7 +2,7 @@
 
 > ACE Engine 的**唯一执行入口**。所有 AI 助手（Claude Code、Cursor 等）启动时必须加载本文件。
 > 
-> **核心哲学**: [ETHOS.md](ETHOS.md) | **快速开始**: [QUICKSTART.md](QUICKSTART.md) | **交互模型**: [docs/INTERACTION_MODEL.md](docs/INTERACTION_MODEL.md)
+> **核心哲学**: [ETHOS.md](ETHOS.md) | **快速开始**: [QUICKSTART.md](QUICKSTART.md) | **Skills 速查**: [SKILLS_REFERENCE.md](SKILLS_REFERENCE.md) ⭐
 
 ---
 
@@ -78,22 +78,32 @@ AI: 调用 ace-create-project
 
 当在 `domains/{project}/` 目录时可用。
 
-#### 核心工作流 Skills
+#### 核心工作流（6 个必需）
 
 | 用户说 | Skill | 说明 |
 |--------|-------|------|
-| "探索需求" | `ace-explore` | 苏格拉底式对话，澄清需求，探索问题空间 |
-| "创建提案" | `ace-propose` | 生成 proposal/design/specs/tasks + **复杂度评估** |
-| "实现变更" | `ace-apply` | 执行 tasks.md 中的任务 + **自动建议 review/verify** |
-| "代码审查" | `review` | 检查代码质量和规范 + **自动修复简单问题** |
-| "验证功能" | `verify` | 运行测试，验证功能正确性 + **复杂度感知** |
-| "归档变更" | `ace-archive` | 归档变更 + **沉淀知识到 10_DOCS/** |
+| "探索需求" | ace-explore | 苏格拉底式对话，澄清需求 |
+| "创建提案" | ace-propose | 生成 artifacts + 复杂度评估 |
+| "实现变更" | ace-apply | 执行 tasks + 自动建议 review/verify |
+| "代码审查" | review | 检查规范 + 自动修复 |
+| "验证功能" | verify | 运行测试 + 复杂度感知 |
+| "归档变更" | ace-archive | 归档 + 沉淀到 10_DOCS/ |
+
+#### 增强 Skills（3 个可选）
+
+| 用户说 | Skill | 使用场景 |
+|--------|-------|---------|
+| "规划 XX 功能" | plan | 复杂需求拆分、工作量评估（propose 前） |
+| "调查 XX 问题" | investigate | 故障排查、性能分析、根因定位 |
+| "复盘 XX 变更" | retro | 提取经验、沉淀最佳实践（archive 后） |
 
 **工作流（带流程守卫）**:
 ```
-explore → propose → apply → review → verify → archive
-          ↓         ↓        ↓        ↓        ↓
-       评估复杂度  前置检查  前置检查  前置检查  前置检查
+plan (可选) → explore → propose → apply → review → verify → archive → retro (可选)
+              ↓         ↓         ↓        ↓        ↓        ↓
+           澄清需求  评估复杂度  前置检查  前置检查  前置检查  前置检查
+           
+investigate (可选，任意时刻用于故障排查)
 ```
 
 **流程守卫机制** ⭐：
@@ -105,53 +115,46 @@ explore → propose → apply → review → verify → archive
 #### 流程守卫决策树
 
 ```
-用户说 "创建提案"
-  ↓
-ace-propose 评估复杂度
-  ├─ 简单（文档、typo、CSS）
-  │   → 流程: propose → apply → archive
-  │   → 可跳过: review、verify
-  │
-  ├─ 中等（单文件功能、UI 组件）
-  │   → 流程: propose → apply → review → archive
-  │   → 可跳过: verify（建议运行）
-  │
-  └─ 复杂（多文件、架构、数据库）
-      → 流程: propose → apply → review → verify → archive
-      → 不可跳过任何步骤
+【规划阶段】
+需求复杂/边界不清？
+  → plan（拆分、评估工作量）→ 生成多个 propose
 
-用户说 "运行 review"
-  ↓
-review 前置检查
-  ├─ apply 功能任务未完成？
-  │   → ❌ 阻止："请先运行 ace-apply 完成功能实现"
-  │
-  └─ apply 功能任务已完成？
-      → ✅ 继续执行 review
+需求清晰？
+  → explore（澄清细节）→ propose
 
-用户说 "跳过 review 直接 verify"
-  ↓
-verify 复杂度检查
-  ├─ 简单/中等变更？
-  │   → ⚠️ 警告："建议运行 review 以保证质量"
-  │   → 询问确认 → 允许继续
-  │
-  └─ 复杂变更？
-      → ❌ 阻止："复杂变更必须完整流程"
-      → 建议："如需强制，明确说'强制运行'"
+【开发阶段】
+propose → apply → review → verify → archive
+  ↓       ↓       ↓        ↓        ↓
+评估复杂度 检查tasks 检查apply 检查review 检查verify
+  
+【故障阶段】
+功能异常/性能问题？
+  → investigate（根因定位）→ propose（修复方案）
+
+【复盘阶段】
+复杂变更完成后？
+  → retro（W.W.L.D 分析）→ 沉淀到 10_DOCS/patterns/
 ```
+
+**复杂度感知**：
+- 简单：propose → apply → archive
+- 中等：propose → apply → review → archive
+- 复杂：完整流程（不可跳过）
 
 #### ACE 增强对比官方 Skills
 
-| Skill | 官方版本 | ACE 增强版 | 增强内容 |
-|-------|---------|-----------|---------|
-| propose | openspec-propose | **ace-propose** | + 复杂度评估<br>+ 加载 domain.yaml/10_DOCS/rules<br>+ 自动添加测试任务<br>+ 建议 dialectical-thinking |
-| apply | openspec-apply | **ace-apply** | + 前置检查（tasks 是否 ready）<br>+ ACE 特定任务处理（10_DOCS/、domain.yaml）<br>+ 自动建议 review/verify |
-| review | ❌ 无 | **review** | + 读取 domain.yaml 编码规范<br>+ 自动修复简单问题<br>+ 检查 10_DOCS/ 一致性<br>+ 前置检查（apply 功能任务） |
-| verify | ❌ 无 | **verify** | + 读取 domain.yaml 测试要求<br>+ 复杂度感知前置检查<br>+ 集成 start.sh 测试环境 |
-| archive | openspec-archive | **ace-archive** | + 知识沉淀到 10_DOCS/<br>+ 生成变更摘要<br>+ 复杂度感知前置检查 |
+| Skill | 官方 | ACE 版本 | 增强内容 |
+|-------|------|---------|---------|
+| propose | openspec-propose | ace-propose | 复杂度评估、加载 domain.yaml/10_DOCS/rules |
+| apply | openspec-apply | ace-apply | 前置检查、ACE 任务处理、自动建议 review/verify |
+| review | ❌ | **review** | 读取 domain.yaml 规范、自动修复、前置检查 |
+| verify | ❌ | **verify** | 读取 domain.yaml 测试要求、复杂度感知 |
+| archive | openspec-archive | ace-archive | 知识沉淀到 10_DOCS/、复杂度感知 |
+| plan | ❌ | **plan** | 需求定级、任务拆分、沉淀到 90_PLANNING/ |
+| investigate | ❌ | **investigate** | 问题定性、根因定位、生成诊断报告 |
+| retro | ❌ | **retro** | W.W.L.D 分析、沉淀最佳实践 |
 
-**薄封装设计**：ACE Skills 委托官方 Skills 完成核心逻辑，仅做前置增强和后置处理，享受官方更新。
+**设计**：薄封装官方 Skills，享受官方更新
 
 ---
 
@@ -236,8 +239,8 @@ AI-Coding-Engine/
 
 - [ETHOS.md](ETHOS.md) - 核心哲学：辩证思考、知识驱动
 - [QUICKSTART.md](QUICKSTART.md) - 10 分钟快速上手
+- **[SKILLS_REFERENCE.md](SKILLS_REFERENCE.md) - Skills 速查表** ⭐
 - [README.md](README.md) - 项目总览和特性
-- [docs/INTERACTION_MODEL.md](docs/INTERACTION_MODEL.md) - AI-First 交互模型详解
 - [CONTRIBUTING.md](CONTRIBUTING.md) - 贡献指南
 
 ---

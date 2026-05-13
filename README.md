@@ -110,9 +110,19 @@ AI-Coding-Engine/
 │       ├── naming-conventions.md
 │       └── git-workflow.md
 │
-├── skills/                     # 原子化能力
-│   ├── system/                # 系统级技能
-│   └── coding/                # 编码技能
+├── skills/                     # AI 可调用能力
+│   ├── system/                # 环境、项目管理（3 个）
+│   ├── workflow/              # 开发工作流（9 个）⭐
+│   │   ├── ace-explore/       # 探索需求
+│   │   ├── ace-propose/       # 创建提案
+│   │   ├── ace-apply/         # 实现变更
+│   │   ├── review/            # 代码审查
+│   │   ├── verify/            # 运行测试
+│   │   ├── ace-archive/       # 归档变更
+│   │   ├── plan/              # 需求规划
+│   │   ├── investigate/       # 故障诊断
+│   │   └── retro/             # 变更复盘
+│   └── coding/                # 编码辅助
 │       └── dialectical-thinking/  # 辩证思考 ⭐
 │
 ├── templates/                  # 项目模板
@@ -204,92 +214,97 @@ npm run dev
 
 ## 🔧 完整开发工作流
 
-ACE Engine 提供端到端的 AI 辅助开发流程，从需求探索到变更归档，全程自动化。
+**9 个 Workflow Skills** 覆盖从规划到复盘的完整生命周期。
 
-### 工作流总览
+### 核心流程（6 个必需）
 
 ```
-1. explore    → 探索需求（苏格拉底式对话）
-2. propose    → 创建提案（生成 proposal/design/specs/tasks）
-3. apply      → 实现变更（执行任务，更新代码）
-4. review     → 代码审查（检查质量，自动修复）
-5. verify     → 验证功能（运行测试）
-6. archive    → 归档变更（沉淀知识到 10_DOCS/）
+explore → propose → apply → review → verify → archive
 ```
+
+| Skill | 作用 |
+|-------|------|
+| **explore** | 探索需求，苏格拉底式对话 |
+| **propose** | 创建提案，生成 artifacts + 复杂度评估 |
+| **apply** | 实现变更，执行 tasks |
+| **review** | 代码审查，自动修复 |
+| **verify** | 运行测试，复杂度感知 |
+| **archive** | 归档变更，沉淀到 10_DOCS/ |
+
+### 增强 Skills（3 个可选）
+
+| Skill | 使用场景 |
+|-------|---------|
+| **plan** | 复杂需求拆分、工作量评估（在 propose 前） |
+| **investigate** | 故障排查、性能分析、根因定位 |
+| **retro** | 变更复盘、提取经验、沉淀最佳实践 |
 
 ### 流程守卫机制 ⭐
 
-每个步骤都有**前置检查**，确保质量和完整性：
-
-**复杂度评估**（propose 阶段）：
-- **简单**（文档、typo、CSS）：propose → apply → archive
+**复杂度分类**（propose 阶段自动评估）：
+- **简单**（文档、typo）：propose → apply → archive
 - **中等**（单文件功能）：propose → apply → review → archive  
-- **复杂**（多文件、架构）：propose → apply → review → verify → archive（不可跳过）
+- **复杂**（多文件、架构）：完整流程不可跳过
 
-**前置检查示例**：
-```
-用户: "运行 review"
-AI:   检查 apply 功能任务是否完成...
-      ❌ 剩余 3 个任务未完成
-      💡 请先运行 ace-apply 完成功能实现
+**前置检查**：每个 Skill 自动验证前置步骤
+**状态日志**：`.claude/state/*.jsonl` 跨会话持久化
 
-用户: "跳过 review 直接归档"（简单变更）
-AI:   ⚠️ 建议运行 review 保证质量
-      继续归档吗？(y/n)
+### 使用示例
 
-用户: "跳过 verify 直接归档"（复杂变更）  
-AI:   ❌ 复杂变更必须完整流程
-      如需强制，明确说"强制归档"
-```
-
-**状态日志**：所有操作记录到 `.claude/state/*.jsonl`，跨会话持久化。
-
-### 实际使用示例
-
+**核心流程**：
 ```
 用户: "探索健康检查功能"
-AI:   → 调用 ace-explore
-      苏格拉底式提问：需要监控哪些指标？数据库还是全系统？
+AI:   → ace-explore（苏格拉底式提问）
 
-用户: "创建健康检查提案"
-AI:   → 调用 ace-propose
-      评估复杂度：简单（单个 API 端点）
-      生成 4 个 artifacts：proposal ✓ design ✓ specs ✓ tasks ✓
+用户: "创建提案"
+AI:   → ace-propose（评估：简单，生成 4 个 artifacts）
 
-用户: "实现健康检查"
-AI:   → 调用 ace-apply
-      创建 health.ts（健康检查端点）
-      创建 health.test.ts（单元测试）
-      注册路由到 app.ts
-      11/14 任务完成 ✓
+用户: "实现功能"
+AI:   → ace-apply（创建文件，注册路由，11/14 任务完成）
 
-用户: "代码审查"
-AI:   → 调用 review
-      检查编码规范（读取 domain.yaml）
-      发现问题：Prisma 实例化不是单例
-      自动修复：创建 utils/prisma.ts 单例 ✓
+用户: "review"
+AI:   → review（发现 Prisma 单例问题，自动修复）
 
 用户: "归档"
-AI:   → 调用 ace-archive
-      沉淀知识到 10_DOCS/api/health-check.md
-      归档到 openspec/archive/2026-05-12-test-health-check/ ✓
+AI:   → ace-archive（沉淀到 10_DOCS/api/）
+```
+
+**增强 Skills**：
+```
+用户: "规划用户积分系统"
+AI:   → plan（拆分为 3 个 propose，沉淀到 90_PLANNING/）
+
+用户: "API 返回 500，调查原因"
+AI:   → investigate（定位根因：缺少单例，生成诊断报告）
+
+用户: "复盘 add-user-auth"
+AI:   → retro（W.W.L.D 分析，沉淀 JWT 最佳实践）
 ```
 
 ---
 
 ### Skills（技能）
 
-可复用的自动化能力，通过 AI 自然语言触发：
+**12 个 Skills** 覆盖项目全生命周期。
 
-| Skill | 触发方式 | 作用 |
-|-------|---------|------|
-| **ace-init-env** | 对 AI 说："初始化环境" | 检查 Node.js、Docker、Git |
-| **ace-create-project** | 对 AI 说："创建项目 my-app" | 自动生成完整项目结构 |
-| **ace-doctor** | 对 AI 说："检查系统健康" | 环境健康诊断 |
+#### 项目管理（3 个，根目录使用）
 
-**重要**: 用户不需要在终端输入命令，只需对 AI（Claude Code/Cursor）说话，AI 会自动调用这些 Skills。
+| Skill | 触发 | 作用 |
+|-------|------|------|
+| ace-init-env | "初始化环境" | 检查/安装 Node.js、Docker、Git |
+| ace-create-project | "创建项目 my-app" | 生成完整项目结构 |
+| ace-doctor | "检查系统健康" | 环境诊断 |
 
-详见 [交互模型文档](./docs/INTERACTION_MODEL.md)
+#### 开发工作流（9 个，子项目使用）
+
+**核心（6 个）**：explore → propose → apply → review → verify → archive
+
+**增强（3 个）**：
+- **plan** - 复杂需求拆分
+- **investigate** - 故障排查
+- **retro** - 变更复盘
+
+详见 [完整开发工作流](#完整开发工作流)
 
 ---
 
@@ -336,7 +351,11 @@ AI:   → 调用 ace-archive
 
 ---
 
-## 📚 核心 Skills
+## 📚 核心能力
+
+### 开发工作流（9 个 Skills）
+
+完整的端到端开发流程，详见 [完整开发工作流](#完整开发工作流)。
 
 ### dialectical-thinking（辩证思考）
 
@@ -362,6 +381,7 @@ AI:   → 调用 ace-archive
 
 ### 快速开始
 - [QUICKSTART.md](./QUICKSTART.md) - 10 分钟快速上手
+- **[SKILLS_REFERENCE.md](./SKILLS_REFERENCE.md) - Skills 速查表** ⭐
 - [TODO App README](./domains/todo-app/README.md) - 示例项目详解
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - 贡献指南
 

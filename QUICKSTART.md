@@ -514,74 +514,66 @@ rm -rf backend/node_modules frontend/node_modules
 
 进入项目后，通过自然语言与 AI 协作开发：
 
-### 完整工作流示例
+### 核心工作流示例
 
 ```
-# 进入项目目录
 cd domains/todo-app
 
 # 1. 探索需求
 用户: "探索添加用户登录功能"
-AI:   → 调用 ace-explore
-      提问: 需要哪种登录方式？邮箱密码还是第三方？
-      提问: 需要记住登录状态吗？
-      提问: 需要找回密码功能吗？
+AI:   → ace-explore（苏格拉底式提问）
 
 # 2. 创建提案
 用户: "创建用户登录提案"
-AI:   → 调用 ace-propose
-      评估复杂度: 复杂（涉及认证、数据库）
-      生成 artifacts:
-        ✅ proposal.md（需求和影响）
-        ✅ design.md（技术设计）
-        ✅ specs/user-auth/spec.md（详细规格）
-        ✅ tasks.md（15个实现任务）
+AI:   → ace-propose（评估：复杂，生成 4 个 artifacts）
 
 # 3. 实现变更
 用户: "实现登录功能"
-AI:   → 调用 ace-apply
-      前置检查: ✅ tasks artifact 已就绪
-      执行任务:
-        ✅ 创建 User 模型
-        ✅ 实现注册 API
-        ✅ 实现登录 API
-        ✅ 添加 JWT 中间件
-        ... 15/15 任务完成
-      💡 建议: 运行 review 检查代码质量
+AI:   → ace-apply（15/15 任务完成，建议 review）
 
 # 4. 代码审查
 用户: "review"
-AI:   → 调用 review
-      前置检查: ✅ apply 功能任务已完成
-      加载规范: domain.yaml 编码规范
-      检查结果:
-        ✅ TypeScript strict 模式
-        ✅ 统一响应格式
-        ✅ 错误处理完整
-        ⚠️ 发现 3 个小问题
-      自动修复: 修正命名、添加注释
-      💡 建议: 运行 verify 执行测试
+AI:   → review（自动修复 3 个问题，建议 verify）
 
 # 5. 验证功能
 用户: "verify"
-AI:   → 调用 verify  
-      前置检查: ✅ review 已通过
-      复杂度检查: 复杂变更，必须运行测试
-      运行测试:
-        ✅ 单元测试: 25/25 通过
-        ✅ 集成测试: 5/5 通过
-        ✅ 覆盖率: 85% (要求 80%)
-      💡 建议: 运行 ace-archive 归档变更
+AI:   → verify（测试通过，覆盖率 85%，建议 archive）
 
 # 6. 归档变更
 用户: "归档"
-AI:   → 调用 ace-archive
-      前置检查: ✅ verify 已通过
-      知识沉淀:
-        ✅ 10_DOCS/api/auth.md
-        ✅ 10_DOCS/architecture/jwt-design.md
-      归档: openspec/archive/2026-05-12-user-login/
-      ✅ 变更已完成！
+AI:   → ace-archive（沉淀到 10_DOCS/api/auth.md）
+```
+
+### 增强 Skills 示例
+
+#### 场景 1: 复杂需求规划
+
+```
+用户: "规划用户积分系统"
+AI:   → plan
+      定级: 复杂（3 个模块）
+      拆分: 3 个 propose（基础 2天 + 抵扣 1.5天 + 过期 1天）
+      沉淀: 90_PLANNING/v1.0-user-points/
+```
+
+#### 场景 2: 故障排查
+
+```
+用户: "API 返回 500，调查原因"
+AI:   → investigate
+      定性: 功能故障
+      根因: 缺少 Prisma 单例（L1/L2/L3 分析）
+      修复: 创建 utils/prisma.ts
+```
+
+#### 场景 3: 变更复盘
+
+```
+用户: "复盘 add-user-auth"
+AI:   → retro
+      耗时: 5天（预估 4-6，准确）
+      经验: JWT 模式沉淀到 10_DOCS/patterns/
+      改进: 更新 domain.yaml 密码规范
 ```
 
 ### 前置检查失败示例
@@ -589,33 +581,17 @@ AI:   → 调用 ace-archive
 ```
 # 场景: 跳过 apply 直接 review
 用户: "review"
-AI:   → 调用 review
-      前置检查...
-      ❌ 前置步骤未完成
-      apply 功能任务尚未完成，剩余 8 个任务
+AI:   ❌ apply 功能任务未完成（剩余 8 个）
+      💡 请先运行 ace-apply
 
-      💡 请先运行 ace-apply 完成功能实现
-
-# 场景: 简单变更跳过 review
-用户: "修复 README 中的 typo"
-AI:   → 调用 ace-propose
-      评估复杂度: 简单
-      流程要求: propose → apply → archive
-
-用户: "跳过 review 直接归档"
-AI:   → 调用 ace-archive
-      复杂度检查: 简单变更，可跳过 review/verify
-      ⚠️ 建议运行 review 保证质量，继续吗？(y/n)
+# 场景: 简单变更跳过 verify
+用户: "归档"（简单变更）
+AI:   ⚠️ 建议运行 review 保证质量，继续吗？
 
 # 场景: 复杂变更强制跳过
-用户: "添加支付功能"
-AI:   → 评估复杂度: 复杂
-
-用户: "跳过 verify 直接归档"
-AI:   → 调用 ace-archive
-      复杂度检查: 复杂变更必须完整流程
-      ❌ 复杂变更不允许跳过 verify
-      如需强制运行，明确说"强制归档"
+用户: "跳过 verify 直接归档"（复杂变更）
+AI:   ❌ 复杂变更必须完整流程
+      如需强制，明确说"强制归档"
 ```
 
 ### 状态日志查询
