@@ -185,8 +185,8 @@ AI 调用 ace-init-env
 
 ```bash
 cd domains/my-app
-./start.sh           # 一键启动（Docker + 依赖 + 迁移）
-npm run dev          # 启动服务
+./start.sh           # 一键启动（自动启动 Docker + 后端 + 前端）
+./status.sh          # 查看服务运行状态
 pkill -f 'vite|tsx'  # 停止服务
 ```
 
@@ -201,7 +201,8 @@ AI-Coding-Engine/
 ├── domains/                  # 业务项目（完全独立）
 │   ├── todo-app/             # 示例项目 ⭐
 │   │   ├── docker-compose.yml   # 独立 Docker（端口 5432）
-│   │   ├── start.sh             # 一键启动脚本
+│   │   ├── start.sh             # 一键启动脚本（自动启动所有服务）
+│   │   ├── status.sh            # 服务状态查看脚本
 │   │   ├── domain.yaml          # 项目配置
 │   │   ├── 10_DOCS/             # 知识文档
 │   │   ├── frontend/            # React 前端
@@ -256,6 +257,7 @@ AI-Coding-Engine/
 |------|---------|
 | 环境检查失败 | 对 AI 说："初始化环境"（自动安装缺失工具） |
 | 项目启动失败 | 检查 Docker 是否运行：`docker ps` |
+| 服务状态不明 | 运行 `./status.sh` 查看所有服务状态 |
 | 端口冲突 | 修改 `.env` 中的 `DB_PORT` |
 | Skills 未生效 | 检查是否在正确目录（根目录 vs 子项目） |
 
