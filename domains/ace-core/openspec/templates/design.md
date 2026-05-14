@@ -1,5 +1,9 @@
 # Design: ${change-id}
 
+## Pre-Design Checklist
+- [ ] 已核对现有 `10_DOCS/wiki/` 确保没有重复建设。
+- [ ] 已检查是否有现成的 Skill 或 Utils 可以复用。
+
 ## 1. 架构目标 (Architecture Goals)
 - 核心组件及其职责
 - 数据流与逻辑链路
