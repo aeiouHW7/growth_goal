@@ -56,11 +56,14 @@
 **然后在终端**：
 ```bash
 cd domains/blog-app
-./start.sh
+./start.sh  # 自动启动所有服务（Docker + 后端 + 前端）
+```
 
-# 启动服务（两个终端）
-cd backend && npm run dev
-cd frontend && npm run dev
+访问 http://localhost:5173 即可看到应用！
+
+**查看服务状态**：
+```bash
+./status.sh  # 查看各服务运行状态
 ```
 
 **详见**: [交互模型文档](./docs/INTERACTION_MODEL.md)
@@ -71,19 +74,15 @@ cd frontend && npm run dev
 
 ```bash
 cd domains/todo-app
-./start.sh
-```
-
-**然后分别启动前后端**（需要两个终端）：
-```bash
-# 终端 1 - 后端
-cd domains/todo-app/backend && npm run dev
-
-# 终端 2 - 前端（新开终端）
-cd domains/todo-app/frontend && npm run dev
+./start.sh  # 自动启动所有服务（Docker + 后端 + 前端）
 ```
 
 访问 http://localhost:5173 即可看到应用！
+
+**查看服务状态**：
+```bash
+./status.sh  # 查看 Docker、后端、前端的运行状态
+```
 
 ---
 

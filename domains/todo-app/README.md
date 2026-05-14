@@ -31,7 +31,7 @@
 
 ```bash
 # 在 todo-app 目录下运行
-./start.sh
+./start.sh  # 自动启动所有服务（Docker + 后端 + 前端）
 ```
 
 **脚本会自动**：
@@ -39,17 +39,14 @@
 - ✅ 安装前后端依赖
 - ✅ 运行数据库迁移
 - ✅ 填充示例数据
-
-**然后分别启动**（需要两个终端）：
-```bash
-# 终端 1 - 后端
-cd backend && npm run dev
-
-# 终端 2 - 前端
-cd frontend && npm run dev
-```
+- ✅ **自动启动后端和前端服务**
 
 访问 http://localhost:5173 查看应用！
+
+**查看服务状态**：
+```bash
+./status.sh  # 查看 Docker、后端、前端的运行状态
+```
 
 ---
 
