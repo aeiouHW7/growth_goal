@@ -6,7 +6,7 @@
 
 **决策**: 采用语义化分类，而非平铺
 - rules/ → rules/system/ + rules/coding/
-- skills/ → skills/system/ + skills/workflow/
+- skills/ → skills/system/ + skills/capabilities/
 - templates/ → templates/domain/ + templates/skill/ + templates/docker/
 
 **原因**:
@@ -125,7 +125,7 @@ domain-name/
 
 **文件结构**:
 ```
-skills/coding/dialectical-thinking/
+skills/capabilities/dialectical-thinking/
 ├── SKILL.md                     # 核心工作流（~350 行）
 └── references/
     ├── principles.md            # 7 条辩证原则

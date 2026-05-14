@@ -285,3 +285,7 @@ ace-archive 后置（摘要 + 清理建议）
 
 What would you like to do?
 ```
+
+## Skill Stack
+
+(No specific capability skills required — archive handles knowledge distillation directly.)

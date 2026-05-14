@@ -1,5 +1,5 @@
 ---
-name: retro
+name: ace-retro
 description: 变更复盘和经验总结 - 从已完成的变更中提取经验、识别模式、优化流程。Use after completing changes to extract lessons learned and improve processes.
 license: MIT
 compatibility: Requires ACE Engine project structure
@@ -507,3 +507,7 @@ retro（变更复盘）
 | 简单变更完成 | 不复盘 | - |
 | 版本发布 | 里程碑 | 每次 |
 | 季度回顾 | 项目整体 | 每季度 |
+
+## Skill Stack
+
+(No specific capability skills required — retro uses built-in W.W.L.D analysis.)

@@ -1,5 +1,5 @@
 ---
-name: oais-prd-standard
+name: oais-prd
 description: 产品 AI PRD 范式（O.A.I.S 需求模型）。逻辑驱动型需求文档规范，输出 AI 可快速理解、研发可直接映射为代码架构的结构化产物。Use when writing PRD, product requirements, feature specs, or any structured requirement document. Keywords: PRD, 需求文档, OAIS, 产品文档, 需求规范, 功能说明, requirement, specification, 产品需求, 文档模板, 需求模型.
 version: 1.1.0
 changelog: |
@@ -309,3 +309,11 @@ sequenceDiagram
 2. 在 PRD 文件末尾的"O.A.I.S 规范反馈"区记录发现
 3. 提醒用户并获得确认
 4. 更新本文档，递增 version，在 changelog 中记录变更
+
+---
+
+## Skill Stack
+
+| Skill | Condition | Purpose |
+|-------|-----------|---------|
+| — | 自包含 | O.A.I.S 方法论含自检矩阵，无需外部依赖 |

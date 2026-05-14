@@ -536,79 +536,68 @@ rm -rf backend/node_modules frontend/node_modules
 ```
 cd domains/todo-app
 
-# 1. 探索需求
-用户: "探索添加用户登录功能"
-AI:   → ace-explore（苏格拉底式提问）
+# 1. 规划（Grill → PRD → 提案）
+用户: "规划添加用户登录功能"
+AI:   → ace-planner
+      第一阶段：需求拷问（谁登录？密码还是 OAuth？）
+      第二阶段：O.A.I.S PRD（用户确认）
+      第三阶段：创建提案（评估：复杂，生成 4 artifacts）
 
-# 2. 创建提案
-用户: "创建用户登录提案"
-AI:   → ace-propose（评估：复杂，生成 4 个 artifacts）
+# 2. 实现变更
+用户: "实现"
+AI:   → ace-applier（逐个 task 实现，每步即时验证）
 
-# 3. 实现变更
-用户: "实现登录功能"
-AI:   → ace-apply（15/15 任务完成，建议 review）
+# 3. 审查代码
+用户: "审查代码"
+AI:   → ace-reviewer（多维度审查 + 自动修复 + 运行测试）
 
-# 4. 代码审查
-用户: "review"
-AI:   → review（自动修复 3 个问题，建议 verify）
-
-# 5. 验证功能
-用户: "verify"
-AI:   → verify（测试通过，覆盖率 85%，建议 archive）
-
-# 6. 归档变更
+# 4. 归档（主 AI 直接处理）
 用户: "归档"
-AI:   → ace-archive（沉淀到 10_DOCS/api/auth.md）
+AI:   主 AI → 读 ace-archive skill → 归档变更 + 沉淀到 10_DOCS/
 ```
 
-### 增强 Skills 示例
+### 增强场景
 
-#### 场景 1: 复杂需求规划
+#### 场景 1: 快速变更（跳过审查）
 
 ```
-用户: "规划用户积分系统"
-AI:   → plan
-      定级: 复杂（3 个模块）
-      拆分: 3 个 propose（基础 2天 + 抵扣 1.5天 + 过期 1天）
-      沉淀: 90_PLANNING/v1.0-user-points/
+用户: "把按钮颜色改成蓝色，直接改不用审查"
+AI:   → ace-planner（评估：简单）
+      → ace-applier（改代码）
+      → 主 AI 归档
 ```
 
 #### 场景 2: 故障排查
 
 ```
 用户: "API 返回 500，调查原因"
-AI:   → investigate
-      定性: 功能故障
-      根因: 缺少 Prisma 单例（L1/L2/L3 分析）
-      修复: 创建 utils/prisma.ts
+AI:   → ace-investigator（假设驱动诊断，定位根因）
+      → ace-planner（创建修复提案）
+      → ace-applier（实现修复）
+      → ace-reviewer（验证修复）
 ```
 
-#### 场景 3: 变更复盘
+#### 场景 3: 复盘总结
 
 ```
 用户: "复盘 add-user-auth"
-AI:   → retro
-      耗时: 5天（预估 4-6，准确）
-      经验: JWT 模式沉淀到 10_DOCS/patterns/
-      改进: 更新 domain.yaml 密码规范
+AI:   主 AI → 读 ace-retro skill → W.W.L.D 总结
 ```
 
-### 前置检查失败示例
+### 前置检查示例
 
 ```
-# 场景: 跳过 apply 直接 review
-用户: "review"
-AI:   ❌ apply 功能任务未完成（剩余 8 个）
-      💡 请先运行 ace-apply
+# 跳过规划直接实现
+用户: "实现登录功能"
+AI:   → ace-planner（检查发现无提案）
+      ⚠️ "没有找到现有提案，需要先规划吗？"
+      用户: "跳过规划，直接实现——加一个登录按钮在前端"
+      → ace-applier（无 tasks.md 但有口头任务）
 
-# 场景: 简单变更跳过 verify
-用户: "归档"（简单变更）
-AI:   ⚠️ 建议运行 review 保证质量，继续吗？
-
-# 场景: 复杂变更强制跳过
-用户: "跳过 verify 直接归档"（复杂变更）
-AI:   ❌ 复杂变更必须完整流程
-      如需强制，明确说"强制归档"
+# 审查无变更
+用户: "审查代码"
+AI:   → git diff --name-only HEAD → 无变更
+      ⚠️ "没有发现未审查的代码变更"
 ```
 
 ### 状态日志查询

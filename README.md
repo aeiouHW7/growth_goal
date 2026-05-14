@@ -257,29 +257,26 @@ explore → propose → apply → review → verify → archive
 
 **核心流程**：
 ```
-用户: "探索健康检查功能"
-AI:   → ace-explore（苏格拉底式提问）
+用户: "规划健康检查功能"
+AI:   → ace-planner（Grill → PRD → 提案，评估：简单）
 
-用户: "创建提案"
-AI:   → ace-propose（评估：简单，生成 4 个 artifacts）
+用户: "实现"
+AI:   → ace-applier（逐任务实现，即时验证）
 
-用户: "实现功能"
-AI:   → ace-apply（创建文件，注册路由，11/14 任务完成）
-
-用户: "review"
-AI:   → review（发现 Prisma 单例问题，自动修复）
+用户: "审查代码"
+AI:   → ace-reviewer（多维度审查，自动修复，测试验证）
 
 用户: "归档"
-AI:   → ace-archive（沉淀到 10_DOCS/api/）
+AI:   主 AI（读 ace-archive skill，沉淀到 10_DOCS/api/）
 ```
 
-**增强 Skills**：
+**增强场景**：
 ```
-用户: "规划用户积分系统"
-AI:   → plan（拆分为 3 个 propose，沉淀到 90_PLANNING/）
-
 用户: "API 返回 500，调查原因"
-AI:   → investigate（定位根因：缺少单例，生成诊断报告）
+AI:   → ace-investigator（定位根因）
+      → ace-planner（创建修复提案）
+      → ace-applier（实现修复）
+      → ace-reviewer（验证修复）
 
 用户: "复盘 add-user-auth"
 AI:   → retro（W.W.L.D 分析，沉淀 JWT 最佳实践）
@@ -351,7 +348,7 @@ AI:   → retro（W.W.L.D 分析，沉淀 JWT 最佳实践）
 
 **结果**: todo-app 的所有代码都是 AI 生成，一次运行成功，零调试。
 
-**详细分析**: 查看 [dialectical-thinking 案例](./skills/coding/dialectical-thinking/references/examples.md)
+**详细分析**: 查看 [dialectical-thinking 案例](./skills/capabilities/dialectical-thinking/references/examples.md)
 
 ---
 
@@ -377,7 +374,7 @@ AI:   → retro（W.W.L.D 分析，沉淀 JWT 最佳实践）
 - 方案决策
 - API 设计
 
-**查看详情**: [skills/coding/dialectical-thinking/SKILL.md](./skills/coding/dialectical-thinking/SKILL.md)
+**查看详情**: [skills/capabilities/dialectical-thinking/SKILL.md](./skills/capabilities/dialectical-thinking/SKILL.md)
 
 ---
 

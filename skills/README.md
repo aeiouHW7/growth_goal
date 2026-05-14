@@ -1,15 +1,13 @@
 # ACE Engine Skills
 
-**17 个 Skills** 覆盖项目全生命周期。
+**10 个 Skills** 覆盖项目全生命周期。
 
 ## 分类
 
 | 分类 | 数量 | Skills |
 |------|------|--------|
 | **system/** | 3 | 环境、项目管理 |
-| **workflow/** | 9 | 开发工作流（核心+增强） |
-| **coding/** | 1 | 编码辅助 |
-| **knowledge/** | 4 | 知识管理 ⭐ |
+| **capabilities/** | 9 | 能力 skills，被 agents 按需引用 |
 
 ---
 
@@ -21,39 +19,21 @@
 
 ---
 
-## workflow/（开发工作流）
+## capabilities/（能力 Skills）
 
-### 核心（6 个必需）
+被 Agent 通过「技能引用」节按需加载。每个 Skill 自包含方法论，通过 Skill Stack 声明能力依赖。
 
-- **ace-explore** - 探索需求，苏格拉底式对话
-- **ace-propose** - 创建提案，复杂度评估
-- **ace-apply** - 实现变更，执行 tasks
-- **review** - 代码审查，自动修复
-- **verify** - 运行测试，复杂度感知
-- **ace-archive** - 归档变更，沉淀知识
-
-### 增强（3 个可选）
-
-- **plan** - 需求规划，复杂需求拆分
-- **investigate** - 问题诊断，根因定位
-- **retro** - 变更复盘，提取经验
-
----
-
-## coding/（编码辅助）
-
-- **dialectical-thinking** - 辩证思考，方案对比
-
----
-
-## knowledge/（知识管理）⭐
-
-- **codebase-recon** - 代码库侦察，先查再写
-- **cross-review** - 审核引擎，自审+交叉审核
-- **docs-extractor** - 文档提取，从代码生成知识库
-- **db-schema-manager** - 数据库管理，schema 基线+版本 SQL
-
-详见 [knowledge/README.md](./knowledge/README.md)
+| Skill | 引用方 | 用途 |
+|-------|--------|------|
+| **ui-prototyping** | ace-planner | 原型生成胶水层：定设计方向 → 出原型 → 质检验证 |
+| **oais-prd** | ace-planner | O.A.I.S 四层 PRD 方法论（P.A.M/状态机/SECURE/自检矩阵） |
+| **dialectical-thinking** | ace-planner | 辩证思考，方案对比 |
+| **codebase-recon** | ace-planner, ace-applier, ace-investigator | 代码库侦察，先查再写 |
+| **cross-review** | ace-reviewer, ui-prototyping | 审核引擎，自审+交叉审核 |
+| **ace-archive** | 主 AI | 归档方法论 |
+| **ace-retro** | 主 AI | 复盘方法论 |
+| **db-schema-manager** | 按需 | 数据库 schema 基线 + 版本 SQL |
+| **docs-extractor** | 按需 | 从代码生成 10_DOCS/ |
 
 ---
 
@@ -65,14 +45,11 @@
 用户: "初始化环境"
 AI:   → ace-init-env
 
-用户: "创建提案"
-AI:   → ace-propose
-
 用户: "有没有类似的实现？"
 AI:   → codebase-recon
 
-用户: "从代码生成文档"
-AI:   → docs-extractor
+用户: "审查代码"
+AI:   → ace-reviewer（agent 自动引用 cross-review skill）
 ```
 
 ---
