@@ -108,18 +108,32 @@ pwd | grep -q "domains/" && echo "子项目" || echo "根目录"
 
 #### 复杂度感知流程
 
-| 复杂度 | 判断条件 | 流程 |
-|--------|---------|------|
-| **简单** | 文档、typo、CSS、单字段 | planner → applier → 主 AI 归档 |
-| **中等** | 单文件功能、UI 组件 | planner → applier → reviewer → 归档 |
-| **复杂** | 多文件、新实体、架构变更 | planner → applier → reviewer（含验证）→ 归档 |
+| 复杂度 | 判断条件 | Gate 要求 | 流程 |
+|--------|---------|-----------|------|
+| **简单** | 文档、typo、CSS、单字段、配置变更 | 无审查要求 | planner → applier → 主 AI 归档 |
+| **中等** | 单文件功能、UI 组件、增量 API | applier 完成后必 reviewer | planner → applier → reviewer → 归档 |
+| **复杂** | 多文件（5+）、新实体、架构变更、核心路径、数据迁移 | reviewer + 验证 + 交叉审查 | planner → applier → reviewer（含验证）→ 归档 |
 
-#### 主 AI 直接处理
+**复杂度判定决策树**：
+```
+变更涉及什么？
+├── 纯文档 / typo / 配置 → 简单
+├── CSS / 样式调整 → 简单
+├── 单个字段增删 → 简单
+└── 代码逻辑变更 →
+    ├── 单文件 & 无新依赖 → 中等
+    └── 多文件 / 新实体 / 新依赖 →
+        ├── 影响核心路径（认证/支付/数据）→ 复杂
+        └── 不影响核心路径 →
+            ├── 5 文件以内 → 中等
+            └── 5 文件以上 → 复杂
+```
 
-以下阶段不经过 agent，由主 AI 直接执行：
-
+**归档/复盘阶段**（主 AI 直接处理）：
 - **归档（archive）** — 读 `skills/capabilities/ace-archive/SKILL.md` 获取方法论，归档变更到 `openspec/archive/`，沉淀知识到 `10_DOCS/`
 - **复盘（retro）** — 读 `skills/capabilities/ace-retro/SKILL.md` 获取方法论，产出 W.W.L.D 复盘总结
+- **归档条件**：reviewer 通过（或用户确认 Warning 归档），代码已合并到目标分支
+- **复盘条件**：归档完成后自动触发；或用户显式要求
 
 #### Agent Gate 说明
 
@@ -144,6 +158,17 @@ Gate 不是问 AI "你完成了吗"，而是 AI 必须**读 artifact 验证**：
 旁路（任意时刻）：
   ace-investigator → ace-planner（修复提案）→ ace-applier → ace-reviewer
 ```
+
+**主链异常恢复**：
+
+| 异常场景 | 处理方式 |
+|---------|---------|
+| applier 实现受阻（提案缺陷） | 挂起当前 task → 通知主 AI → 主 AI 评估：修改提案 / 调 investigator 分析 |
+| reviewer 发现 Block 项 | 通知 applier 修复 → 修复后 reviewer 复查 |
+| review 循环超过 3 轮 | 主 AI 介入决策：接受风险 / 回退 / 变更方案 |
+| 用户中途变更需求 | 暂停当前流程 → 调 planner 重新评估 → 更新提案 |
+| investigator 定位到非代码问题 | 输出运维/配置修复建议，不进入 applier |
+| applier 单个 task 修复超 3 轮 | 标记为阻塞 → 主 AI 决策：回退该 task / 调 investigator / 修改提案 |
 
 **完整示例（复杂变更）**：
 ```

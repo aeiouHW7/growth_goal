@@ -114,20 +114,21 @@ AI-Coding-Engine/
 │       ├── naming-conventions.md
 │       └── git-workflow.md
 │
-├── skills/                     # AI 可调用能力
+├── skills/                     # AI 知识层（capabilities）
 │   ├── system/                # 环境、项目管理（3 个）
-│   ├── workflow/              # 开发工作流（9 个）⭐
-│   │   ├── ace-explore/       # 探索需求
-│   │   ├── ace-propose/       # 创建提案
-│   │   ├── ace-apply/         # 实现变更
-│   │   ├── review/            # 代码审查
-│   │   ├── verify/            # 运行测试
-│   │   ├── ace-archive/       # 归档变更
-│   │   ├── plan/              # 需求规划
-│   │   ├── investigate/       # 故障诊断
-│   │   └── retro/             # 变更复盘
-│   └── coding/                # 编码辅助
-│       └── dialectical-thinking/  # 辩证思考 ⭐
+│   │   ├── ace-create-project/
+│   │   ├── ace-doctor/
+│   │   └── ace-init-env/
+│   └── capabilities/          # 可复用能力（9 个）⭐
+│       ├── ace-archive/       # 归档变更
+│       ├── ace-retro/         # 变更复盘
+│       ├── codebase-recon/    # 代码侦察
+│       ├── cross-review/      # 交叉审查
+│       ├── db-schema-manager/ # 数据库 Schema 管理
+│       ├── dialectical-thinking/  # 辩证思考 ⭐
+│       ├── docs-extractor/    # 文档提取
+│       ├── oais-prd/          # O.A.I.S PRD 方法论
+│       └── ui-prototyping/    # UI 原型
 │
 ├── templates/                  # 项目模板
 │   ├── domain/                # Domain 模板
@@ -218,30 +219,22 @@ npm run dev
 
 ## 🔧 完整开发工作流
 
-**9 个 Workflow Skills** 覆盖从规划到复盘的完整生命周期。
+**4 Agents + 9 Capabilities** 覆盖从规划到复盘的完整生命周期。
 
 ### 核心流程（6 个必需）
 
 ```
-explore → propose → apply → review → verify → archive
+planner → applier → reviewer → 归档/复盘
 ```
 
-| Skill | 作用 |
+| Agent/Skill | 作用 |
 |-------|------|
-| **explore** | 探索需求，苏格拉底式对话 |
-| **propose** | 创建提案，生成 artifacts + 复杂度评估 |
-| **apply** | 实现变更，执行 tasks |
-| **review** | 代码审查，自动修复 |
-| **verify** | 运行测试，复杂度感知 |
-| **archive** | 归档变更，沉淀到 10_DOCS/ |
-
-### 增强 Skills（3 个可选）
-
-| Skill | 使用场景 |
-|-------|---------|
-| **plan** | 复杂需求拆分、工作量评估（在 propose 前） |
-| **investigate** | 故障排查、性能分析、根因定位 |
-| **retro** | 变更复盘、提取经验、沉淀最佳实践 |
+| **ace-planner** | 规划：Grill → PRD → 提案 |
+| **ace-applier** | 实现：逐 task 执行 + 即时验证 |
+| **ace-reviewer** | 审查：多维度 + 自动修复 + 测试 |
+| ace-archive | 归档：沉淀到 10_DOCS/ |
+| ace-retro | 复盘：W.W.L.D 经验提取 |
+| cross-review | 交叉审查：独立视角
 
 ### 流程守卫机制 ⭐
 
@@ -288,24 +281,28 @@ AI:   → retro（W.W.L.D 分析，沉淀 JWT 最佳实践）
 
 **12 个 Skills** 覆盖项目全生命周期。
 
-#### 项目管理（3 个，根目录使用）
+#### 系统级（3 个，根目录使用）
 
 | Skill | 触发 | 作用 |
 |-------|------|------|
 | ace-init-env | "初始化环境" | 检查/安装 Node.js、Docker、Git |
 | ace-create-project | "创建项目 my-app" | 生成完整项目结构 |
-| ace-doctor | "检查系统健康" | 环境诊断 |
+| ace-doctor | "检查系统健康" | 环境健康诊断 |
 
-#### 开发工作流（9 个，子项目使用）
+#### Capabilities（9 个，被 agents 按需引用）
 
-**核心（6 个）**：explore → propose → apply → review → verify → archive
+**核心（6 个）**：
+- **ace-archive** — 归档变更，沉淀到 `10_DOCS/`
+- **ace-retro** — 变更复盘（W.W.L.D）
+- **cross-review** — 方案/代码/测试的交叉审查
+- **codebase-recon** — 不熟悉代码时的侦察
+- **dialectical-thinking** — 辩证分析、方案对比 ⭐
+- **oais-prd** — O.A.I.S 四层 PRD 方法论
 
 **增强（3 个）**：
-- **plan** - 复杂需求拆分
-- **investigate** - 故障排查
-- **retro** - 变更复盘
-
-详见 [完整开发工作流](#完整开发工作流)
+- **ui-prototyping** — HTML+Tailwind 交互原型
+- **db-schema-manager** — 数据库 Schema 版本管理
+- **docs-extractor** — 从代码提取文档
 
 ---
 

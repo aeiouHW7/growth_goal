@@ -49,6 +49,26 @@ cat openspec/changes/{change-name}/tasks.md 2>/dev/null | head -20
 ⑥ 提交 → git commit（原子提交）
 ```
 
+**反馈循环细化**（Matt Pocock 模式）：
+
+| 步骤 | 具体操作 |
+|------|---------|
+| 1. 改 | 实现单个 task 的代码变更 |
+| 2. 查 | 类型检查（tsc --noEmit）/ linter / 编译 |
+| 3. 验 | 运行相关测试 vitest run --related |
+| 4. 看 | 查看输出错误，定位问题点 |
+| 5. 修 | 修复后回到步骤 2 |
+| 6. 过 | 全部通过 → 标记完成 |
+
+循环控制：每个 task 最多 3 轮修复尝试。超过 3 轮仍有问题 → 暂停当前 task，
+标记为阻塞项，通知主 AI 决策（回退方案 / 调 investigator 分析 / 修改提案）。
+
+**实现故障处理**：
+- 编译/类型错误 → 立即修复，不阻塞
+- 测试失败 → 分析是代码问题还是测试问题，修复后重跑
+- 发现提案缺陷（设计不合理、遗漏场景）→ 暂停 task，通知主 AI 评估是否需要修改提案
+- 依赖问题 → 安装后继续
+
 ### Step 3: 质量自检
 
 每 task 完成后快速检查：
@@ -66,6 +86,8 @@ cat openspec/changes/{change-name}/tasks.md 2>/dev/null | head -20
 
 1. 写入 `10_DOCS/` 对应目录
 2. 或在 `proposal.md` 末尾追加 `## 实现记录` 节
+
+如果沉淀的内容可复用（如通用模式、最佳实践），同时考虑贡献到 `skills/capabilities/` 下作为新 skill 或补充现有 SKILL.md。
 
 ---
 
