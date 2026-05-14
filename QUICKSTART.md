@@ -28,8 +28,10 @@ cd domains/todo-app
 - ✅ 安装依赖（如果缺失）
 - ✅ 运行数据库迁移
 - ✅ 填充示例数据（**仅首次**，已有数据时跳过）
-- ✅ **后台启动后端服务**（http://localhost:3000）
-- ✅ **后台启动前端服务**（http://localhost:5173）
+- ✅ **自动启动后端服务**（http://localhost:3000）
+- ✅ **自动启动前端服务**（http://localhost:5173）
+
+**无需手动启动！** start.sh 会在后台启动所有服务。
 
 **预期输出**：
 ```
@@ -72,6 +74,11 @@ cd domains/todo-app
 ```
 
 **访问应用**: http://localhost:5173
+
+**查看服务状态**:
+```bash
+./status.sh  # 查看 Docker、后端、前端的运行状态
+```
 
 **停止服务**:
 ```bash
@@ -154,7 +161,10 @@ AI 会自动：
 
 ```bash
 cd domains/my-blog
-./start.sh  # 自动启动所有服务
+./start.sh  # 自动启动所有服务（Docker + 后端 + 前端）
+
+# 查看服务状态
+./status.sh
 ```
 
 ---
@@ -366,6 +376,9 @@ tail -f /tmp/todo-frontend.log
 cd domains/{project}
 ./start.sh
 
+# 查看服务状态
+./status.sh                    # 查看 Docker、后端、前端运行状态
+
 # 停止服务
 pkill -f 'vite|tsx.*{project}'
 
@@ -450,12 +463,16 @@ npm run lint:fix          # 自动修复
 **症状**: 执行 `./start.sh` 后显示成功，但访问 http://localhost:5173 无响应
 
 **解决**:
-1. 查看日志检查错误：
+1. 先检查服务状态：
+   ```bash
+   ./status.sh  # 查看哪些服务未运行
+   ```
+2. 查看日志检查错误：
    ```bash
    tail -f /tmp/todo-backend.log
    tail -f /tmp/todo-frontend.log
    ```
-2. 检查进程是否运行：
+3. 检查进程是否运行：
    ```bash
    ps aux | grep -E '(vite|tsx)' | grep todo-app
    ```
