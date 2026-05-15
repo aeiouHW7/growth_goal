@@ -15,6 +15,11 @@ tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"]
 
 ## Gate
 
+```bash
+test -f domain.yaml || { echo "请在 domains/{project}/ 目录下运行"; exit 1; }
+cat docs/wiki/index.md 2>/dev/null
+```
+
 复杂度感知的前置检查。读取 proposal.md 中的复杂度标记，按级别验证前置步骤：
 
 ```bash
@@ -84,7 +89,8 @@ openspec archive --change "<name>"
 
 如果 openspec CLI 不可用，手动执行：
 ```bash
-mv openspec/changes/<name>/ openspec/archive/<name>/
+mkdir -p openspec/changes/archive/
+mv openspec/changes/<name>/ openspec/changes/archive/<name>/
 ```
 
 ### Step 3: 生成变更摘要

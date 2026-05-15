@@ -15,6 +15,11 @@ tools: ["Read", "Grep", "Glob", "Bash"]
 
 ## Gate
 
+```bash
+test -f domain.yaml || { echo "请在 domains/{project}/ 目录下运行"; exit 1; }
+cat docs/wiki/index.md 2>/dev/null
+```
+
 确认有变更可审查：
 
 ```bash

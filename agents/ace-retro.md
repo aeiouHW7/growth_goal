@@ -15,12 +15,17 @@ tools: ["Read", "Write", "Grep", "Glob", "Bash"]
 
 ## Gate
 
-**建议**：变更已归档（openspec/archive/ 中存在）
+```bash
+test -f domain.yaml || { echo "请在 domains/{project}/ 目录下运行"; exit 1; }
+cat docs/wiki/index.md 2>/dev/null
+```
+
+**建议**：变更已归档（openspec/changes/archive/ 中存在）
 
 **可选**：正在进行的变更也可复盘（阶段性总结）
 
 ```bash
-ls openspec/archive/ 2>/dev/null
+ls openspec/changes/archive/ 2>/dev/null
 ```
 
 无条件阻塞 — 用户指定复盘对象即可开始。
@@ -41,9 +46,9 @@ ls openspec/archive/ 2>/dev/null
 
 **变更 artifacts**：
 ```bash
-cat openspec/archive/<name>/proposal.md   # 目标和范围
-cat openspec/archive/<name>/tasks.md      # 实际工作量
-cat openspec/archive/<name>/design.md     # 技术决策
+cat openspec/changes/archive/<name>/proposal.md   # 目标和范围
+cat openspec/changes/archive/<name>/tasks.md      # 实际工作量
+cat openspec/changes/archive/<name>/design.md     # 技术决策
 ```
 
 **状态日志**：

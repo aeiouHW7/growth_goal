@@ -86,7 +86,7 @@ npm run test:coverage
 - [ ] Assertions are specific and meaningful
 - [ ] Coverage is 80%+
 
-For detailed mocking patterns and framework-specific examples, see `skill: tdd-workflow`.
+For project-specific test patterns, check `docs/wiki/patterns.md` and `domain.yaml` testing section.
 
 ## v1.8 Eval-Driven TDD Addendum
 

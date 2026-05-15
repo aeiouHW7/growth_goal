@@ -15,7 +15,11 @@ tools: ["Read", "Grep", "Glob", "Bash"]
 
 ## Gate
 
-无条件限制。任意时刻可调用。
+```bash
+test -f domain.yaml 2>/dev/null && cat docs/wiki/index.md 2>/dev/null
+```
+
+无条件限制。任意时刻可调用。在项目目录下时自动加载项目知识。
 
 ---
 

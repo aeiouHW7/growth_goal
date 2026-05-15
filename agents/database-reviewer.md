@@ -91,7 +91,7 @@ psql -c "SELECT indexrelname, idx_scan, idx_tup_read FROM pg_stat_user_indexes O
 
 ## Reference
 
-For detailed index patterns, schema design examples, connection management, concurrency strategies, JSONB patterns, and full-text search, see skills: `postgres-patterns` and `database-migrations`.
+For detailed patterns, refer to project-specific database documentation in `docs/wiki/` if available.
 
 ---
 

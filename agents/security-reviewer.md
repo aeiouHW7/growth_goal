@@ -110,7 +110,7 @@ If you find a CRITICAL vulnerability:
 
 ## Reference
 
-For detailed vulnerability patterns, code examples, report templates, and PR review templates, see skill: `security-review`.
+For project-specific security considerations, check `docs/wiki/` and `domain.yaml` coding_standards.
 
 ---
 
