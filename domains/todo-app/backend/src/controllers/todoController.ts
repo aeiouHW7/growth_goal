@@ -74,7 +74,7 @@ export const todoController = {
   update: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { title, completed } = req.body;
+      const { title, completed, priority } = req.body;
 
       // 验证
       if (title !== undefined && (typeof title !== 'string' || title.trim().length === 0 || title.length > 200)) {
@@ -85,10 +85,16 @@ export const todoController = {
         return res.status(400).json({ error: 'Completed must be a boolean' });
       }
 
+      const validPriorities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+      if (priority !== undefined && !validPriorities.includes(priority)) {
+        return res.status(400).json({ error: 'Priority must be one of: LOW, MEDIUM, HIGH, CRITICAL' });
+      }
+
       // 更新
       const data: any = {};
       if (title !== undefined) data.title = title.trim();
       if (completed !== undefined) data.completed = completed;
+      if (priority !== undefined) data.priority = priority;
 
       const todo = await prisma.todo.update({
         where: { id: parseInt(id) },
