@@ -1,0 +1,60 @@
+# ACE (AI Coding Engine) OpenSpec Config
+# ---------------------------------------------------------
+# schema: spec-driven（proposal → specs → design → tasks）
+# ---------------------------------------------------------
+
+schema: spec-driven
+
+# 全局上下文：定义 ACE 的核心运行原则
+context: |
+  # ACE 引擎通用契约
+
+  ## 核心理念 (ETHOS)
+  1. **终端无关**：知识资产（Markdown/YAML）是核心，工具是消耗品。
+  2. **知识复利**：代码产出的同时必须产出/更新对应的 10_DOCS。
+  3. **辩证思考**：禁止直接编码，必须进行方案对比和自我质疑。
+
+  ## 开发生命周期
+  explore → plan → propose → apply → review → verify → archive
+
+  ## 变更隔离原则
+  - 所有变更在 `openspec/changes/{change-id}/` 目录下进行。
+  - `change-id` 格式建议：`YYYYMMDD-brief-description`。
+
+  ## 知识库结构 (10_DOCS)
+  - `10_DOCS/raw/`: 【冷数据】人类专用输入区，AI **只读**。
+  - `10_DOCS/wiki/`: 【热数据】AI 的结构化大脑，AI **读写**。
+
+rules:
+  general:
+    - "状态总线：每个核心任务结束后，在 `.claude/state/events.jsonl` 追加状态记录。"
+    - "防跳步：按顺序勾选 Checkbox，前置未完成禁止下一步。"
+
+  proposal:
+    - "必须包含方案对比：至少列出方案 A 与方案 B，说明为何选择当前方案。"
+    - "必须包含风险评估：识别潜在技术债、性能瓶颈或安全风险。"
+    - "资产审计：列出本次变更将新增或更新哪些 10_DOCS 文件。"
+    - "回滚计划：apply 失败时的恢复方案。"
+
+  tasks:
+    - "验证绑定：每个编码 Task 必须对应一个明确的 Verify 场景。"
+    - "最小化提交：Task 应拆分为可验证的最小单元。"
+
+  design:
+    - "DRY 原则审计：检查是否有现成的 Skill 或 Utils 可以复用。"
+    - "文档先行：核心逻辑变更必须先在设计文档中明确，再开始编码。"
+
+roles:
+  - id: ARCHITECT
+    description: 负责需求拆解、方案对比及 10_DOCS 结构设计。
+  - id: IMPLEMENTER
+    description: 负责根据 Proposal 实施编码及单元测试。
+  - id: QA_ENGINEER
+    description: 负责验证场景设计及最终质量验收。
+
+templates:
+  proposal: openspec/templates/proposal.md
+  design: openspec/templates/design.md
+  tasks: openspec/templates/tasks.md
+  review: openspec/templates/review-log.md
+  verify: openspec/templates/verify-log.md

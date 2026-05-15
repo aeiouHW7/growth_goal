@@ -53,9 +53,11 @@ export const todoController = {
   getById: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
+      const parsedId = parseInt(id);
 
+      // BUG: id 为 NaN 时不会触发 400，而是查数据库后抛异常
       const todo = await prisma.todo.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: parsedId },
       });
 
       if (!todo) {

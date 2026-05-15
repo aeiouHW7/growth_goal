@@ -106,6 +106,23 @@ pwd | grep -q "domains/" && echo "子项目" || echo "根目录"
 | **ace-reviewer** | "审查代码" / "验证功能" | git diff 确认有变更 | 审查报告 + 测试结果 |
 | **ace-investigator** | "调查 XX 问题" | 无（随时可用） | 诊断报告 |
 
+#### 专业子 Agent（可 spawn）
+
+对话型 agent 遇到以下场景时 spawn 子 agent 处理，结果返回后继续对话：
+
+| Agent | 触发条件 | 工具 | 模型 |
+|-------|---------|------|------|
+| **code-explorer** | 需要深入理解现有代码实现（Phase 1 定向侦察） | Read/Grep/Glob | sonnet |
+| **architect** | 架构方案对比、技术选型分析 | Read/Grep/Glob | opus |
+| **code-reviewer** | 代码审查（置信度过滤，>80% 才报告） | Read/Grep/Glob/Bash | sonnet |
+| **security-reviewer** | 涉及用户输入/认证/API 端点/敏感数据 | Read/Write/Edit/Bash/Grep/Glob | sonnet |
+| **database-reviewer** | 编写 SQL/迁移/Schema 设计/性能优化 | Read/Write/Edit/Bash/Grep/Glob | sonnet |
+| **tdd-guide** | 新功能/修 bug/重构，需要 TDD 工作流 | Read/Write/Edit/Bash/Grep | sonnet |
+| **build-error-resolver** | 构建/类型检查失败 | Read/Write/Edit/Bash/Grep/Glob | sonnet |
+| **refactor-cleaner** | 重构后需要清理技术债 | Read/Write/Edit/Bash/Grep/Glob | sonnet |
+
+子 agent 委托原则详见 `10_DOCS/technical/sub-agent-delegation-philosophy.md`。
+
 #### 复杂度感知流程
 
 | 复杂度 | 判断条件 | Gate 要求 | 流程 |
@@ -211,10 +228,20 @@ pkill -f 'vite|tsx'  # 停止服务
 ```
 AI-Coding-Engine/
 ├── agents/                    # Workflow agents（执行层）
+│   │                          # ── ACE 原生（编排对话型）──
 │   ├── ace-planner.md         # 规划：需求 → PRD → 提案
 │   ├── ace-applier.md         # 实现：逐任务编码
 │   ├── ace-reviewer.md        # 审查：代码审查 + 测试
 │   └── ace-investigator.md    # 诊断：根因定位
+│   │                          # ── ECC 派生（子 agent 型）──
+│   ├── code-explorer.md       # 定向代码侦察（只读）
+│   ├── architect.md           # 架构方案分析（只读，opus）
+│   ├── code-reviewer.md       # 通用代码审查（置信度过滤）
+│   ├── security-reviewer.md   # 安全漏洞扫描
+│   ├── database-reviewer.md   # 数据库 Schema/查询优化
+│   ├── tdd-guide.md           # TDD 工作流
+│   ├── build-error-resolver.md # 构建错误修复
+│   └── refactor-cleaner.md    # 重构清理
 ├── domains/                   # 业务项目（完全独立）
 ├── skills/                    # 知识层
 │   ├── system/                # 系统级（环境、项目管理）
