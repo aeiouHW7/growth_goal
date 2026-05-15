@@ -32,7 +32,7 @@ ace-planner Phase 2
 
 ```bash
 # 生成完整设计系统推荐
-cd .tmp/ui-ux-pro-max-study
+cd skills/capabilities/ui-prototyping/references/ui-ux-pro-max-study
 python3 src/ui-ux-pro-max/scripts/search.py "SaaS 后台" --design-system -f markdown -p "项目名"
 
 # 补充搜索：配色

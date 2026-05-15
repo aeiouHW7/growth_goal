@@ -169,16 +169,19 @@ eval "$LINT" 2>&1 | head -20
 eval "$TEST" 2>&1 | tail -30
 ```
 
+环境依赖说明：测试需要外部服务（数据库）时，失败不阻塞。验证日志记录具体失败原因供 reviewer 判断。
+
 #### ⑤ 判断与处理
 
 验证通过 → 执行以下操作：
 
 ```bash
-# tick task（将第一个 [ ] 改为 [x]，跨平台）
-node -e "const f=require('fs');let c=f.readFileSync('openspec/changes/{change_name}/tasks.md','utf8');f.writeFileSync('openspec/changes/{change_name}/tasks.md',c.replace('[ ]','[x]'))"
+# 在 tasks.md 中将当前 task 标记为 [x]
+# （直接在 tasks.md 中替换 [ ] → [x]，不要用字符串匹配脚本）
+# 只 add 本次 task 涉及的文件（AI 记录改了什么文件）
+git add {files_changed_by_this_task}
 
 # atomic commit（一个 task 一个 commit）
-git add -A
 git commit -m "feat({scope}): {task_title}
 
 完成 task #{n}: {task_description}
