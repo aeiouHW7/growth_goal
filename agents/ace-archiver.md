@@ -40,17 +40,17 @@ grep "**复杂度**:" openspec/changes/*/proposal.md | tail -1
 
 从 artifacts 中提取知识，沉淀到项目文档目录。
 
-**识别沉淀类型**（从 proposal.md 和 design.md 关键词）：
-
-| 变更特征 | 沉淀目录 |
-|---------|---------|
-| 提到 "API" | docs/api/ |
-| 提到 "业务规则" | docs/business/ |
-| 提到 "架构" | docs/architecture/ |
-| 提到 "数据库" | docs/database/ |
-| 其他 | docs/features/ |
+所有知识统一沉淀到 `docs/wiki/`，一个主题一个 `.md` 文件。
 
 **提取优先级**：specs/ → design.md → proposal.md → review-log
+
+**沉淀流程**：
+
+1. 从 artifacts 提取关键知识（决策、接口、规则、注意事项）
+2. 写入 `docs/wiki/{topic}.md`（如 `auth.md`、`api-design.md`）
+   - 已有同名文件 → 追加/更新，不覆盖
+   - 无同名文件 → 新建
+3. **更新 `docs/wiki/index.md`**（必须）——增加新页面的链接和一行描述
 
 **沉淀格式**：
 ```markdown
@@ -72,7 +72,7 @@ grep "**复杂度**:" openspec/changes/*/proposal.md | tail -1
 [从 review-log/verify-log 提取]
 ```
 
-如果无法识别沉淀类型或内容过少，跳过此步。
+如果内容过少（不足 3 条有价值的信息），跳过此步。
 
 ### Step 2: 归档变更
 

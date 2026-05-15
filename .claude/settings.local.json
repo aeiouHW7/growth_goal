@@ -12,7 +12,10 @@
       "Bash(rm -f skills/README.md)",
       "Bash(rm -rf domains/example-app domains/ace-core)",
       "Bash([ -d \"skills/capabilities/$skill\" ])",
-      "Bash([ -f \"agents/$agent.md\" ])"
+      "Bash([ -f \"agents/$agent.md\" ])",
+      "Bash(git add *)",
+      "Bash(git rm *)",
+      "Bash(git commit *)"
     ]
   }
 }

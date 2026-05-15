@@ -73,3 +73,14 @@ testing:
     unit: "npm run test"
     integration: "npm run test:integration"
 
+knowledge:
+  always_load:
+    - path: docs/wiki/index.md
+      desc: 项目知识库导航入口
+  on_demand:
+    - path: docs/wiki/
+      trigger: "涉及项目知识、技术方案、业务规则、接口设计时"
+
+planning:
+  current_version: v0.1
+

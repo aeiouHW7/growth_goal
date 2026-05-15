@@ -76,9 +76,11 @@ git log --all --grep="<name>" --oneline
 
 | 类型 | 沉淀位置 | 典型内容 |
 |------|---------|---------|
-| 技术模式 | docs/patterns/ | 设计模式、最佳实践 |
-| 复盘报告 | docs/retrospectives/ | W.W.L.D 完整记录 |
-| 规范更新 | rules/ 或 domain.yaml | 编码规范、测试标准 |
+| 技术模式 | docs/wiki/patterns.md | 设计模式、最佳实践 |
+| 复盘报告 | docs/wiki/retros/{change-name}.md | W.W.L.D 完整记录 |
+| 规范更新 | domain.yaml 或项目 CLAUDE.md | 编码规范、测试标准 |
+
+沉淀后**必须更新 `docs/wiki/index.md`**，保持导航完整。
 
 ### Step 5: 输出复盘总结
 
