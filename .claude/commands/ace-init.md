@@ -20,7 +20,43 @@
 
 不需要的信息跳过，用默认值。
 
-### Step 2: 创建目录结构
+### Step 2: 环境检测
+
+检测用户机器上的必要工具，输出状态报告。**不自动安装**（避免权限问题），缺失时给安装指引。
+
+```bash
+# 检测必要工具
+echo "环境检测:"
+
+# Node.js
+if command -v node >/dev/null 2>&1; then
+  NODE_VER=$(node -v)
+  if echo "$NODE_VER" | grep -qE '^v(18|20|22|24)'; then
+    echo "  ✓ Node.js $NODE_VER"
+  else
+    echo "  ⚠ Node.js $NODE_VER（需要 v18+，建议升级：nvm install 20）"
+  fi
+else
+  echo "  ✗ Node.js 未安装（安装：https://nodejs.org 或 brew install node）"
+fi
+
+# npm
+command -v npm >/dev/null 2>&1 && echo "  ✓ npm $(npm -v)" || echo "  ✗ npm 未安装（随 Node.js 一起安装）"
+
+# Git
+command -v git >/dev/null 2>&1 && echo "  ✓ Git $(git --version | cut -d' ' -f3)" || echo "  ✗ Git 未安装（安装：brew install git）"
+
+# Docker（可选）
+if command -v docker >/dev/null 2>&1; then
+  docker ps >/dev/null 2>&1 && echo "  ✓ Docker $(docker --version | cut -d' ' -f3 | tr -d ',')" || echo "  ⚠ Docker 已安装但未运行（请启动 Docker Desktop）"
+else
+  echo "  ⚠ Docker 未安装（可选，安装：https://docs.docker.com/get-docker/）"
+fi
+```
+
+如果有关键工具缺失（Node.js 或 Git），提示用户先安装再继续，但不阻塞流程。
+
+### Step 3: 创建目录结构
 
 ```bash
 PROJECT_DIR="domains/{project-name}"
@@ -33,7 +69,7 @@ mkdir -p "$PROJECT_DIR/openspec/archive"
 mkdir -p "$PROJECT_DIR/.claude/state"
 ```
 
-### Step 3: 生成 domain.yaml
+### Step 4: 生成 domain.yaml
 
 根据用户回答填充模板：
 
@@ -77,7 +113,7 @@ planning:
   current_version: v0.1
 ```
 
-### Step 4: 生成知识库骨架
+### Step 5: 生成知识库骨架
 
 写入 `docs/wiki/index.md`：
 
@@ -95,7 +131,7 @@ planning:
 - [patterns.md](patterns.md) — 技术模式与最佳实践（待创建）
 ```
 
-### Step 5: 生成 openspec config
+### Step 6: 生成 openspec config
 
 写入 `openspec/config.yaml`：
 
@@ -105,18 +141,18 @@ change_dir: changes
 archive_dir: archive
 ```
 
-### Step 6: 调用 ace-generate
+### Step 7: 调用 ace-generate
 
 在项目目录下运行 `/ace-generate` 生成 CLAUDE.md。
 
-### Step 7: 可选 — 生成 Docker 环境
+### Step 8: 可选 — 生成 Docker 环境
 
 如果用户选择需要 Docker，根据技术栈生成：
 - `docker-compose.yml`
 - `start.sh`（一键启动脚本）
 - `.env`（环境变量模板）
 
-### Step 8: 输出摘要
+### Step 9: 输出摘要
 
 ```
 ✓ 项目 {project-name} 创建完成

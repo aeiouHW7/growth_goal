@@ -9,9 +9,9 @@
 
 ## 2. Phase B — 新 Commands
 
-- [ ] 2.1 创建 .claude/commands/ace-status.md：读取 domain.yaml services 段，用 lsof/nc 检测各端口，输出表格化状态面板。验证：执行 /ace-status 看到正确的服务状态表格
-- [ ] 2.2 创建 .claude/commands/ace-handoff.md：生成交接文档，包含当前阶段、进度、未完成决策、建议下次入口、artifacts 路径引用。验证：执行 /ace-handoff 看到格式正确的交接文档
-- [ ] 2.3 ace-init 环境检测增强：在 .claude/commands/ace-init.md（或对应 skill）中追加环境检测步骤（node>=18、npm、docker、git），输出缺失工具的安装指引。验证：在缺少 docker 的环境下运行 ace-init 看到警告
+- [x] 2.1 创建 .claude/commands/ace-status.md：读取 domain.yaml services 段，用 lsof/nc 检测各端口，输出表格化状态面板。验证：执行 /ace-status 看到正确的服务状态表格
+- [x] 2.2 创建 .claude/commands/ace-handoff.md：生成交接文档，包含当前阶段、进度、未完成决策、建议下次入口、artifacts 路径引用。验证：执行 /ace-handoff 看到格式正确的交接文档
+- [x] 2.3 ace-init 环境检测增强：在 .claude/commands/ace-init.md（或对应 skill）中追加环境检测步骤（node>=18、npm、docker、git），输出缺失工具的安装指引。验证：在缺少 docker 的环境下运行 ace-init 看到警告
 
 ## 3. Phase C — Hooks 系统（风险最高）
 
