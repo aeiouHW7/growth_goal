@@ -72,9 +72,8 @@ tsconfig.json
 
 - **文档目录**: kebab-case
   ```
-  10_DOCS/business/
-  10_DOCS/technical/
-  90_PLANNING/
+  docs/wiki/
+  planning/
   ```
 
 ---

@@ -11,7 +11,7 @@
 
 ### Phase 2: Plan (规划)
 *   **动作**：将需求结构化为具体的 Feature 或版本目标。
-*   **产出**：`90_PLANNING/` 下的 Markdown 文档。
+*   **产出**：`planning/` 下的 Markdown 文档。
 
 ### Phase 3: Propose (提案)
 *   **动作**：编写详细的设计规格（Spec）和任务分解（Tasks）。
@@ -27,7 +27,7 @@
 *   **产出**：`review-log.md` 和 `verify-log.md`。
 
 ### Phase 6: Archive & Distill (归档与提炼)
-*   **动作**：合并变更，清理现场，将新知识同步到 `10_DOCS/`。
+*   **动作**：合并变更，清理现场，将新知识同步到 `docs/wiki/`。
 
 ## 2. 辩证思考在流程中的强制嵌入
 

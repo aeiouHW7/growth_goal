@@ -1,0 +1,4 @@
+- [ACE Project Status 2026-05-15](project-status-20260515.md) — 三层架构落地：domain.yaml 驱动闭环 + 知识回流 + ace-init/generate
+- [ACE Architecture: Adapter Pattern](ace-architecture-adapter-pattern.md) — Lego-base/adapter pattern，引用外部 skill 而非重写
+- [Hooks Philosophy](feedback-hooks-philosophy.md) — 6-8 hooks 而非 2-3，基于 AI 真实失败模式决策
+- [OpenSpec Per Domain](feedback-openspec-per-domain.md) — openspec 按子项目管理，todo-app 是引擎优化载体

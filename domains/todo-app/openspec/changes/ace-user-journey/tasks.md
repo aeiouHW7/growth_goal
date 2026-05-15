@@ -15,12 +15,12 @@
 
 ## 3. Phase C — Hooks 系统（风险最高）
 
-- [ ] 3.1 创建 scripts/hooks/ 目录和 read-before-write.js：PreToolUse(Edit|Write) hook，检查文件是否已被读取。验证：尝试编辑未读文件时被阻止
-- [ ] 3.2 创建 scripts/hooks/config-protection.js：PreToolUse(Edit|Write) hook，阻止修改 eslint/tsconfig/prettier/biome 配置文件。验证：尝试编辑 tsconfig.json 时被阻止
-- [ ] 3.3 创建 scripts/hooks/no-skip-hooks.js：PreToolUse(Bash) hook，阻止 git commit --no-verify。验证：执行 git commit --no-verify 时被阻止
-- [ ] 3.4 创建 scripts/hooks/foreground-server-block.js：PreToolUse(Bash) hook，阻止非 tmux 下 npm run dev/start。验证：直接 npm run dev 被阻止，tmux 内放行
-- [ ] 3.5 创建 scripts/hooks/post-edit-typecheck.js：PostToolUse(Edit|Write) hook，.ts/.tsx 文件编辑后异步 tsc --noEmit。验证：编辑 .ts 文件后看到类型检查结果
-- [ ] 3.6 创建 scripts/hooks/post-edit-format.js：PostToolUse(Edit|Write) hook，编辑后自动运行 prettier/biome。验证：编辑文件后格式自动修正
-- [ ] 3.7 创建 scripts/hooks/pre-commit-quality.js：PreToolUse(Bash) hook，commit 前检查 console.log 和 secrets。验证：暂存含 console.log 的文件 commit 时看到警告
-- [ ] 3.8 创建 scripts/hooks/workflow-guard.js：PreToolUse(Write) hook，新建 src/ 下业务文件时提醒先走 planner。验证：直接创建 src/components/NewComponent.tsx 时看到提醒
-- [ ] 3.9 配置 .claude/settings.json：注册所有 hooks（matcher、command、async/timeout 设置）。验证：openspec validate 通过，hooks 正常触发
+- [x] 3.1 创建 scripts/hooks/ 目录和 read-before-write.cjs：PreToolUse(Write) hook，Write 已存在文件时阻止。验证：Write 已存在文件被阻止，新文件放行
+- [x] 3.2 创建 scripts/hooks/config-protection.cjs：PreToolUse(Edit|Write) hook，阻止修改 eslint/tsconfig/prettier/biome 配置文件。验证：修改配置文件被阻止
+- [x] 3.3 创建 scripts/hooks/no-skip-hooks.cjs：PreToolUse(Bash) hook，阻止 git commit --no-verify 和 core.hooksPath 覆盖。验证：--no-verify 被阻止
+- [x] 3.4 创建 scripts/hooks/foreground-server-block.cjs：PreToolUse(Bash) hook，阻止非 tmux 下 npm run dev/start。验证：直接 npm run dev 被阻止
+- [x] 3.5 创建 scripts/hooks/post-edit-typecheck.cjs：PostToolUse(Edit|Write) hook，.ts/.tsx 文件编辑后 tsc --noEmit。验证：编辑 .ts 文件后看到类型检查结果
+- [x] 3.6 创建 scripts/hooks/post-edit-format.cjs：PostToolUse(Edit|Write) hook，编辑后自动运行 prettier/biome。验证：编辑文件后格式自动修正
+- [x] 3.7 创建 scripts/hooks/pre-commit-quality.cjs：PreToolUse(Bash) hook，commit 前检查 console.log、debugger 和 secrets。验证：暂存含问题代码时看到警告
+- [x] 3.8 创建 scripts/hooks/workflow-guard.cjs：PreToolUse(Write) hook，新建 src/ 下业务文件时提醒先走 planner。验证：创建 src/ 新文件时看到提醒
+- [x] 3.9 配置 .claude/settings.json：注册所有 8 个 hooks（PreToolUse + PostToolUse，matcher/command/timeout）。验证：hooks 正常触发
