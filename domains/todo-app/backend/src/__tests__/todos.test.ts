@@ -85,6 +85,34 @@ describe('TODO API Endpoints', () => {
       expect(response.status).toBe(201);
       expect(response.body.completed).toBe(false);
     });
+
+    it('should create todo with priority', async () => {
+      const response = await request(app).post('/api/todos').send({
+        title: 'High Priority Task',
+        priority: 'HIGH',
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body.priority).toBe('HIGH');
+    });
+
+    it('should default priority to LOW', async () => {
+      const response = await request(app).post('/api/todos').send({
+        title: 'Default Priority Task',
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body.priority).toBe('LOW');
+    });
+
+    it('should return 400 for invalid priority', async () => {
+      const response = await request(app).post('/api/todos').send({
+        title: 'Invalid Priority Task',
+        priority: 'URGENT',
+      });
+
+      expect(response.status).toBe(400);
+    });
   });
 
   describe('GET /api/todos/:id', () => {
@@ -154,6 +182,31 @@ describe('TODO API Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body.title).toBe('Original Title');
       expect(response.body.completed).toBe(true);
+    });
+
+    it('should update priority', async () => {
+      const created = await prisma.todo.create({
+        data: { title: 'Task', completed: false, priority: 'LOW' },
+      });
+
+      const response = await request(app)
+        .put(`/api/todos/${created.id}`)
+        .send({ priority: 'CRITICAL' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.priority).toBe('CRITICAL');
+    });
+
+    it('should return priority in get all todos', async () => {
+      await prisma.todo.create({
+        data: { title: 'Task with priority', priority: 'HIGH' },
+      });
+
+      const response = await request(app).get('/api/todos');
+
+      expect(response.status).toBe(200);
+      expect(response.body[0]).toHaveProperty('priority');
+      expect(response.body[0].priority).toBe('HIGH');
     });
   });
 
