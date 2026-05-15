@@ -52,6 +52,9 @@ if command -v docker >/dev/null 2>&1; then
 else
   echo "  ⚠ Docker 未安装（可选，安装：https://docs.docker.com/get-docker/）"
 fi
+
+# tmux（可选，dev server 需要）
+command -v tmux >/dev/null 2>&1 && echo "  ✓ tmux $(tmux -V | cut -d' ' -f2)" || echo "  ⚠ tmux 未安装（dev server 建议使用，安装：brew install tmux）"
 ```
 
 如果有关键工具缺失（Node.js 或 Git），提示用户先安装再继续，但不阻塞流程。
@@ -147,10 +150,38 @@ archive_dir: archive
 
 ### Step 8: 可选 — 生成 Docker 环境
 
-如果用户选择需要 Docker，根据技术栈生成：
-- `docker-compose.yml`
-- `start.sh`（一键启动脚本）
-- `.env`（环境变量模板）
+如果用户选择需要 Docker **且** domain.yaml 中有 database 配置，**必须**生成以下文件：
+
+**docker-compose.yml**（根据 database 类型生成）：
+
+```yaml
+# PostgreSQL 示例
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: {project-name}-db
+    environment:
+      POSTGRES_USER: {project-name}user
+      POSTGRES_PASSWORD: {project-name}pass
+      POSTGRES_DB: {project-name}
+    ports:
+      - "{domain.yaml services.database.port}:5432"
+    volumes:
+      - {project-name}-data:/var/lib/postgresql/data
+
+volumes:
+  {project-name}-data:
+```
+
+**backend/.env**：
+
+```bash
+DATABASE_URL="postgresql://{user}:{pass}@localhost:{port}/{dbname}"
+PORT={domain.yaml services.backend.port}
+NODE_ENV=development
+```
+
+此步骤**不可跳过** — 没有 docker-compose.yml，数据库无法启动，后续 Prisma migrate 会失败。
 
 ### Step 9: 输出摘要
 
