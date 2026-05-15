@@ -4,18 +4,7 @@
   "description": "ACE - AI Coding Engine: 企业级 AI 辅助开发引擎",
   "type": "module",
   "private": true,
-  "scripts": {
-    "ace:doctor": "node skills/system/ace-doctor/executor.mjs",
-    "dev:frontend": "cd domains/todo-app/frontend && npm run dev",
-    "dev:backend": "cd domains/todo-app/backend && npm run dev",
-    "db:migrate": "cd domains/todo-app/backend && npx prisma migrate dev",
-    "db:studio": "cd domains/todo-app/backend && npx prisma studio",
-    "db:seed": "cd domains/todo-app/backend && npx prisma db seed",
-    "lint:frontend": "cd domains/todo-app/frontend && npm run lint",
-    "lint:backend": "cd domains/todo-app/backend && npm run lint",
-    "test:backend": "cd domains/todo-app/backend && npm test",
-    "test:coverage": "cd domains/todo-app/backend && npm run test:coverage"
-  },
+  "scripts": {},
   "keywords": [
     "ai",
     "coding",

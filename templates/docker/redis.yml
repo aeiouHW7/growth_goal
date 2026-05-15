@@ -1,8 +1,0 @@
-services:
-  ace-redis:
-    image: redis:6.2-alpine
-    container_name: ace-redis-${DOMAIN_NAME}
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    networks:
-      - ace-network

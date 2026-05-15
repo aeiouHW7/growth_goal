@@ -2,7 +2,7 @@
 
 > ACE Engine 的**唯一执行入口**。所有 AI 助手（Claude Code、Cursor 等）启动时必须加载本文件。
 > 
-> **核心哲学**: [ETHOS.md](ETHOS.md) | **快速开始**: [QUICKSTART.md](QUICKSTART.md) | **Skills 速查**: [SKILLS_REFERENCE.md](SKILLS_REFERENCE.md) ⭐
+> **核心哲学**: [ETHOS.md](ETHOS.md)
 
 ---
 
@@ -40,32 +40,6 @@ Skills（知识层 — skills/capabilities/）
 
 ---
 
-## 🚀 AI 启动流程（自动执行）
-
-**每次会话开始，AI 自动完成初始化**（用户无需触发）：
-
-### 1. 加载全局规则
-
-批量读取 `rules/*.md` 所有文件（辩证思考、代码质量、变更隔离等）。
-
-### 2. 检测工作目录
-
-```bash
-pwd | grep -q "domains/" && echo "子项目" || echo "根目录"
-```
-
-- **根目录** (`/AI-Coding-Engine/`): 项目管理模式
-- **子项目** (`/domains/{project}/`): 开发模式
-
-### 3. 加载项目配置（如在子项目）
-
-读取以下文件：
-- `domain.yaml` - 项目配置
-- `10_DOCS/` - 业务和技术文档
-- `openspec/` - 变更提案和规格
-
-**完成后即可响应用户消息。**
-
 ---
 
 ## 🎯 核心理念 (ETHOS)
@@ -81,23 +55,7 @@ pwd | grep -q "domains/" && echo "子项目" || echo "根目录"
 
 ## 🛠 可用 Agents
 
-### 项目管理 Agents（根目录）
-
-用户通过**自然语言**触发，无需记忆命令。
-
-| 用户说 | AI 调用 | 功能 |
-|--------|---------|------|
-| "初始化环境" | `ace-init-env` | 检查并自动安装 Node.js、Docker、Git |
-| "创建项目 blog-app" | `ace-create-project` | 生成完整项目结构 |
-| "检查系统健康" | `ace-doctor` | 诊断环境和配置问题 |
-
----
-
-### 开发工作流 Agents（子项目）
-
-当在 `domains/{project}/` 目录时可用。
-
-#### 核心 Agent
+### 核心 Agent
 
 | Agent | 用户说 | Gate | 输出 |
 |-------|--------|------|------|
@@ -121,7 +79,7 @@ pwd | grep -q "domains/" && echo "子项目" || echo "根目录"
 | **build-error-resolver** | 构建/类型检查失败 | Read/Write/Edit/Bash/Grep/Glob | sonnet |
 | **refactor-cleaner** | 重构后需要清理技术债 | Read/Write/Edit/Bash/Grep/Glob | sonnet |
 
-子 agent 委托原则详见 `10_DOCS/technical/sub-agent-delegation-philosophy.md`。
+子 agent 委托原则详见 `docs/sub-agent-delegation-philosophy.md`。
 
 #### 复杂度感知流程
 
@@ -147,7 +105,7 @@ pwd | grep -q "domains/" && echo "子项目" || echo "根目录"
 ```
 
 **归档/复盘阶段**（主 AI 直接处理）：
-- **归档（archive）** — 读 `skills/capabilities/ace-archive/SKILL.md` 获取方法论，归档变更到 `openspec/archive/`，沉淀知识到 `10_DOCS/`
+- **归档（archive）** — 读 `skills/capabilities/ace-archive/SKILL.md` 获取方法论，归档变更
 - **复盘（retro）** — 读 `skills/capabilities/ace-retro/SKILL.md` 获取方法论，产出 W.W.L.D 复盘总结
 - **归档条件**：reviewer 通过（或用户确认 Warning 归档），代码已合并到目标分支
 - **复盘条件**：归档完成后自动触发；或用户显式要求
@@ -155,7 +113,7 @@ pwd | grep -q "domains/" && echo "子项目" || echo "根目录"
 #### Agent Gate 说明
 
 Gate 不是问 AI "你完成了吗"，而是 AI 必须**读 artifact 验证**：
-- ace-planner: 自查 `10_DOCS/`、`90_PLANNING/` 判断信息充分度
+- ace-planner: 无硬性前置条件
 - ace-applier: 读 `openspec/changes/{name}/tasks.md` 确认提案就绪
 - ace-reviewer: `git diff --name-only HEAD` 确认有变更
 - ace-investigator: 无 gate（任意时刻可用）
@@ -199,41 +157,29 @@ Gate 不是问 AI "你完成了吗"，而是 AI 必须**读 artifact 验证**：
   → ace-reviewer（审查 + 测试） → 通过
 
 主 AI:
-  → 归档（openspec/archive/ + 10_DOCS/）
-  → 复盘（W.W.L.D 总结）
+  → 归档（ace-archive）
+  → 复盘（ace-retro, W.W.L.D 总结）
 ```
 
 ---
 
 ## 📐 交互模型 (AI-First)
 
-### AI 的领域（根目录）
-
-用户对 AI 说话 → AI 调用 Agents → 自动化执行
-
-### 用户的领域（子项目终端）
-
-直接在终端执行命令：
-```bash
-cd domains/my-app
-./start.sh           # 一键启动（自动启动 Docker + 后端 + 前端）
-./status.sh          # 查看服务运行状态
-pkill -f 'vite|tsx'  # 停止服务
-```
-
----
-
 ## 📁 项目结构
 
 ```
 AI-Coding-Engine/
+├── .claude/
+│   ├── skills/                # 5 个注册 skill（workflow 入口）
+│   ├── memory/                # auto-memory
+│   └── state/                 # workflow 状态日志
 ├── agents/                    # Workflow agents（执行层）
 │   │                          # ── ACE 原生（编排对话型）──
 │   ├── ace-planner.md         # 规划：需求 → PRD → 提案
 │   ├── ace-applier.md         # 实现：逐任务编码
 │   ├── ace-reviewer.md        # 审查：代码审查 + 测试
-│   └── ace-investigator.md    # 诊断：根因定位
-│   │                          # ── ECC 派生（子 agent 型）──
+│   ├── ace-investigator.md    # 诊断：根因定位
+│   │                          # ── 子 agent 型 ──
 │   ├── code-explorer.md       # 定向代码侦察（只读）
 │   ├── architect.md           # 架构方案分析（只读，opus）
 │   ├── code-reviewer.md       # 通用代码审查（置信度过滤）
@@ -242,41 +188,28 @@ AI-Coding-Engine/
 │   ├── tdd-guide.md           # TDD 工作流
 │   ├── build-error-resolver.md # 构建错误修复
 │   └── refactor-cleaner.md    # 重构清理
-├── domains/                   # 业务项目（完全独立）
-├── skills/                    # 知识层
-│   ├── system/                # 系统级（环境、项目管理）
-│   └── capabilities/          # 能力 skills（被 agents 按需引用）
+├── skills/capabilities/       # 知识层（被 agents 按需引用）
+│   ├── ace-archive/           # 归档方法论
+│   ├── ace-retro/             # 复盘方法论
+│   ├── codebase-recon/        # 代码库侦察
+│   ├── dialectical-thinking/  # 辩证思考
+│   ├── oais-prd/              # O.A.I.S PRD 方法论
+│   └── ui-prototyping/        # 原型设计
 ├── rules/                     # 全局规则
-├── templates/                 # 项目模板
-├── docs/                      # 引擎文档
-├── AGENTS.md                  # 本文件（AI 入口）⭐
+├── docs/                      # 经验文档和参考
+├── domains/todo-app/          # 业务项目
+├── AGENTS.md                  # 本文件（AI 入口）
 ├── ETHOS.md                   # 核心哲学
-└── README.md                  # 用户入口
+└── README.md                  # 项目说明
 ```
 
 ---
 
 ## 🔧 决策原则
 
-1. **状态总线**: 每个 agent 执行完成后，记录事件到 `.claude/state/events.jsonl`，会话结束时 flush
-2. **冷热分离**: `10_DOCS/raw` 仅供读取参考，`10_DOCS/wiki` 才是知识的最终归宿
-3. **Gate 优先**: 进入每个 stage 前，必须按 Gate 要求验证事实，不依赖自我报告
-4. **沉淀优先**: 能沉淀为 10_DOCS 或 Skills 的方案优先
-5. **规范驱动**: 有规范遵循规范，无规范先建规范
-6. **Knowledge first**: 做事前先查 `skills/` 和 `10_DOCS/`
-7. **最小惊讶**: 遵循项目已有的编码模式
-8. **验证闭环**: 任何代码变更必须有可执行的验证
-
----
-
-## 🆘 故障排除
-
-| 问题 | 解决方案 |
-|------|---------|
-| 环境检查失败 | 对 AI 说："初始化环境"（自动安装缺失工具） |
-| 项目启动失败 | 检查 Docker 是否运行：`docker ps` |
-| 服务状态不明 | 运行 `./status.sh` 查看所有服务状态 |
-| 端口冲突 | 修改 `.env` 中的 `DB_PORT` |
-
-
-**开始使用**: 对 AI（Claude Code/Cursor）说："初始化环境"
+1. **状态总线**: 每个 agent 执行完成后，记录事件到 `.claude/state/events.jsonl`
+2. **Gate 优先**: 进入每个 stage 前，必须按 Gate 要求验证事实，不依赖自我报告
+3. **规范驱动**: 有规范遵循规范，无规范先建规范
+4. **Knowledge first**: 做事前先查 `skills/capabilities/`
+5. **最小惊讶**: 遵循项目已有的编码模式
+6. **验证闭环**: 任何代码变更必须有可执行的验证
