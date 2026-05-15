@@ -60,8 +60,10 @@ Skills（知识层 — skills/capabilities/）
 | Agent | 用户说 | Gate | 输出 |
 |-------|--------|------|------|
 | **ace-planner** | "规划 XX" / "创建提案" | 无（可用信息自查） | PRD + 提案 artifacts |
-| **ace-applier** | "实现变更" | 读 tasks.md 确认就绪 | 实现代码 |
-| **ace-reviewer** | "审查代码" / "验证功能" | git diff 确认有变更 | 审查报告 + 测试结果 |
+| **ace-applier** | "实现变更" / "做吧" | 读 tasks.md 确认就绪 | 实现代码 |
+| **ace-reviewer** | "审查代码" / "review" | git diff 确认有变更 | 审查报告 |
+| **ace-archiver** | "归档" / "archive" | 复杂度感知前置检查 | 知识沉淀 + 归档 |
+| **ace-retro** | "复盘" / "retro" | 建议已归档 | W.W.L.D 复盘报告 |
 | **ace-investigator** | "调查 XX 问题" | 无（随时可用） | 诊断报告 |
 
 #### 专业子 Agent（可 spawn）
@@ -104,11 +106,11 @@ Skills（知识层 — skills/capabilities/）
             └── 5 文件以上 → 复杂
 ```
 
-**归档/复盘阶段**（主 AI 直接处理）：
-- **归档（archive）** — 读 `skills/capabilities/ace-archive/SKILL.md` 获取方法论，归档变更
-- **复盘（retro）** — 读 `skills/capabilities/ace-retro/SKILL.md` 获取方法论，产出 W.W.L.D 复盘总结
-- **归档条件**：reviewer 通过（或用户确认 Warning 归档），代码已合并到目标分支
-- **复盘条件**：归档完成后自动触发；或用户显式要求
+**归档/复盘阶段**：
+- **ace-archiver** — 复杂度感知归档，知识沉淀，变更摘要
+- **ace-retro** — W.W.L.D 四维复盘，沉淀最佳实践
+- **归档条件**：reviewer 通过（或用户确认跳过）
+- **复盘条件**：归档完成后建议触发；或用户显式要求
 
 #### Agent Gate 说明
 
@@ -126,9 +128,9 @@ Gate 不是问 AI "你完成了吗"，而是 AI 必须**读 artifact 验证**：
 
 ```
 主链：
-  ace-planner → ace-applier → ace-reviewer → 主 AI 归档/复盘
-      ↓            ↓             ↓
-   Grill+PRD    逐任务实现    审查+验证
+  ace-planner → ace-applier → ace-reviewer → ace-archiver → ace-retro
+      ↓            ↓             ↓              ↓            ↓
+   Grill+PRD    逐任务实现    审查+验证      归档+沉淀    W.W.L.D复盘
 
 旁路（任意时刻）：
   ace-investigator → ace-planner（修复提案）→ ace-applier → ace-reviewer
@@ -156,9 +158,8 @@ Gate 不是问 AI "你完成了吗"，而是 AI 必须**读 artifact 验证**：
 用户: "审查代码"
   → ace-reviewer（审查 + 测试） → 通过
 
-主 AI:
-  → 归档（ace-archive）
-  → 复盘（ace-retro, W.W.L.D 总结）
+  → ace-archiver（归档 + 知识沉淀）
+  → ace-retro（W.W.L.D 复盘）
 ```
 
 ---
@@ -174,11 +175,13 @@ AI-Coding-Engine/
 │   ├── memory/                # auto-memory
 │   └── state/                 # workflow 状态日志
 ├── agents/                    # Workflow agents（执行层）
-│   │                          # ── ACE 原生（编排对话型）──
+│   │                          # ── 6 个 workflow 阶段 ──
 │   ├── ace-planner.md         # 规划：需求 → PRD → 提案
 │   ├── ace-applier.md         # 实现：逐任务编码
 │   ├── ace-reviewer.md        # 审查：代码审查 + 测试
-│   ├── ace-investigator.md    # 诊断：根因定位
+│   ├── ace-archiver.md        # 归档：知识沉淀 + 变更归档
+│   ├── ace-retro.md           # 复盘：W.W.L.D 经验提取
+│   ├── ace-investigator.md    # 诊断：根因定位（旁路）
 │   │                          # ── 子 agent 型 ──
 │   ├── code-explorer.md       # 定向代码侦察（只读）
 │   ├── architect.md           # 架构方案分析（只读，opus）
