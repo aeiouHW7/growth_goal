@@ -75,6 +75,21 @@ git log --all --grep="<name>" --oneline
 
 每个维度按阶段（规划/实现/工具流程）组织，附具体证据。
 
+### Step 3.5: 架构深度检查
+
+参考 Matt Pocock zoom-out 思维（`.tmp/references/mattpocock-skills/skills/engineering/zoom-out/SKILL.md`）和 deep module 理念：
+
+```
+架构健康检查:
+├── 本次变更引入了新模块吗？
+│   └── Deletion test：假设删掉它，复杂度去了哪里？
+│       如果删掉后复杂度只是换了个地方 → shallow module 警告
+├── 接口是否比实现更简单？（deep module 标志）
+│   └── 接口复杂但实现简单 → pass-through 警告，考虑合并
+└── 模块边界是否在变更中被侵蚀？
+    └── 跨层调用、循环依赖 → 标记为架构债务
+```
+
 ### Step 4: 沉淀最佳实践
 
 根据 Lessons 沉淀可复用知识：

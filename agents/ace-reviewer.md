@@ -159,6 +159,18 @@ echo "$CHANGED_FILES" | grep -qiE 'docker|yml|yaml|config|json' && IS_CONFIG=tru
 └── 异常路径处理风格一致？
 ```
 
+#### 维度 G — 术语一致性（总是审查）
+
+对照 `docs/wiki/glossary.md` 检查变更中的命名：
+
+```
+检查项:
+├── 变量名/函数名/路由路径是否与术语表一致？
+├── 术语表定义 "todo" 但代码用了 "task" → 标记 Warning
+├── 代码引入了术语表中不存在的新领域概念 → 建议追加到 glossary
+└── API 响应字段名是否与前端/文档中的术语一致？
+```
+
 ### Step 4: 综合与置信度过滤
 
 收集子 agent 报告 + 主 agent 直接审查的发现，合并去重后生成统一报告。

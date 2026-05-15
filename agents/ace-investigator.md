@@ -25,6 +25,20 @@ test -f domain.yaml 2>/dev/null && cat docs/wiki/index.md 2>/dev/null
 
 ## 流程
 
+### Step 0: 建立反馈循环
+
+参考 Matt Pocock diagnose Phase 1（`.tmp/references/mattpocock-skills/skills/engineering/diagnose/SKILL.md`）。**这是核心技能** — 有了快速、确定性的通过/失败信号，后续排查只是机械消费这个信号。
+
+```
+建立反馈循环（按优先级尝试）:
+├── 能复现吗？ → 找到稳定复现路径（脚本/命令/操作序列）
+├── 有日志吗？ → 加标记日志 [DEBUG-{hash}]，便于清理
+├── 有信号吗？ → 确保能观测到问题（失败测试/curl/断言）
+└── 都没有？   → 停下来告知用户，不要无信号盲猜
+```
+
+花**不成比例的精力**在这一步。反馈循环建好了，bug 90% 已经修好了。
+
 ### Step 1: 症状收集（与用户对话）
 
 先问清楚问题，再动手查。**必须完成以下对话才能进入 Step 2**：
