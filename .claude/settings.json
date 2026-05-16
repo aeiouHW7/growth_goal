@@ -1,4 +1,6 @@
 {
+  "model": "deepseek-v4-pro",
+    
   "hooks": {
     "PreToolUse": [
       {

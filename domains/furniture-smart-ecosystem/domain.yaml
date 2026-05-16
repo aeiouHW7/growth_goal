@@ -1,0 +1,42 @@
+name: furniture-smart-ecosystem
+description: 家里面的各种设备通过各种智能手段自动控制
+version: 0.1.0
+
+tech_stack:
+  frontend: react-ts
+  backend: node-ts-prisma
+  database: postgresql
+
+scripts:
+  dev: "npm run dev"
+  test: "npm run test"
+  build: "npm run build"
+
+coding_standards:
+  backend:
+    - "使用 TypeScript 严格模式"
+    - "API 遵循 RESTful 设计"
+    - "设备通信使用异步消息队列"
+    - "IoT 设备控制需有重试和超时机制"
+  frontend:
+    - "使用 TypeScript 严格模式"
+    - "组件采用函数式 + Hooks"
+    - "状态管理优先使用 React Context / Zustand"
+
+testing:
+  unit_test_coverage: 80
+  e2e_test_required: false
+  test_framework: vitest
+  test_commands:
+    unit: "npm run test"
+
+knowledge:
+  always_load:
+    - path: docs/wiki/index.md
+      desc: 项目知识库导航入口
+  on_demand:
+    - path: docs/wiki/
+      trigger: "涉及项目知识、技术方案、业务规则时"
+
+planning:
+  current_version: v0.1

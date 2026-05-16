@@ -1,0 +1,118 @@
+name: wol-pc-control
+title: 小爱音响语音控制电脑开关机
+status: proposed
+created: 2026-05-15
+
+## 摘要
+
+通过小爱音响语音指令，经米家自动化 + 巴法云中转，控制电脑开机（WOL）和关机（SSH）。
+
+## 提案
+
+### 动机
+在家里不方便手动开关电脑时，语音一键控制，为后续全屋智能打下基础。
+
+### 架构
+
+```
+小爱音响 → 米家自动化场景 → 巴法云 WebAPI
+  → 华为手机(Termux + FSE Agent) → [WOL 开机 | SSH 关机]
+```
+
+| 组件 | 位置 | 职责 |
+|------|------|------|
+| FSE Agent | 华为手机 Termux (Node.js) | 监听巴法云消息，执行 WOL/SSH 命令 |
+| 巴法云 | 云端 (免费) | 米家与小爱之间的 WebAPI 消息中转 |
+| 米家自动化 | 米家 App | 绑定小爱音响语音指令到巴法云 |
+
+### 边界
+- 本次不做：Windows 端 Agent（后续需要更复杂控制再加）
+- 本次不做：用户界面（后续统一由前端管理）
+- 本次不做：多设备支持
+
+## 技术规格
+
+### FSE Agent (Node.js + Termux)
+
+```
+fse-agent/
+├── package.json
+├── src/
+│   ├── index.ts          # 入口，连接巴法云 WebSocket
+│   ├── wol.ts            # WOL Magic Packet 发送
+│   ├── ssh.ts            # SSH 远程执行 shutdown
+│   └── config.ts         # 配置读取
+├── config.yaml           # MAC 地址、巴法云 Key、SSH 凭据
+└── start.sh              # Termux 启动脚本
+```
+
+### 配置项 (config.yaml)
+
+```yaml
+wol:
+  mac: "xx:xx:xx:xx:xx:xx"   # 电脑网卡 MAC
+  broadcast: "192.168.1.255" # 广播地址
+  port: 9                    # WOL 端口
+
+ssh:
+  host: "192.168.1.x"        # 电脑内网 IP
+  port: 22                   # SSH 端口
+  user: "username"
+
+befox:
+  uid: ""                     # 巴法云 UID
+  topic: "pc001"              # 巴法云设备主题
+```
+
+## 设计
+
+### 消息协议 (巴法云 Topic)
+
+设备主题 `pc001`，消息体：
+
+| 消息 | 动作 |
+|------|------|
+| `pc:poweron` | WOL 开机 |
+| `pc:poweroff` | SSH 关机 |
+| `pc:status` | 查询状态 |
+
+### 工作流程
+
+**开机流程：**
+1. 用户说 "小爱同学，打开电脑"
+2. 米家自动化触发，发送 `pc:poweron` 到巴法云 `pc001`
+3. FSE Agent 通过巴法云 WebSocket 收到消息
+4. 解析消息，调用 WOL 模块发 Magic Packet
+5. 电脑启动
+
+**关机流程：**
+1. 用户说 "小爱同学，关闭电脑"
+2. 同上链路到 FSE Agent
+3. FSE Agent 检查电脑是否在线
+4. 通过 SSH 执行 `shutdown /s /t 0`
+5. 电脑关机
+
+## 任务清单
+
+### 任务 1: 验证环境
+- [ ] 检查电脑是否支持 WOL（已确认：PCI-E 已开启）
+- [ ] 获取电脑网卡 MAC 地址
+- [ ] 手机安装 Termux + Node.js
+- [ ] 注册巴法云账号，创建 Topic
+- [ ] 注册小米开发者账号或确认米家自动化功能
+
+### 任务 2: 开发 FSE Agent
+- [ ] 初始化 Node.js + TypeScript 项目
+- [ ] 实现 WOL 模块 (Magic Packet 发送)
+- [ ] 实现 SSH 模块 (远程关机)
+- [ ] 实现巴法云 WebSocket 消息监听
+- [ ] 集成主入口，消息路由
+
+### 任务 3: 配置巴法云与米家
+- [ ] 米家 App 配置自动化场景
+- [ ] 绑定小爱音响语音指令（"打开电脑" / "关闭电脑"）
+
+### 任务 4: 端到端联调
+- [ ] 测试 WOL 开机
+- [ ] 测试 SSH 关机
+- [ ] 测试完整链路（小爱 → 手机 → 电脑）

@@ -1,0 +1,15 @@
+# FSE Agent 配置文件
+
+server:
+  port: 3000  # 手机上的端口
+
+wol:
+  mac: "08:BF:B8:86:9D:F5"  # 电脑网卡 MAC 地址
+  broadcast: "192.168.3.255" # 内网广播地址
+  port: 9                    # WOL 端口（默认 9）
+
+ssh:
+  host: "192.168.3.2"        # 电脑内网 IP
+  port: 22                   # SSH 端口
+  user: "y2830"              # Windows 用户名
+  privateKey: "fse_agent_key" # SSH 密钥（跟 config.yaml 同目录）

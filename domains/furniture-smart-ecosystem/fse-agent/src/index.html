@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FSE Agent - PC 控制</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Noto Sans SC', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #1e293b;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  h1 {
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+  .status-bar {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 14px;
+    color: #64748b;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .status-dot.online { background: #22c55e; }
+  .status-dot.offline { background: #ef4444; }
+  .status-dot.checking { background: #f59e0b; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .btn-group { display: flex; flex-direction: column; gap: 12px; }
+  button {
+    padding: 18px;
+    border: none;
+    border-radius: 14px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.5; transform: none; }
+  .btn-on { background: #22c55e; color: #052e16; }
+  .btn-on:hover:not(:disabled) { background: #16a34a; }
+  .btn-off { background: #ef4444; color: #450a0a; }
+  .btn-off:hover:not(:disabled) { background: #dc2626; }
+  .btn-status { background: #334155; color: #e2e8f0; font-size: 14px; }
+  .result {
+    margin-top: 20px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #0f172a;
+    font-size: 13px;
+    color: #94a3b8;
+    text-align: center;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-break: break-all;
+  }
+  .result.success { color: #22c55e; }
+  .result.error { color: #ef4444; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>⚡ PC 远程控制</h1>
+  <div class="status-bar">
+    <span class="status-dot checking" id="statusDot"></span>
+    <span id="statusLabel">检测中...</span>
+  </div>
+  <div class="btn-group">
+    <button class="btn-on" id="btnOn" onclick="action('poweron')">🖥️ 开机</button>
+    <button class="btn-off" id="btnOff" onclick="action('poweroff')">⏻ 关机</button>
+  </div>
+  <div class="result" id="result"></div>
+</div>
+<script>
+async function checkStatus() {
+  const dot = document.getElementById('statusDot');
+  const label = document.getElementById('statusLabel');
+  dot.className = 'status-dot checking';
+  label.textContent = '检测中...';
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    dot.className = d.status === 'online' ? 'status-dot online' : 'status-dot offline';
+    label.textContent = d.status === 'online' ? '电脑在线' : '电脑离线';
+  } catch {
+    dot.className = 'status-dot offline';
+    label.textContent = '无法连接';
+  }
+}
+async function action(type) {
+  const result = document.getElementById('result');
+  const btnOn = document.getElementById('btnOn');
+  const btnOff = document.getElementById('btnOff');
+  btnOn.disabled = true;
+  btnOff.disabled = true;
+  result.className = 'result';
+  result.textContent = type === 'poweron' ? '正在开机...' : '正在关机...';
+  try {
+    const r = await fetch('/api/' + type, { method: 'POST' });
+    const d = await r.json();
+    result.className = d.ok ? 'result success' : 'result error';
+    result.textContent = d.ok ? (type === 'poweron' ? '✅ 开机指令已发送' : '✅ 关机指令已发送，5秒后关机') : '❌ 失败: ' + d.error;
+  } catch (e) {
+    result.className = 'result error';
+    result.textContent = '❌ 请求失败: ' + e.message;
+  }
+  btnOn.disabled = false;
+  btnOff.disabled = false;
+  setTimeout(checkStatus, 3000);
+}
+checkStatus();
+</script>
+</body>
+</html>

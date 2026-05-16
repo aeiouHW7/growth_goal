@@ -18,6 +18,13 @@ dist/
 *.backup
 *.log
 
+# SSH keys
+*_key
+*_key.pub
+
+# Archives
+*.zip
+
 # Claude Code
 .claude/worktrees/
 .claude/scheduled_tasks.lock

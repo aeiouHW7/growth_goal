@@ -15,7 +15,26 @@
       "Bash([ -f \"agents/$agent.md\" ])",
       "Bash(git add *)",
       "Bash(git rm *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git stash *)",
+      "Bash(mkdir -p domains/furniture-smart-ecosystem)",
+      "Bash(mkdir -p domains/furniture-smart-ecosystem/docs/wiki)",
+      "Bash(mkdir -p domains/furniture-smart-ecosystem/planning/v0.1)",
+      "Bash(mkdir -p domains/furniture-smart-ecosystem/openspec/changes)",
+      "Bash(mkdir -p domains/furniture-smart-ecosystem/openspec/archive)",
+      "Skill(ace-planner)",
+      "Skill(ace-applier)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(ipconfig /all)",
+      "Bash(ipconfig.exe /all、、)",
+      "Bash(/c/Windows/System32/cmd.exe *)",
+      "Bash(powershell.exe *)",
+      "Bash(curl *)",
+      "Bash(pip install *)",
+      "Bash(sshpass -p \"199533\" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 y2830@192.168.3.2 \"echo SSH_OK\")",
+      "Bash(Get-ChildItem -Recurse -Depth 2 domains/furniture-smart-ecosystem/)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }
