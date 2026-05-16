@@ -1,6 +1,7 @@
 import { GoalStatus, PlanStatus, MetricType } from "@prisma/client";
-import { prisma } from "../index";
+import { prisma } from "../prisma";
 import { validateMetric } from "../utils/metric-validator";
+import { validateDateString } from "../utils/date-validator";
 
 const GOAL_STATUS_TRANSITIONS: Record<GoalStatus, GoalStatus[]> = {
   ACTIVE: [GoalStatus.COMPLETED, GoalStatus.ABANDONED, GoalStatus.ARCHIVED],
@@ -74,7 +75,7 @@ export class PlanService {
   async listDailyPlans(userId: string, filters?: { monthlyPlanId?: string; date?: string }) {
     const where: any = { userId };
     if (filters?.monthlyPlanId) where.monthlyPlanId = filters.monthlyPlanId;
-    if (filters?.date) where.date = new Date(filters.date);
+    if (filters?.date) where.date = validateDateString(filters.date);
     return prisma.dailyPlan.findMany({ where, orderBy: { date: "asc" } });
   }
 
@@ -83,7 +84,7 @@ export class PlanService {
     date: string; metricType: MetricType; targetValue: string;
   }) {
     validateMetric(data.metricType, data.targetValue);
-    return prisma.dailyPlan.create({ data: { ...data, date: new Date(data.date) } });
+    return prisma.dailyPlan.create({ data: { ...data, date: validateDateString(data.date) } });
   }
 
   async updateDailyPlan(id: string, data: { title?: string; description?: string; targetValue?: string; currentValue?: string }) {

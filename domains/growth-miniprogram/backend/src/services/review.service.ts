@@ -1,5 +1,6 @@
 import { ReviewStatus, Prisma } from "@prisma/client";
-import { prisma } from "../index";
+import { prisma } from "../prisma";
+import { validateDateString } from "../utils/date-validator";
 
 const REVIEW_STATUS_TRANSITIONS: Record<ReviewStatus, ReviewStatus[]> = {
   INPUTTING: [ReviewStatus.ANALYZING],
@@ -22,7 +23,7 @@ export class ReviewService {
   // DailyReview
   async getByDate(userId: string, date: string) {
     return prisma.dailyReview.findFirst({
-      where: { userId, date: new Date(date) },
+      where: { userId, date: validateDateString(date) },
       include: { aiAnalyses: { orderBy: { createdAt: "desc" }, take: 1 } },
     });
   }
@@ -31,21 +32,21 @@ export class ReviewService {
     const where: any = { userId };
     if (from || to) {
       where.date = {};
-      if (from) where.date.gte = new Date(from);
-      if (to) where.date.lte = new Date(to);
+      if (from) where.date.gte = validateDateString(from);
+      if (to) where.date.lte = validateDateString(to);
     }
     return prisma.dailyReview.findMany({ where, orderBy: { date: "desc" } });
   }
 
   async createDaily(userId: string, date: string, rawInput: string) {
     const existing = await prisma.dailyReview.findFirst({
-      where: { userId, date: new Date(date) },
+      where: { userId, date: validateDateString(date) },
     });
     if (existing) {
       throw Object.assign(new Error("该日期已有复盘记录"), { status: 409, code: "REVIEW_ALREADY_EXISTS" });
     }
     return prisma.dailyReview.create({
-      data: { userId, date: new Date(date), rawInput, status: ReviewStatus.ANALYZING },
+      data: { userId, date: validateDateString(date), rawInput, status: ReviewStatus.ANALYZING },
     });
   }
 
@@ -91,16 +92,16 @@ export class ReviewService {
     userId: string; weekStart: string; weekEnd: string; year: number;
     week: number; rawInput?: string; summary?: string;
   }) {
-    return prisma.weeklyReview.create({ data: { ...data, weekStart: new Date(data.weekStart), weekEnd: new Date(data.weekEnd) } });
+    return prisma.weeklyReview.create({ data: { ...data, weekStart: validateDateString(data.weekStart), weekEnd: validateDateString(data.weekEnd) } });
   }
 
   async updateWeekly(id: string, data: { rawInput?: string; summary?: string; missingDays?: Prisma.InputJsonValue }) {
     return prisma.weeklyReview.update({ where: { id }, data });
   }
 
-  async checkWeekly(year: number, week: number) {
+  async checkWeekly(userId: string, year: number, week: number) {
     // Check if weekly review exists for this week
-    const existing = await prisma.weeklyReview.findFirst({ where: { year, week } });
+    const existing = await prisma.weeklyReview.findFirst({ where: { userId, year, week } });
     return { needsTrigger: !existing };
   }
 
@@ -122,8 +123,8 @@ export class ReviewService {
     return prisma.monthlyReview.update({ where: { id }, data });
   }
 
-  async checkMonthly(year: number, month: number) {
-    const existing = await prisma.monthlyReview.findFirst({ where: { year, month } });
+  async checkMonthly(userId: string, year: number, month: number) {
+    const existing = await prisma.monthlyReview.findFirst({ where: { userId, year, month } });
     return { needsTrigger: !existing };
   }
 }

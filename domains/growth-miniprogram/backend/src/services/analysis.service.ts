@@ -1,5 +1,5 @@
 import { AnalysisType, Prisma } from "@prisma/client";
-import { prisma } from "../index";
+import { prisma } from "../prisma";
 
 export class AnalysisService {
   async generate(data: {

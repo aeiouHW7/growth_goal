@@ -1,5 +1,5 @@
 import { GoalStatus, MetricType } from "@prisma/client";
-import { prisma } from "../index";
+import { prisma } from "../prisma";
 import { validateMetric } from "../utils/metric-validator";
 
 const GOAL_STATUS_TRANSITIONS: Record<GoalStatus, GoalStatus[]> = {

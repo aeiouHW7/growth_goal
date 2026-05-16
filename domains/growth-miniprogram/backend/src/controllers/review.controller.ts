@@ -97,9 +97,10 @@ export class ReviewController {
 
   async checkWeekly(req: Request, res: Response, next: NextFunction) {
     try {
+      const userId = await getUserId();
       const year = parseInt(req.query.year as string, 10);
       const week = parseInt(req.query.week as string, 10);
-      const result = await reviewService.checkWeekly(year, week);
+      const result = await reviewService.checkWeekly(userId, year, week);
       res.json({ data: result });
     } catch (err) { next(err); }
   }
@@ -141,9 +142,10 @@ export class ReviewController {
 
   async checkMonthly(req: Request, res: Response, next: NextFunction) {
     try {
+      const userId = await getUserId();
       const year = parseInt(req.query.year as string, 10);
       const month = parseInt(req.query.month as string, 10);
-      const result = await reviewService.checkMonthly(year, month);
+      const result = await reviewService.checkMonthly(userId, year, month);
       res.json({ data: result });
     } catch (err) { next(err); }
   }
