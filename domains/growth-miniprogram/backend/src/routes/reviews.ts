@@ -1,56 +1,28 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
+import { ReviewController } from "../controllers/review.controller";
 
 const router = Router();
+const c = new ReviewController();
 
-// DailyReview
-router.get("/daily", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.post("/daily", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.put("/daily/:id", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.post("/daily/:id/followup", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.get("/daily/:date", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
+// DailyReview — order: static paths first, param paths after
+router.get("/daily", c.listDaily.bind(c));
+router.post("/daily", c.createDaily.bind(c));
+router.put("/daily/:id", c.updateDaily.bind(c));
+router.post("/daily/:id/followup", c.addFollowUp.bind(c));
+router.get("/daily/:date", c.getByDate.bind(c));
 
-// WeeklyReview
-router.get("/weekly", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.post("/weekly", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.put("/weekly/:id", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.get("/weekly/check", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.get("/weekly/:year/:week", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
+// WeeklyReview — check before param routes
+router.get("/weekly", c.listWeekly.bind(c));
+router.get("/weekly/check", c.checkWeekly.bind(c));
+router.post("/weekly", c.createWeekly.bind(c));
+router.put("/weekly/:id", c.updateWeekly.bind(c));
+router.get("/weekly/:year/:week", c.getWeekly.bind(c));
 
 // MonthlyReview
-router.get("/monthly", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.post("/monthly", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.put("/monthly/:id", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.get("/monthly/check", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.get("/monthly/:year/:month", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
+router.get("/monthly", c.listMonthly.bind(c));
+router.get("/monthly/check", c.checkMonthly.bind(c));
+router.post("/monthly", c.createMonthly.bind(c));
+router.put("/monthly/:id", c.updateMonthly.bind(c));
+router.get("/monthly/:year/:month", c.getMonthly.bind(c));
 
 export default router;
