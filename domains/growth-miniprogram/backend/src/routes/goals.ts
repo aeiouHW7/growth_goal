@@ -1,36 +1,20 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
+import { GoalController } from "../controllers/goal.controller";
 
 const router = Router();
+const c = new GoalController();
 
 // LifeGoal
-router.get("/life", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.post("/life", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.put("/life/:id", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.patch("/life/:id/status", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
+router.get("/life", c.listLifeGoals.bind(c));
+router.post("/life", c.createLifeGoal.bind(c));
+router.put("/life/:id", c.updateLifeGoal.bind(c));
+router.patch("/life/:id/status", c.updateLifeGoalStatus.bind(c));
 
 // YearlyGoal
-router.get("/yearly", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.post("/yearly", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.put("/yearly/:id", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.patch("/yearly/:id/status", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.patch("/yearly/:id/progress", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
+router.get("/yearly", c.listYearlyGoals.bind(c));
+router.post("/yearly", c.createYearlyGoal.bind(c));
+router.put("/yearly/:id", c.updateYearlyGoal.bind(c));
+router.patch("/yearly/:id/status", c.updateYearlyGoalStatus.bind(c));
+router.patch("/yearly/:id/progress", c.updateYearlyGoalProgress.bind(c));
 
 export default router;
