@@ -1,13 +1,6 @@
 import { GoalStatus, MetricType } from "@prisma/client";
 import { prisma } from "../index";
-
-const VALID_METRIC_PATTERNS: Record<string, RegExp> = {
-  NUMERIC: /^\d+(\.\d+)?(\s+\S+)?$/,
-  DURATION: /^\d+min$/,
-  FREQUENCY: /^\d+\/\d+(\s+\S+)?$/,
-  PERCENTAGE: /^\d+%$/,
-  STAGE: /.+→.+/,
-};
+import { validateMetric } from "../utils/metric-validator";
 
 const GOAL_STATUS_TRANSITIONS: Record<GoalStatus, GoalStatus[]> = {
   ACTIVE: [GoalStatus.COMPLETED, GoalStatus.ABANDONED, GoalStatus.ARCHIVED],
@@ -16,20 +9,6 @@ const GOAL_STATUS_TRANSITIONS: Record<GoalStatus, GoalStatus[]> = {
   ARCHIVED: [],
   SUSPENDED: [GoalStatus.ACTIVE],
 };
-
-function validateMetric(metricType: MetricType | string, targetValue: string): void {
-  const pattern = VALID_METRIC_PATTERNS[metricType];
-  if (!pattern) {
-    throw Object.assign(new Error(`不支持的度量类型: ${metricType}`), {
-      status: 400, code: "VALIDATION_ERROR",
-    });
-  }
-  if (!pattern.test(targetValue)) {
-    throw Object.assign(new Error(`度量值 "${targetValue}" 格式不匹配 ${metricType}`), {
-      status: 400, code: "VALIDATION_ERROR",
-    });
-  }
-}
 
 function validateStatusTransition(current: GoalStatus, next: GoalStatus): void {
   const allowed = GOAL_STATUS_TRANSITIONS[current];

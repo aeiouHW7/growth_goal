@@ -1,36 +1,20 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
+import { PlanController } from "../controllers/plan.controller";
 
 const router = Router();
+const c = new PlanController();
 
 // MonthlyPlan
-router.get("/monthly", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.post("/monthly", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.put("/monthly/:id", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.patch("/monthly/:id/status", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.patch("/monthly/:id/progress", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
+router.get("/monthly", c.listMonthlyPlans.bind(c));
+router.post("/monthly", c.createMonthlyPlan.bind(c));
+router.put("/monthly/:id", c.updateMonthlyPlan.bind(c));
+router.patch("/monthly/:id/status", c.updateMonthlyPlanStatus.bind(c));
+router.patch("/monthly/:id/progress", c.updateMonthlyPlanProgress.bind(c));
 
 // DailyPlan
-router.get("/daily", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.post("/daily", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.put("/daily/:id", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.patch("/daily/:id/status", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
+router.get("/daily", c.listDailyPlans.bind(c));
+router.post("/daily", c.createDailyPlan.bind(c));
+router.put("/daily/:id", c.updateDailyPlan.bind(c));
+router.patch("/daily/:id/status", c.updateDailyPlanStatus.bind(c));
 
 export default router;
