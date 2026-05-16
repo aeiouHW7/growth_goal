@@ -47,7 +47,9 @@ DB_CONTAINER=$(parse_db_container)
 
 # --- 健康检查轮询 ---
 wait_for_url() {
-  local url="$1" max_wait="$2" label="$3"
+  local url="$1"
+  local max_wait="$2"
+  local label="$3"
   local elapsed=0
   while [ $elapsed -lt "$max_wait" ]; do
     if curl -s "$url" > /dev/null 2>&1; then

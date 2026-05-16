@@ -16,9 +16,16 @@ parse_port() {
 }
 
 # --- 读取服务端口 ---
+parse_db_container() {
+  grep "container_name:" "$SCRIPT_DIR/docker-compose.yml" 2>/dev/null | head -1 | sed 's/.*container_name:\s*//' | tr -d ' '
+}
+
+# --- 读取服务端口 ---
 FRONTEND_PORT=$(parse_port "frontend")
 BACKEND_PORT=$(parse_port "backend")
-DB_CONTAINER="todo-app-db"
+DB_CONTAINER=$(parse_db_container)
+
+: "${DB_CONTAINER:=todo-app-db}"
 
 : "${FRONTEND_PORT:=5173}"
 : "${BACKEND_PORT:=3000}"

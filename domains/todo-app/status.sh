@@ -31,8 +31,11 @@ DB_CONTAINER=$(parse_db_container)
 
 # --- 服务状态检测 ---
 check_service() {
-  local name="$1" port="$2" pid_file="$PID_DIR/${name}.pid"
-  local status="DOWN" pid_info=""
+  local name="$1"
+  local port="$2"
+  local pid_file="$PID_DIR/${name}.pid"
+  local status="DOWN"
+  local pid_info=""
 
   if curl -s "http://localhost:${port}" > /dev/null 2>&1; then
     status="UP"
