@@ -4,3 +4,4 @@
 - [OpenSpec Per Domain](feedback-openspec-per-domain.md) — openspec 按子项目管理，todo-app 是引擎优化载体
 - [ace-init Must Generate Docker](feedback-ace-init-docker.md) — domain.yaml 有数据库就必须生成 docker-compose.yml，不可跳步
 - [Stop Script Required](feedback-stop-script.md) — 有 start.sh 就要有 stop.sh，用户不想手动 kill
+- [TODO: Docker 启停脚本](project-todo-docker-scripts.md) — 为各项目补齐 start.sh/stop.sh/status.sh 三件套

@@ -96,16 +96,15 @@ skills/          # 纯语义化
 templates/       # 纯语义化
 domains/         # 纯语义化
   └── example-domain/
-      ├── 10_DOCS/      # 保留数字（强调文档优先）
+      ├── docs/         # 语义化
       ├── frontend/     # 语义化
       ├── backend/
-      └── 90_PLANNING/  # 保留数字（强调规划）
+      └── planning/     # 语义化
 ```
 
 **关键技术**:
 - 根目录 100% 语义化（清晰、专业）
-- Domain 内部关键位置保留数字（10_DOCS, 90_PLANNING）
-- 其他开发目录语义化（frontend/backend）
+- Domain 内部全部语义化（docs, planning, frontend, backend）
 
 ---
 

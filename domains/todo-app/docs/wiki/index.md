@@ -14,6 +14,14 @@
 - [ecc-evolution-philosophy.md](ecc-evolution-philosophy.md) — ECC 进化哲学提炼：Instinct Pipeline、Skill 成熟度分层、Knowledge Compounding
 - [openspec-changes-status.md](openspec-changes-status.md) — OpenSpec Changes 状态总览：docker-independence / ace-user-journey / add-todo-priority-t
 
+## 运维与脚本
+
+- [lifecycle-scripts.md](lifecycle-scripts.md) — 生命周期脚本：配置驱动的启停三件套、npm 进程树陷阱、bash local 陷阱
+
+## 复盘记录
+
+- [retros/lifecycle-scripts.md](retros/lifecycle-scripts.md) — 配置驱动三件套复盘：W.W.L.D 分析、npm 进程树、bash local 陷阱
+
 ## 模式与最佳实践
 
 - [patterns.md](patterns.md) — 技术模式与最佳实践（待创建）

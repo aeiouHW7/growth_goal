@@ -7,7 +7,7 @@
 - **WHEN** 用户对 AI 说："创建一个新项目叫 my-app"
 - **THEN** AI 调用 `ace-create-project` Skill
 - **THEN** 在 `domains/my-app/` 生成完整目录结构
-- **THEN** 包含 `10_DOCS/`, `frontend/`, `backend/`, `90_PLANNING/` 等目录
+- **THEN** 包含 `docs/`, `frontend/`, `backend/`, `planning/` 等目录
 
 #### Scenario: 自动配置项目文件
 - **WHEN** 项目生成完成
