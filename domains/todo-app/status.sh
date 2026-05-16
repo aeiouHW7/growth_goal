@@ -1,129 +1,89 @@
 #!/bin/bash
 
-# TODO App - 状态检查脚本
-# 用途: 查看所有服务的运行状态
+# TODO App - 状态检查脚本（配置驱动）
+# 从 domain.yaml 读取服务定义，检测各端口状态
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔍 TODO App 服务状态"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DOMAIN_YAML="$SCRIPT_DIR/domain.yaml"
+PID_DIR="$SCRIPT_DIR/.pids"
+LOG_DIR="$SCRIPT_DIR/.logs"
 
-# 检查 Docker 状态
-echo "【Docker 服务】"
-if docker ps > /dev/null 2>&1; then
-  DB_STATUS=$(docker ps --filter "name=todo-app-db" --format "table {{.Names}}\t{{.Status}}" | tail -n +2)
-  if [ -n "$DB_STATUS" ]; then
-    echo "✅ PostgreSQL: 运行中"
-    echo "   容器: $DB_STATUS"
-  else
-    echo "❌ PostgreSQL: 未运行"
+# --- YAML 轻量解析 ---
+parse_port() {
+  local service="$1"
+  grep -A5 "^  ${service}:" "$DOMAIN_YAML" 2>/dev/null | grep "port:" | head -1 | sed 's/.*port:\s*//' | tr -d ' '
+}
+
+parse_db_container() {
+  grep "container_name:" "$SCRIPT_DIR/docker-compose.yml" 2>/dev/null | head -1 | sed 's/.*container_name:\s*//' | tr -d ' '
+}
+
+# --- 读取配置 ---
+FRONTEND_PORT=$(parse_port "frontend")
+BACKEND_PORT=$(parse_port "backend")
+DB_PORT=$(parse_port "database")
+DB_CONTAINER=$(parse_db_container)
+
+: "${FRONTEND_PORT:=5173}"
+: "${BACKEND_PORT:=3000}"
+: "${DB_PORT:=5432}"
+: "${DB_CONTAINER:=todo-app-db}"
+
+# --- 服务状态检测 ---
+check_service() {
+  local name="$1" port="$2" pid_file="$PID_DIR/${name}.pid"
+  local status="DOWN" pid_info=""
+
+  if curl -s "http://localhost:${port}" > /dev/null 2>&1; then
+    status="UP"
   fi
-else
-  echo "❌ Docker: 未运行（请启动 Docker Desktop）"
-fi
 
-echo ""
-
-# 检查后端状态
-echo "【后端服务】"
-if curl -s http://localhost:3000/health > /dev/null 2>&1; then
-  BACKEND_PID=$(ps aux | grep -E '[t]sx.*todo-app.*backend' | awk '{print $2}' | head -1)
-  echo "✅ 后端: 运行中"
-  echo "   地址: http://localhost:3000"
-  if [ -n "$BACKEND_PID" ]; then
-    echo "   PID: $BACKEND_PID"
+  # PID 一致性检查
+  if [ -f "$pid_file" ]; then
+    local saved_pid
+    saved_pid=$(cat "$pid_file")
+    if kill -0 "$saved_pid" 2>/dev/null; then
+      pid_info="PID:${saved_pid}"
+    else
+      pid_info="PID:stale"
+    fi
   fi
-else
-  echo "❌ 后端: 未运行"
-fi
 
-echo ""
+  printf "│ %-10s │ %5s │ %-4s │ %-10s │\n" "$name" "$port" "$status" "$pid_info"
+}
 
-# 检查前端状态
-echo "【前端服务】"
-if curl -s http://localhost:5173 > /dev/null 2>&1; then
-  FRONTEND_PID=$(ps aux | grep -E '[v]ite.*todo-app' | awk '{print $2}' | head -1)
-  echo "✅ 前端: 运行中"
-  echo "   地址: http://localhost:5173"
-  if [ -n "$FRONTEND_PID" ]; then
-    echo "   PID: $FRONTEND_PID"
+check_db() {
+  local status="DOWN"
+  if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "$DB_CONTAINER"; then
+    local health
+    health=$(docker inspect --format='{{.State.Health.Status}}' "$DB_CONTAINER" 2>/dev/null || echo "unknown")
+    if [ "$health" = "healthy" ]; then
+      status="UP"
+    else
+      status="$health"
+    fi
   fi
+  printf "│ %-10s │ %5s │ %-4s │ %-10s │\n" "database" "$DB_PORT" "$status" "$DB_CONTAINER"
+}
+
+# --- 输出 ---
+echo "┌────────────┬───────┬──────┬────────────┐"
+echo "│ Service    │  Port │ Status │ Info       │"
+echo "├────────────┼───────┼──────┼────────────┤"
+check_db
+check_service "backend" "$BACKEND_PORT"
+check_service "frontend" "$FRONTEND_PORT"
+echo "└────────────┴───────┴──────┴────────────┘"
+
+# --- 日志信息 ---
+echo ""
+if [ -f "$LOG_DIR/backend.log" ] || [ -f "$LOG_DIR/frontend.log" ]; then
+  echo "📋 日志:"
+  [ -f "$LOG_DIR/backend.log" ] && echo "   后端: tail -f $LOG_DIR/backend.log"
+  [ -f "$LOG_DIR/frontend.log" ] && echo "   前端: tail -f $LOG_DIR/frontend.log"
 else
-  echo "❌ 前端: 未运行"
+  echo "📋 无日志文件（服务未通过 start.sh 启动）"
 fi
 
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# 端口占用检查
-echo ""
-echo "【端口占用】"
-echo "后端端口 (3000):"
-lsof -i :3000 2>/dev/null | tail -n +2 || echo "  未占用"
-
-echo ""
-echo "前端端口 (5173):"
-lsof -i :5173 2>/dev/null | tail -n +2 || echo "  未占用"
-
-echo ""
-echo "数据库端口 (5432):"
-lsof -i :5432 2>/dev/null | tail -n +2 || echo "  未占用"
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# 日志文件检查
-echo ""
-echo "【日志文件】"
-if [ -f /tmp/todo-backend.log ]; then
-  BACKEND_SIZE=$(ls -lh /tmp/todo-backend.log | awk '{print $5}')
-  echo "后端日志: /tmp/todo-backend.log ($BACKEND_SIZE)"
-  echo "  查看: tail -f /tmp/todo-backend.log"
-else
-  echo "后端日志: 不存在"
-fi
-
-echo ""
-if [ -f /tmp/todo-frontend.log ]; then
-  FRONTEND_SIZE=$(ls -lh /tmp/todo-frontend.log | awk '{print $5}')
-  echo "前端日志: /tmp/todo-frontend.log ($FRONTEND_SIZE)"
-  echo "  查看: tail -f /tmp/todo-frontend.log"
-else
-  echo "前端日志: 不存在"
-fi
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# 健康检查
-echo ""
-echo "【健康检查】"
-
-ALL_RUNNING=true
-
-# 检查各服务
-if ! docker ps --filter "name=todo-app-db" --format "{{.Names}}" | grep -q "todo-app-db"; then
-  echo "⚠️  数据库未运行"
-  ALL_RUNNING=false
-fi
-
-if ! curl -s http://localhost:3000/health > /dev/null 2>&1; then
-  echo "⚠️  后端未响应"
-  ALL_RUNNING=false
-fi
-
-if ! curl -s http://localhost:5173 > /dev/null 2>&1; then
-  echo "⚠️  前端未响应"
-  ALL_RUNNING=false
-fi
-
-if [ "$ALL_RUNNING" = true ]; then
-  echo "✅ 所有服务运行正常！"
-  echo ""
-  echo "📝 访问应用: http://localhost:5173"
-else
-  echo ""
-  echo "💡 启动服务: ./start.sh"
-fi
-
-echo ""
+echo "💡 启动: ./start.sh  |  停止: ./stop.sh"

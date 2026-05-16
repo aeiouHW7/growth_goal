@@ -53,12 +53,12 @@
 
 ## 7. 现有项目迁移 - todo-app
 
-- [ ] 7.1 复制根目录 `docker-compose.yml.backup` 到 `domains/todo-app/docker-compose.yml`
-- [ ] 7.2 更新 `todo-app/docker-compose.yml`：服务名改为 `todo-app-db`
-- [ ] 7.3 更新 `todo-app/docker-compose.yml`：添加 `DB_PORT` 环境变量支持
-- [ ] 7.4 创建 `todo-app/.env` 文件，设置 `DB_PORT=5432`
-- [ ] 7.5 更新 `todo-app/start.sh`：在第 17 行之前添加 Docker 启动逻辑
-- [ ] 7.6 测试 `todo-app/start.sh` 可成功启动（Docker + 后端 + 前端）
+- [x] 7.1 复制根目录 `docker-compose.yml.backup` 到 `domains/todo-app/docker-compose.yml`
+- [x] 7.2 更新 `todo-app/docker-compose.yml`：服务名改为 `todo-app-db`
+- [x] 7.3 更新 `todo-app/docker-compose.yml`：添加 `DB_PORT` 环境变量支持
+- [x] 7.4 创建 `todo-app/.env` 文件，设置 `DB_PORT=5432`
+- [x] 7.5 更新 `todo-app/start.sh`：在第 17 行之前添加 Docker 启动逻辑（由 lifecycle-scripts 变更覆盖）
+- [x] 7.6 测试 `todo-app/start.sh` 可成功启动（Docker + 后端 + 前端）（由 lifecycle-scripts 变更覆盖）
 
 ## 8. 测试和验证
 

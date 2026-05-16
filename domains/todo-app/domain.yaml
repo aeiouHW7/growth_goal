@@ -81,6 +81,13 @@ knowledge:
     - path: docs/wiki/
       trigger: "涉及项目知识、技术方案、业务规则、接口设计时"
 
+lifecycle:
+  pid_dir: .pids
+  log_dir: .logs
+  health_check:
+    backend: /health
+    timeout: 30
+
 planning:
   current_version: v0.1
 
