@@ -1,15 +1,11 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
+import { AnalysisController } from "../controllers/analysis.controller";
 
 const router = Router();
+const c = new AnalysisController();
 
-router.post("/generate", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.get("/:id", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.post("/:id/feedback", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
+router.post("/generate", c.generate.bind(c));
+router.get("/:id", c.getById.bind(c));
+router.post("/:id/feedback", c.submitFeedback.bind(c));
 
 export default router;
