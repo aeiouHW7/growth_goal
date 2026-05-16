@@ -1,17 +1,11 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
+import { UserController } from "../controllers/user.controller";
 
 const router = Router();
+const controller = new UserController();
 
-router.get("/", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-
-router.post("/", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-
-router.put("/", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
+router.get("/", controller.get.bind(controller));
+router.post("/", controller.create.bind(controller));
+router.put("/", controller.update.bind(controller));
 
 export default router;
