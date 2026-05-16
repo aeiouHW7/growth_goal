@@ -1,15 +1,11 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
+import { ProgressController } from "../controllers/progress.controller";
 
 const router = Router();
+const c = new ProgressController();
 
-router.get("/overview", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.get("/goal/:goalId", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
-router.get("/calendar", (_req: Request, res: Response) => {
-  res.status(501).json({ error: { code: "NOT_IMPLEMENTED", message: "待实现" } });
-});
+router.get("/overview", c.overview.bind(c));
+router.get("/goal/:goalId", c.goalChain.bind(c));
+router.get("/calendar", c.calendar.bind(c));
 
 export default router;
