@@ -28,3 +28,5 @@ dist/
 # Claude Code
 .claude/worktrees/
 .claude/scheduled_tasks.lock
+self-growth-analyst/
+domains/my-app/self-growth-analyst/
