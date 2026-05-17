@@ -1,0 +1,48 @@
+name: growth-miniprogram
+description: 目标拆解与复盘小程序 — 将年计划拆解为月计划、日计划，定期复盘评估完成情况，促进目标达成
+version: 0.1.0
+
+tech_stack:
+  frontend: Taro (React + TypeScript) — 跨端支持微信小程序和 H5/Web
+  backend: Node.js + TypeScript + Prisma
+  database: PostgreSQL
+
+services:
+  backend:
+    port: 3001
+  database:
+    type: postgresql
+    port: 5434
+
+scripts:
+  dev: "cd backend && npm run dev"
+  test: "cd backend && npm test"
+  build: "cd frontend && npm run build:h5"
+
+coding_standards:
+  backend:
+    - RESTful API 设计
+    - 使用 Prisma 进行数据库操作
+    - 错误处理使用统一错误码
+  frontend:
+    - Taro 跨端组件规范
+    - 状态管理使用 React hooks
+    - 页面组件放在 pages/ 目录
+
+testing:
+  unit_test_coverage: 80
+  e2e_test_required: false
+  test_framework: jest
+  test_commands:
+    unit: "cd backend && npm test"
+
+knowledge:
+  always_load:
+    - path: docs/wiki/index.md
+      desc: 项目知识库导航入口
+  on_demand:
+    - path: docs/wiki/
+      trigger: "涉及项目知识、技术方案、业务规则时"
+
+planning:
+  current_version: v0.1

@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>growth-miniprogram · 完整原型</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0A0A14;
+      --bg-card: #13132A;
+      --bg-hover: #1C1C3A;
+      --accent: #6366F1;
+      --accent-light: #8B5CF6;
+      --accent-glow: rgba(99,102,241,0.15);
+      --text: #E2E8F0;
+      --text-dim: #64748B;
+      --text-muted: #475569;
+      --border: #1E1E3A;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
+      --grayed: #4A5568;
+      --radius: 10px;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); padding:32px; max-width:1200px; margin:0 auto; }
+
+    h1 { font-size:22px; font-weight:700; background:linear-gradient(135deg,var(--accent),var(--accent-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:4px; }
+    .subtitle { color:var(--text-dim); font-size:13px; margin-bottom:32px; }
+
+    /* 场景切换 */
+    .group-label { font-size:11px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em; margin:24px 0 10px; }
+    .tab-bar { display:flex; gap:4px; margin-bottom:20px; flex-wrap:wrap; }
+    .tab { padding:5px 12px; border-radius:6px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-dim); cursor:pointer; font-size:12px; transition:all .15s; }
+    .tab:hover { border-color:var(--accent); color:var(--text); }
+    .tab.active { border-color:var(--accent); background:var(--accent-glow); color:var(--accent-light); }
+
+    .scene { display:none; }
+    .scene.active { display:block; }
+
+    /* ═══ Claude 终端 ═══ */
+    .chat-window { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    .chat-hdr { display:flex; align-items:center; gap:10px; padding:12px 18px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.02); }
+    .chat-dot { width:8px; height:8px; border-radius:50%; }
+    .chat-dot:nth-child(1) { background:#EF4444; }
+    .chat-dot:nth-child(2) { background:#F59E0B; }
+    .chat-dot:nth-child(3) { background:#10B981; }
+    .chat-lbl { font-size:11px; color:var(--text-dim); margin-left:auto; }
+    .chat-body { padding:20px; }
+
+    .msg { display:flex; gap:10px; margin-bottom:16px; animation:fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .av { width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; margin-top:3px; }
+    .av.u { background:linear-gradient(135deg,#6366F1,#8B5CF6); order:1; }
+    .av.ai { background:#1E1E3A; color:#8B5CF6; }
+
+    .bub { background:#181833; border:1px solid var(--border); border-radius:10px; padding:10px 14px; max-width:88%; line-height:1.6; font-size:14px; }
+    .bub.u { background:rgba(99,102,241,0.1); border-color:rgba(99,102,241,0.25); margin-left:auto; }
+
+    .bl { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); margin-bottom:4px; }
+    .bl.green { color:var(--success); }
+    .bl.red { color:var(--error); }
+
+    .al { padding:6px 10px; margin:4px 0; border-left:3px solid var(--accent); background:rgba(99,102,241,0.03); border-radius:0 5px 5px 0; font-size:13px; }
+    .al.green { border-left-color:var(--success); }
+    .al.yellow { border-left-color:var(--warning); }
+    .al.red { border-left-color:var(--error); }
+    .al.purple { border-left-color:var(--accent-light); }
+
+    .tg { display:inline-block; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:500; }
+    .tg.s { background:rgba(16,185,129,0.15); color:var(--success); }
+    .tg.w { background:rgba(245,158,11,0.15); color:var(--warning); }
+    .tg.i { background:rgba(99,102,241,0.15); color:var(--accent); }
+
+    .mg { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:8px; margin:8px 0; }
+    .mc { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:7px; padding:10px; text-align:center; }
+    .mc .v { font-size:20px; font-weight:700; }
+    .mc .l { font-size:11px; color:var(--text-dim); margin-top:2px; }
+
+    .eb { display:inline-flex; align-items:center; gap:3px; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:500; background:rgba(139,92,246,0.12); color:var(--accent-light); }
+    .hr { border:none; border-top:1px solid var(--border); margin:12px 0; }
+
+    /* ═══ Web 看板 ═══ */
+    .app { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+
+    .tbar { display:flex; align-items:center; gap:20px; padding:10px 20px; border-bottom:1px solid var(--border); }
+    .br { font-weight:700; font-size:14px; background:linear-gradient(135deg,var(--accent),var(--accent-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+    .main { padding:20px; }
+
+    /* 目标链 */
+    .gs { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:18px; }
+    .gh { display:flex; align-items:center; gap:8px; padding:12px 16px; cursor:pointer; font-size:14px; font-weight:600; }
+    .gh:hover { background:var(--bg-hover); border-radius:var(--radius); }
+    .ga { font-size:10px; color:var(--text-dim); transition:transform .2s; }
+    .ga.open { transform:rotate(90deg); }
+    .gb { display:none; padding:0 16px 12px; }
+    .gb.open { display:block; }
+
+    .gr { display:flex; align-items:center; gap:8px; padding:5px 0; font-size:13px; }
+    .gr.done { color:var(--grayed); }
+    .gr.done .gv { color:var(--grayed); }
+
+    .gbx { flex:1; height:5px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden; }
+    .gfl { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--accent),var(--accent-light)); }
+    .gfl.g { background:linear-gradient(90deg,var(--success),#34D399); }
+    .gfl.gy { background:var(--grayed); }
+
+    .gv { font-weight:600; width:36px; text-align:right; font-size:12px; }
+    .gt { font-size:10px; padding:1px 5px; border-radius:3px; font-weight:500; }
+    .gt.r { background:rgba(245,158,11,0.15); color:var(--warning); }
+    .gt.ok { background:rgba(16,185,129,0.15); color:var(--success); }
+    .gt.dn { background:rgba(74,85,104,0.2); color:var(--grayed); }
+    .gc { margin-left:20px; padding-left:10px; border-left:1px solid var(--border); }
+    .gck { cursor:pointer; padding:3px 6px; border-radius:4px; transition:background .15s; }
+    .gck:hover { background:var(--accent-glow); }
+
+    /* 周期区 */
+    .pbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .pts { display:flex; gap:2px; background:rgba(255,255,255,0.03); border-radius:7px; padding:3px; }
+    .pt { padding:5px 14px; border-radius:5px; font-size:13px; color:var(--text-dim); cursor:pointer; transition:all .15s; }
+    .pt.active { background:var(--accent); color:#fff; }
+    .pv { font-size:14px; font-weight:600; color:var(--text); margin-left:4px; }
+    .pn { font-size:12px; color:var(--text-dim); cursor:pointer; padding:3px 8px; border-radius:4px; background:var(--bg); border:1px solid var(--border); }
+    .pn:hover { border-color:var(--accent); }
+
+    .g2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+    .cd { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
+    .ct { font-size:13px; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:5px; }
+
+    .cg { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+    .ch { text-align:center; font-size:11px; color:var(--text-dim); padding:4px 0; }
+    .cc { aspect-ratio:1; border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:13px; cursor:pointer; position:relative; }
+    .cc:hover { background:var(--bg-hover); }
+    .cc.td { border:2px solid var(--accent); }
+    .cc.om .dt { color:var(--text-muted); }
+    .cc .dt { font-weight:500; }
+    .cc .cgrd { font-size:10px; line-height:1; margin-top:1px; }
+
+    .cl { display:flex; gap:8px; margin-top:8px; font-size:11px; color:var(--text-dim); }
+
+    .cts { display:flex; gap:3px; margin-bottom:10px; background:rgba(255,255,255,0.03); border-radius:5px; padding:3px; width:fit-content; }
+    .ctb { padding:4px 10px; border-radius:4px; font-size:12px; color:var(--text-dim); cursor:pointer; }
+    .ctb.active { background:var(--bg-hover); color:var(--text); }
+
+    .cpa { display:none; }
+    .cpa.active { display:block; }
+
+    .pi { display:flex; align-items:center; gap:7px; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px; }
+    .pi:last-child { border-bottom:none; }
+    .pd { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .pd.g { background:var(--success); }
+    .pd.y { background:var(--warning); }
+    .pd.r { background:var(--error); }
+
+    .pn2 { flex:1; }
+    .pm { font-size:11px; color:var(--text-dim); }
+
+    .rl { border-left:3px solid var(--accent); padding:6px 9px; margin:5px 0; background:rgba(99,102,241,0.03); border-radius:0 5px 5px 0; font-size:13px; }
+    .rl.green { border-left-color:var(--success); }
+    .rl.yellow { border-left-color:var(--warning); }
+    .rl.purple { border-left-color:var(--accent-light); }
+
+    .wr { display:flex; align-items:center; gap:7px; padding:5px 0; font-size:13px; }
+    .wd2 { width:40px; font-weight:500; flex-shrink:0; }
+
+    /* 年视图月块 */
+    .mbg { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:6px; }
+    .mb2 { padding:7px; border-radius:6px; background:var(--bg-card); text-align:center; cursor:pointer; }
+    .mb2:hover { background:var(--bg-hover); }
+    .mb2 .mn2 { font-size:11px; color:var(--text-dim); }
+    .mb2 .mv2 { font-size:14px; font-weight:700; margin:2px 0; }
+
+    /* 目标点击详情弹窗 */
+    .gdetail { display:none; margin-top:10px; padding:12px; background:var(--bg-card); border-radius:8px; }
+    .gdetail.open { display:block; }
+
+    @media (max-width:820px) { .g2 { grid-template-columns:1fr; } body { padding:14px; } }
+  </style>
+</head>
+<body>
+
+<h1>growth-miniprogram</h1>
+<p class="subtitle">目标管理与复盘系统 · 完整交互原型</p>
+
+<div class="group-label">▸ Claude 终端交互（Phase 1）</div>
+<div class="tab-bar">
+  <button class="tab active" data-scene="s-setup">🎯 设定目标</button>
+  <button class="tab" data-scene="s-daily">📝 每日复盘</button>
+  <button class="tab" data-scene="s-ai">🤖 AI 分析</button>
+  <button class="tab" data-scene="s-score">⭐ 打分反馈</button>
+  <button class="tab" data-scene="s-weekly">📊 周/月复盘</button>
+</div>
+
+<div class="group-label" style="margin-top:0;">▸ Web 看板（Phase 2）</div>
+<div class="tab-bar">
+  <button class="tab" data-scene="s-web">🖥️ 看板完整页</button>
+  <button class="tab" data-scene="s-empty">🌱 空态</button>
+</div>
+
+<!-- ════════════════ Claude 场景 ════════════════ -->
+
+<!-- 设定目标 -->
+<div class="scene active" id="scene-s-setup">
+  <div class="chat-window">
+    <div class="chat-hdr"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-lbl">Claude · 目标设定</span></div>
+    <div class="chat-body">
+      <div class="msg"><div class="av u">U</div><div class="bub u">> 我想设定目标</div></div>
+      <div class="msg"><div class="av ai">AI</div><div class="bub"><div class="bl">🎯 引导</div><p>先从最高层开始。</p><p style="margin-top:6px;"><strong>你的人生终极目标或阶段性大目标是什么？</strong>（无时间限制也行）</p></div></div>
+      <div class="msg"><div class="av u">U</div><div class="bub u">> 财务自由，被动收入覆盖生活支出</div></div>
+      <div class="msg"><div class="av ai">AI</div><div class="bub"><div class="bl">🎯 拆解</div><p>时间跨度？</p><p style="margin-top:4px; color:var(--text-dim); font-size:13px;">🔹 5年 &nbsp; 🔹 10年 &nbsp; 🔹 20年 &nbsp; 🔹 自定义</p></div></div>
+      <div class="msg"><div class="av u">U</div><div class="bub u">> 10年</div></div>
+      <div class="msg"><div class="av ai">AI</div><div class="bub"><div class="bl">📋 当前体系</div><div style="display:flex;align-items:center;gap:6px;margin:6px 0;"><span style="color:var(--accent);">├──</span><strong>总目标：财务自由（10年）</strong></div><div style="margin-left:36px;padding:6px 10px;border-left:2px solid var(--border);"><p style="color:var(--text-dim);font-size:13px;">还没有拆解年度目标。</p><p style="margin-top:6px;"><strong>今年（2026）想达到什么里程碑？</strong> 必须有可度量单位。</p></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 每日复盘 -->
+<div class="scene" id="scene-s-daily">
+  <div class="chat-window">
+    <div class="chat-hdr"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-lbl">Claude · 每日复盘</span></div>
+    <div class="chat-body">
+      <div class="msg"><div class="av u">U</div><div class="bub u">> 今天复盘：早上7点起来写了2小时代码，下午开会消耗了一下午，晚上学了1小时英语。今天没有运动，有点累。</div></div>
+      <div class="msg"><div class="av ai">AI</div><div class="bub"><div class="bl">📋 结构化提取</div>
+        <div class="al green"><span class="tg s">✅ 完成</span> 写代码 2h · 英语 1h</div>
+        <div class="al red"><span class="tg w">❌ 未完成</span> 运动未做 · 博客未写</div>
+        <div class="al"><span class="tg i">🔍 情绪</span> 疲惫 · 会议占大块时间</div>
+        <p style="margin-top:8px; font-size:13px;">补充两个问题：</p>
+        <p style="margin-top:4px; color:var(--text-dim); font-size:13px;">1. 没运动是时间不够还是不想动？<br>2. 原本计划下午做什么？</p>
+      </div></div>
+      <div class="msg"><div class="av u">U</div><div class="bub u">> 1. 不想动，累；2. 原本写博客</div></div>
+      <div class="msg"><div class="av ai">AI</div><div class="bub"><div class="bl">🤖 分析报告</div>
+        <div style="background:rgba(99,102,241,0.04);border-radius:7px;padding:12px;margin:8px 0;">
+          <div class="mg" style="margin-top:0;"><div class="mc"><div class="v" style="color:var(--warning);">50%</div><div class="l">完成率</div></div><div class="mc"><div class="v" style="color:var(--success);">3h</div><div class="l">有效产出</div></div><div class="mc"><div class="v" style="color:var(--accent-light);">😴</div><div class="l">精力</div></div></div>
+          <div class="al green"><strong>✅ 完成</strong><br>写代码 2h · 英语 1h</div>
+          <div class="al yellow"><strong>📉 偏差</strong><br>代码-2h · 运动-30min · 博客推迟3天</div>
+          <div class="al"><strong>🔬 诊断</strong><br>本周2天"会议→打乱"。建议核心任务移早晨。</div>
+          <div class="al purple"><span class="eb">🌐 外部视角</span><br>AI全栈人才需求增长，代码方向与财务自由目标对齐？</div>
+        </div>
+        <hr class="hr">
+        <p style="font-size:13px;font-weight:500;">请打分（0-100）</p>
+        <p style="font-size:12px;color:var(--text-dim);">&lt;60 记录反思 · ≥80 记录优秀案例</p>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- AI 分析 -->
+<div class="scene" id="scene-s-ai">
+  <div class="chat-window">
+    <div class="chat-hdr"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-lbl">Claude · AI 分析</span></div>
+    <div class="chat-body">
+      <div class="msg"><div class="av u">U</div><div class="bub u">> 看看这周整体分析</div></div>
+      <div class="msg"><div class="av ai">AI</div><div class="bub"><div class="bl">📊 周度分析（5/10-5/16）</div>
+        <p style="color:var(--text-dim);font-size:12px;margin-bottom:8px;">基于5天复盘</p>
+        <div class="mg"><div class="mc"><div class="v" style="color:var(--success);">71%</div><div class="l">完成率</div></div><div class="mc"><div class="v" style="color:var(--accent-light);">↑12%</div><div class="l">较上周</div></div><div class="mc"><div class="v">2次</div><div class="l">模式发现</div></div></div>
+        <div style="background:rgba(16,185,129,0.05);border-radius:6px;padding:8px;margin:6px 0;"><strong style="color:var(--success);">📌 亮点</strong><div style="font-size:13px;margin-top:2px;">英语连续5天✅ · 代码+40%</div></div>
+        <div style="background:rgba(245,158,11,0.05);border-radius:6px;padding:8px;margin:6px 0;"><strong style="color:var(--warning);">⚠️ 问题</strong><div style="font-size:13px;margin-top:2px;">博客推迟5天 · 运动40%</div></div>
+        <div style="background:rgba(99,102,241,0.04);border-radius:6px;padding:8px;margin:6px 0;"><span class="eb">🌐 趋势</span><div style="font-size:13px;margin-top:4px;">AI编程工具新迭代 · 科技Q2融资活跃<br>建议：博客改AI资讯汇总（3h→30min）</div></div>
+        <hr class="hr">
+        <div style="background:rgba(16,185,129,0.05);border-radius:6px;padding:10px;"><strong style="color:var(--success);">💡 建议</strong><div style="font-size:13px;margin-top:4px;">1.暂停博客改AI资讯 · 2.运动改散步听播客 · 3.80%代码投入AI方向</div></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 打分反馈 -->
+<div class="scene" id="scene-s-score">
+  <div class="chat-window">
+    <div class="chat-hdr"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-lbl">Claude · 打分反馈闭环</span></div>
+    <div class="chat-body">
+      <p style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">▸ 优秀案例（≥80）</p>
+      <div class="msg"><div class="av u">U</div><div class="bub u">> 85分。外部视角提醒很好，第一次想到可以写AI资讯代替博客</div></div>
+      <div class="msg"><div class="av ai">AI</div><div class="bub"><div class="bl green">⭐ 优秀案例已记录</div><div style="background:rgba(16,185,129,0.05);border-radius:6px;padding:8px;margin-top:4px;"><strong>模式</strong>：外部趋势+低启动成本替代方案<br><strong style="font-size:12px;color:var(--text-dim);">复现条件</strong>：用户长期推迟任务时，先评估方向而非意志力</div></div></div>
+      <hr class="hr">
+      <p style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">▸ 不及格（&lt;60）</p>
+      <div class="msg"><div class="av u">U</div><div class="bub u">> 50分。你说我计划不合理，但没问我为什么。这周搬家才没完成的</div></div>
+      <div class="msg"><div class="av ai">AI</div><div class="bub"><div class="bl red">📝 反思已记录</div><div style="background:rgba(239,68,68,0.05);border-radius:6px;padding:8px;margin-top:4px;"><strong>问题</strong>：未排除外部事件就下结论<br><strong style="font-size:12px;color:var(--text-dim);">优化</strong>：下次复盘前先问是否有特殊情况</div><p style="margin-top:4px;color:var(--text-dim);font-size:13px;">💬 调整后建议要看吗？</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 周/月复盘 -->
+<div class="scene" id="scene-s-weekly">
+  <div class="chat-window">
+    <div class="chat-hdr"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-lbl">Claude · 周复盘（AI发起）</span></div>
+    <div class="chat-body">
+      <div class="msg"><div class="av ai">AI</div><div class="bub"><div class="bl">📅 周复盘</div><p>⏰ 周末了！本周复盘记录：周一、周二、周四、周五。</p><p style="margin-top:4px;color:var(--warning);"><strong>周三没有记录</strong>，那天有什么特别的事？</p></div></div>
+      <div class="msg"><div class="av u">U</div><div class="bub u">> 周三发烧休息了</div></div>
+      <div class="msg"><div class="av ai">AI</div><div class="bub"><div class="bl">📊 周报告</div>
+        <div class="mg"><div class="mc"><div class="v" style="color:var(--success);">65%</div><div class="l">完成率</div></div><div class="mc"><div class="v" style="color:var(--warning);">-8%</div><div class="l">较上周</div></div><div class="mc"><div class="v">2次</div><div class="l">模式</div></div></div>
+        <div class="al"><strong>🔄 模式：会议冲击</strong> — 3天~6h产出损失</div>
+        <div class="al green"><strong>🔄 模式：晨间高产出</strong> — 7-9点100%</div>
+        <div class="al purple"><span class="eb">🌐 扫描</span> Claude新功能与你代码方向相关</div>
+        <hr class="hr">
+        <p style="font-size:13px;color:var(--text-dim);">以上AI生成。<strong>你要补充吗？</strong></p>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ Web 看板 ════════════════ -->
+<div class="scene" id="scene-s-web">
+  <div class="app">
+    <div class="tbar">
+      <span class="br">growth</span>
+      <span class="topnav" style="font-size:13px;color:var(--accent);font-weight:500;">🎯 目标</span>
+      <span class="topnav" style="font-size:13px;color:var(--text-dim);">📋 计划</span>
+      <span class="topnav" style="font-size:13px;color:var(--text-dim);">📊 报告</span>
+    </div>
+    <div class="main">
+
+      <!-- ═══ 目标总览（顶部） ═══ -->
+      <div class="gs">
+        <div class="gh" onclick="tg(this)">
+          <span class="ga open">▶</span>
+          <span>🎯 目标总览</span>
+          <span style="font-size:11px;color:var(--text-dim);font-weight:400;margin-left:auto;">点击任意目标查看关联计划</span>
+        </div>
+        <div class="gb open">
+          <!-- 进行中 -->
+          <div class="gr">
+            <span style="color:var(--accent);">●</span>
+            <span>财务自由（10年）</span>
+            <div class="gbx"><div class="gfl" style="width:15%"></div></div>
+            <span class="gv">15%</span>
+            <span class="gt r">⚠️ 风险</span>
+          </div>
+          <div class="gc">
+            <div class="gr gck" onclick="showGoalDetail(this)">
+              <span style="color:var(--success);font-size:11px;">└─</span>
+              <span>2026 存款 20 万</span>
+              <div class="gbx"><div class="gfl g" style="width:42%"></div></div>
+              <span class="gv" style="color:var(--success);">42%</span>
+              <span class="gt ok">✅</span>
+            </div>
+            <div class="gc">
+              <div class="gr gck" onclick="showGoalDetail(this)">
+                <span style="color:var(--text-dim);font-size:11px;">└─</span>
+                <span>6月 存 1.7 万</span>
+                <div class="gbx"><div class="gfl" style="width:60%"></div></div>
+                <span class="gv">60%</span>
+                <span class="gt ok">✅</span>
+              </div>
+            </div>
+          </div>
+          <div class="gr">
+            <span style="color:var(--success);">●</span>
+            <span>英语流利 B2（年度）</span>
+            <div class="gbx"><div class="gfl g" style="width:68%"></div></div>
+            <span class="gv" style="color:var(--success);">68%</span>
+            <span class="gt ok">✅</span>
+          </div>
+          <!-- 已完成（灰色） -->
+          <div class="gr done">
+            <span>●</span><span>读完 12 本书（2025）</span>
+            <div class="gbx"><div class="gfl gy" style="width:100%"></div></div>
+            <span class="gv">🎉</span>
+            <span class="gt dn">已完成</span>
+          </div>
+          <div class="gr done">
+            <span>●</span><span>减重 5kg（2025）</span>
+            <div class="gbx"><div class="gfl gy" style="width:100%"></div></div>
+            <span class="gv">🎉</span>
+            <span class="gt dn">已完成</span>
+          </div>
+          <!-- 点击目标后的详情 -->
+          <div class="gdetail" id="gdetail">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+              <span style="color:var(--accent);">●</span>
+              <span style="font-size:14px;font-weight:600;" id="gd-title">2026 存款 20 万</span>
+              <span style="font-size:12px;color:var(--text-dim);">→ 本周关联计划</span>
+            </div>
+            <div class="pi"><span class="pd g"></span><span class="pn2">存款 4000（周目标）</span><span class="pm">1000/4000</span></div>
+            <div class="pi"><span class="pd g"></span><span class="pn2">写 AI 代码 ≥15h</span><span class="pm">8/15h</span></div>
+            <div class="pi"><span class="pd y"></span><span class="pn2">研究被动收入渠道</span><span class="pm">未开始</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 周期选择 ═══ -->
+      <div class="pbar">
+        <div class="pts">
+          <span class="pt" onclick="swp(this)">年</span>
+          <span class="pt" onclick="swp(this)">月</span>
+          <span class="pt" onclick="swp(this)">周</span>
+          <span class="pt active" onclick="swp(this)">日</span>
+        </div>
+        <span class="pn" onclick="prev()">‹</span>
+        <span class="pv" id="period-label">2026年6月17日</span>
+        <span class="pn" onclick="next()">›</span>
+      </div>
+
+      <!-- ═══ 日历 + 内容区 ═══（日视图默认） -->
+      <div id="view-day" class="period-view">
+        <div class="g2">
+          <div class="cd">
+            <div class="ct">📅 2026年6月</div>
+            <div class="cg">
+              <div class="ch">一</div><div class="ch">二</div><div class="ch">三</div><div class="ch">四</div><div class="ch">五</div><div class="ch">六</div><div class="ch">日</div>
+              <div class="cc om"><span class="dt">26</span></div><div class="cc om"><span class="dt">27</span></div><div class="cc om"><span class="dt">28</span></div><div class="cc om"><span class="dt">29</span></div><div class="cc om"><span class="dt">30</span></div><div class="cc om"><span class="dt">31</span></div>
+              <div class="cc"><span class="dt">1</span></div>
+              <div class="cc"><span class="dt">2</span><span class="cgrd">🟢</span></div>
+              <div class="cc"><span class="dt">3</span><span class="cgrd">🟢</span></div>
+              <div class="cc"><span class="dt">4</span><span class="cgrd">⚪</span></div>
+              <div class="cc"><span class="dt">5</span><span class="cgrd">🟡</span></div>
+              <div class="cc"><span class="dt">6</span><span class="cgrd">🔴</span></div>
+              <div class="cc"><span class="dt">7</span></div><div class="cc"><span class="dt">8</span></div>
+              <div class="cc"><span class="dt">9</span><span class="cgrd">🟢</span></div>
+              <div class="cc"><span class="dt">10</span><span class="cgrd">🟡</span></div>
+              <div class="cc"><span class="dt">11</span><span class="cgrd">🟢</span></div>
+              <div class="cc"><span class="dt">12</span><span class="cgrd">⚪</span></div>
+              <div class="cc"><span class="dt">13</span><span class="cgrd">⚪</span></div>
+              <div class="cc"><span class="dt">14</span></div><div class="cc"><span class="dt">15</span></div>
+              <div class="cc"><span class="dt">16</span><span class="cgrd">🟡</span></div>
+              <div class="cc td"><span class="dt">17</span><span class="cgrd">📝</span></div>
+              <div class="cc"><span class="dt">18</span></div><div class="cc"><span class="dt">19</span></div>
+              <div class="cc"><span class="dt">20</span></div><div class="cc"><span class="dt">21</span></div><div class="cc"><span class="dt">22</span></div>
+            </div>
+            <div class="cl"><span>🟢优秀</span><span>🟡良好</span><span>🔴差</span><span>⚪缺卡</span></div>
+          </div>
+          <div>
+            <div class="cts">
+              <span class="ctb active" onclick="swc(this,'dp')">📋 计划</span>
+              <span class="ctb" onclick="swc(this,'dg')">🏅 评估</span>
+              <span class="ctb" onclick="swc(this,'dr')">📊 报告</span>
+            </div>
+            <div class="cpa active" id="dp">
+              <div class="cd">
+                <div class="ct">今日计划 · 6月17日</div>
+                <div class="pi"><span class="pd g"></span><span class="pn2">写代码 4h（AI 应用）</span><span class="pm">已完成2h</span></div>
+                <div class="pi"><span class="pd g"></span><span class="pn2">英语学习 1h</span><span class="pm">✅ 完成</span></div>
+                <div class="pi"><span class="pd y"></span><span class="pn2">运动 30min</span><span class="pm">⏳ 未做</span></div>
+                <div class="pi"><span class="pd r"></span><span class="pn2">写博客</span><span class="pm">推迟第3天</span></div>
+              </div>
+            </div>
+            <div class="cpa" id="dg">
+              <div class="cd">
+                <div class="ct">🏅 今日综合评估</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;"><span style="font-size:28px;">🟡</span><div><span style="font-size:16px;font-weight:700;color:var(--warning);">良好</span><span style="font-size:12px;color:var(--text-dim);margin-left:6px;">AI综合68分</span></div></div>
+                <div style="font-size:13px;">完成率50% · 有效产出3h<br>⛔ 运动未做、博客推迟 · ✨ 代码质量高英语没断</div>
+              </div>
+            </div>
+            <div class="cpa" id="dr">
+              <div class="cd">
+                <div class="ct">📊 日报告 · 6月17日</div>
+                <div class="rl green"><strong>✅ 完成</strong><br>写代码2h · 英语1h · 存款正常</div>
+                <div class="rl yellow"><strong>📉 偏差</strong><br>运动-30min · 博客推迟3天</div>
+                <div class="rl"><strong>🔬 诊断</strong><br>会议冲击下午，核心任务宜早晨</div>
+                <div class="rl purple"><span class="eb">🌐 视角</span><br>AI工具新迭代，建议博客改AI资讯（3h→30min）</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 周视图（隐藏） -->
+      <div id="view-week" class="period-view" style="display:none;">
+        <div class="g2">
+          <div class="cd">
+            <div class="ct">📅 第25周（6/15 - 6/21）</div>
+            <div class="wr"><span class="wd2">周一15</span><div class="gbx" style="max-width:50px;"><div class="gfl g" style="width:80%"></div></div><span style="font-size:13px;flex:1;">代码3h·英语1h·运动❌</span><span>🟢</span></div>
+            <div class="wr"><span class="wd2">周二16</span><div class="gbx" style="max-width:50px;"><div class="gfl" style="width:45%;background:var(--warning);"></div></div><span style="font-size:13px;flex:1;">英语1h·存款45%</span><span>🟡</span></div>
+            <div class="wr"><span class="wd2">周三17</span><div class="gbx" style="max-width:50px;"></div><span style="font-size:13px;flex:1;color:var(--text-dim);">今日</span><span>📝</span></div>
+            <div style="margin-top:8px;font-size:12px;color:var(--text-dim);">⚪ 缺卡：周三无数据</div>
+          </div>
+          <div>
+            <div class="cts">
+              <span class="ctb active" onclick="swc(this,'wp')">📋 计划</span>
+              <span class="ctb" onclick="swc(this,'wg')">🏅 评估</span>
+              <span class="ctb" onclick="swc(this,'wr2')">📊 报告</span>
+            </div>
+            <div class="cpa active" id="wp">
+              <div class="cd"><div class="ct">本周计划</div>
+                <div class="pi"><span class="pd g"></span><span class="pn2">存款 4000</span><span class="pm">1000/4000</span></div>
+                <div class="pi"><span class="pd g"></span><span class="pn2">写代码 ≥15h</span><span class="pm">8/15h</span></div>
+                <div class="pi"><span class="pd y"></span><span class="pn2">运动 3次</span><span class="pm">0/3</span></div>
+                <div class="pi"><span class="pd r"></span><span class="pn2">写1篇博客</span><span class="pm">未开始</span></div>
+              </div>
+            </div>
+            <div class="cpa" id="wg">
+              <div class="cd"><div class="ct">🏅 本周综合</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;"><span style="font-size:28px;">🟡</span><div><span style="font-size:16px;font-weight:700;color:var(--warning);">良好</span></div></div>
+                <div style="font-size:13px;">完成率65% · 复盘2/3天 · 模式：会议冲击~6h</div>
+              </div>
+            </div>
+            <div class="cpa" id="wr2">
+              <div class="cd"><div class="ct">📊 周报告 · 第25周</div>
+                <div class="rl green"><strong>📌 亮点</strong><br>代码+40% · 英语连续</div>
+                <div class="rl yellow"><strong>⚠️ 问题</strong><br>运动0次 · 博客推迟</div>
+                <div class="rl"><strong>💡 建议</strong><br>核心任务移早上 · 博客改AI资讯</div>
+                <div class="rl purple"><span class="eb">🌐 趋势</span><br>科技Q2融资活跃，自由职业机会增多</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 月视图 -->
+      <div id="view-month" class="period-view" style="display:none;">
+        <div class="g2">
+          <div class="cd">
+            <div class="ct">📅 2026年6月</div>
+            <div class="cg">
+              <div class="ch">一</div><div class="ch">二</div><div class="ch">三</div><div class="ch">四</div><div class="ch">五</div><div class="ch">六</div><div class="ch">日</div>
+              <div class="cc om"><span class="dt">26</span></div><div class="cc om"><span class="dt">27</span></div><div class="cc om"><span class="dt">28</span></div><div class="cc om"><span class="dt">29</span></div><div class="cc om"><span class="dt">30</span></div><div class="cc om"><span class="dt">31</span></div>
+              <div class="cc"><span class="dt">1</span></div>
+              <div class="cc"><span class="dt">2</span><span class="cgrd">🟢</span></div>
+              <div class="cc"><span class="dt">3</span><span class="cgrd">🟢</span></div>
+              <div class="cc"><span class="dt">4</span><span class="cgrd">⚪</span></div>
+              <div class="cc"><span class="dt">5</span><span class="cgrd">🟡</span></div>
+              <div class="cc"><span class="dt">6</span><span class="cgrd">🔴</span></div>
+              <div class="cc"><span class="dt">7</span></div><div class="cc"><span class="dt">8</span></div>
+              <div class="cc"><span class="dt">9</span><span class="cgrd">🟢</span></div>
+              <div class="cc"><span class="dt">10</span><span class="cgrd">🟡</span></div>
+              <div class="cc"><span class="dt">11</span><span class="cgrd">🟢</span></div>
+              <div class="cc"><span class="dt">12</span><span class="cgrd">⚪</span></div>
+              <div class="cc"><span class="dt">13</span><span class="cgrd">⚪</span></div>
+              <div class="cc"><span class="dt">14</span></div><div class="cc"><span class="dt">15</span></div>
+              <div class="cc"><span class="dt">16</span><span class="cgrd">🟡</span></div>
+              <div class="cc td"><span class="dt">17</span><span class="cgrd">📝</span></div>
+              <div class="cc"><span class="dt">18</span></div><div class="cc"><span class="dt">19</span></div>
+              <div class="cc"><span class="dt">20</span></div><div class="cc"><span class="dt">21</span></div><div class="cc"><span class="dt">22</span></div>
+            </div>
+            <div class="cl"><span>🟢优秀</span><span>🟡良好</span><span>🔴差</span><span>⚪缺卡</span></div>
+            <div style="margin-top:8px;font-size:12px;color:var(--text-dim);">🟢×4 🟡×3 🔴×1 ⚪×3 · 完成率62%</div>
+          </div>
+          <div>
+            <div class="cts">
+              <span class="ctb active" onclick="swc(this,'mp')">📋 计划</span>
+              <span class="ctb" onclick="swc(this,'mgv')">🏅 评估</span>
+              <span class="ctb" onclick="swc(this,'mr')">📊 报告</span>
+            </div>
+            <div class="cpa active" id="mp">
+              <div class="cd"><div class="ct">6月计划</div>
+                <div class="pi"><span class="pd g"></span><span class="pn2">存款 1.7万</span><span class="pm">1.02/1.7万</span></div>
+                <div class="pi"><span class="pd g"></span><span class="pn2">写代码 ≥60h</span><span class="pm">32/60h</span></div>
+                <div class="pi"><span class="pd y"></span><span class="pn2">运动 ≥12次</span><span class="pm">3/12</span></div>
+                <div class="pi"><span class="pd r"></span><span class="pn2">写4篇博客</span><span class="pm">0/4</span></div>
+              </div>
+            </div>
+            <div class="cpa" id="mgv">
+              <div class="cd"><div class="ct">🏅 本月综合</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;"><span style="font-size:28px;">🟡</span><div><span style="font-size:16px;font-weight:700;color:var(--warning);">良好</span></div></div>
+                <div style="font-size:13px;">完成率62% · 复盘8/17天 · 较上月↑5%</div>
+              </div>
+            </div>
+            <div class="cpa" id="mr">
+              <div class="cd"><div class="ct">📊 月报告 · 6月</div>
+                <div class="rl green"><strong>📌 亮点</strong><br>代码稳定 · 英语全勤17天</div>
+                <div class="rl yellow"><strong>⚠️ 问题</strong><br>运动25% · 博客持续推迟</div>
+                <div class="rl"><strong>💡 建议</strong><br>博客改AI资讯 · 运动改散步听播客 · 代码聚焦AI</div>
+                <div class="rl purple"><span class="eb">🌐 月趋势</span><br>AI赛道融资活跃，建议做可展示项目</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 年视图 -->
+      <div id="view-year" class="period-view" style="display:none;">
+        <div class="g2">
+          <div class="cd">
+            <div class="ct">📅 2026年度</div>
+            <div class="mbg">
+              <div class="mb2"><div class="mn2">1月</div><div class="mv2" style="color:var(--success);">🟢</div><div style="font-size:10px;color:var(--text-dim);">71%</div></div>
+              <div class="mb2"><div class="mn2">2月</div><div class="mv2" style="color:var(--success);">🟢</div><div style="font-size:10px;color:var(--text-dim);">68%</div></div>
+              <div class="mb2"><div class="mn2">3月</div><div class="mv2" style="color:var(--warning);">🟡</div><div style="font-size:10px;color:var(--text-dim);">55%</div></div>
+              <div class="mb2"><div class="mn2">4月</div><div class="mv2" style="color:var(--warning);">🟡</div><div style="font-size:10px;color:var(--text-dim);">58%</div></div>
+              <div class="mb2" style="background:var(--accent-glow);"><div class="mn2">5月</div><div class="mv2" style="color:var(--success);">🟢</div><div style="font-size:10px;color:var(--accent);">73%↑</div></div>
+              <div class="mb2"><div class="mn2">6月</div><div class="mv2">📝</div><div style="font-size:10px;color:var(--text-dim);">进行中</div></div>
+              <div class="mb2" style="opacity:.35;"><div class="mn2">7月</div><div class="mv2">-</div></div>
+              <div class="mb2" style="opacity:.35;"><div class="mn2">8月</div><div class="mv2">-</div></div>
+              <div class="mb2" style="opacity:.35;"><div class="mn2">9月</div><div class="mv2">-</div></div>
+              <div class="mb2" style="opacity:.35;"><div class="mn2">10月</div><div class="mv2">-</div></div>
+              <div class="mb2" style="opacity:.35;"><div class="mn2">11月</div><div class="mv2">-</div></div>
+              <div class="mb2" style="opacity:.35;"><div class="mn2">12月</div><div class="mv2">-</div></div>
+            </div>
+          </div>
+          <div>
+            <div class="cts">
+              <span class="ctb active" onclick="swc(this,'yp')">📋 年计划</span>
+              <span class="ctb" onclick="swc(this,'ygv')">🏅 评估</span>
+              <span class="ctb" onclick="swc(this,'yr')">📊 报告</span>
+            </div>
+            <div class="cpa active" id="yp">
+              <div class="cd"><div class="ct">2026年度目标</div>
+                <div class="pi"><span class="pd g"></span><span class="pn2">存款 20万</span><span class="pm">8.4/20万</span></div>
+                <div class="pi"><span class="pd g"></span><span class="pn2">英语 B1→B2</span><span class="pm">B1.4/B2</span></div>
+                <div class="pi"><span class="pd y"></span><span class="pn2">运动 ≥150次</span><span class="pm">38/150</span></div>
+                <div class="pi"><span class="pd r"></span><span class="pn2">写24篇博客</span><span class="pm">2/24</span></div>
+              </div>
+            </div>
+            <div class="cpa" id="ygv">
+              <div class="cd"><div class="ct">🏅 H1综合</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;"><span style="font-size:28px;">🟡</span><div><span style="font-size:16px;font-weight:700;color:var(--warning);">良好</span></div></div>
+                <div style="font-size:13px;">H1平均65% · ↑8% vs Q1 · 风险：博客8% · 运动25%</div>
+              </div>
+            </div>
+            <div class="cpa" id="yr">
+              <div class="cd"><div class="ct">📊 H1中期报告</div>
+                <div class="rl green"><strong>📌 H1</strong><br>存款8.4万/20万(42%) · 英语稳中有升</div>
+                <div class="rl yellow"><strong>⚠️ 预警</strong><br>运动38/150(25%) · 博客2/24(8%)</div>
+                <div class="rl"><strong>💡 H2建议</strong><br>取消博客KPI · 运动绑定播客 · 加大AI产品化</div>
+                <div class="rl purple"><span class="eb">🌐 年度趋势</span><br>从"学"转到"做出可展示产品"对财务杠杆最大</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 空态 ═══ -->
+<div class="scene" id="scene-s-empty">
+  <div class="app">
+    <div class="tbar"><span class="br">growth</span></div>
+    <div class="main">
+      <div style="text-align:center;padding:60px 20px;">
+        <div style="font-size:48px;margin-bottom:14px;">🌱</div>
+        <p style="font-size:16px;font-weight:600;">还没有设定目标</p>
+        <p style="color:var(--text-dim);font-size:14px;margin:8px auto;max-width:380px;">
+          在 Claude 终端输入「设定目标」，AI 帮你拆解到年、月、日计划，<br>并通过每日复盘持续优化方向。
+        </p>
+        <div style="display:inline-block;margin-top:18px;padding:10px 24px;background:linear-gradient(135deg,var(--accent),var(--accent-light));border-radius:8px;font-size:14px;font-weight:500;">
+          终端输入：设定目标 🎯
+        </div>
+        <p style="font-size:12px;color:var(--text-dim);margin-top:14px;">数据会在设定目标后自动同步到看板</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 标签页切换
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.scene').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const el = document.getElementById('scene-'+t.dataset.scene);
+      if (el) el.classList.add('active');
+    });
+  });
+
+  // 目标折叠
+  function tg(el) {
+    const b = el.nextElementSibling, a = el.querySelector('.ga');
+    if (b) b.classList.toggle('open');
+    if (a) a.classList.toggle('open');
+  }
+
+  // 周期切换
+  function swp(el) {
+    el.parentElement.querySelectorAll('.pt').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    const v = el.textContent.trim();
+    document.querySelectorAll('.period-view').forEach(p=>p.style.display='none');
+    const map = {日:'day',周:'week',月:'month',年:'year'};
+    const id = document.getElementById('view-'+map[v]);
+    if (id) id.style.display='block';
+    document.getElementById('period-label').textContent = '2026年6月17日';
+  }
+
+  // 内容tab切换
+  function swc(el, id) {
+    const p = el.closest('.g2');
+    const tabs = el.closest('.cts');
+    if (tabs) tabs.querySelectorAll('.ctb').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    p.querySelectorAll('.cpa').forEach(c=>c.classList.remove('active'));
+    const target = document.getElementById(id);
+    if (target) target.classList.add('active');
+  }
+
+  // 导航
+  function prev() { /* 示意 */ }
+  function next() { /* 示意 */ }
+
+  // 点击目标展示详情
+  function showGoalDetail(el) {
+    const d = document.getElementById('gdetail');
+    d.classList.toggle('open');
+    const title = el.querySelector('span:nth-child(2)')?.textContent || '目标详情';
+    document.getElementById('gd-title').textContent = title;
+  }
+
+  // 默认展开目标
+  document.querySelectorAll('.gh').forEach(h => {
+    const b = h.nextElementSibling, a = h.querySelector('.ga');
+    if (b) b.classList.add('open');
+    if (a) a.classList.add('open');
+  });
+</script>
+</body>
+</html>

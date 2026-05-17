@@ -65,7 +65,10 @@
       "Bash(grep *)",
       "Skill(ace-archiver)",
       "Bash(mkdir -p /Users/yangyanyu/AI-Coding-Engine/domains/todo-app/.claude/state)",
-      "Bash(echo '{\"ts\":\"2026-05-16T17:00:00+08:00\",\"agent\":\"ace-retro\",\"event\":\"completed\",\"change\":\"lifecycle-scripts\"}')"
+      "Bash(echo '{\"ts\":\"2026-05-16T17:00:00+08:00\",\"agent\":\"ace-retro\",\"event\":\"completed\",\"change\":\"lifecycle-scripts\"}')",
+      "Bash(npm root *)",
+      "Bash(npm run *)",
+      "Bash(npm test *)"
     ]
   }
 }
