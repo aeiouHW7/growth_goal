@@ -1,8 +1,43 @@
 import { PrismaClient, GoalStatus, PlanStatus, ReviewStatus, AnalysisType } from "@prisma/client";
+import { execSync } from "child_process";
+import { existsSync, mkdirSync } from "fs";
+import { join } from "path";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  // ⚠️ SAFETY GUARD: seed 脚本会清空所有数据！
+  const args = process.argv.slice(2);
+  if (!args.includes("--force")) {
+    console.error("安全拦截：seed 脚本会清空所有现有数据");
+    console.error("   Usage: npx tsx prisma/seed.ts --force");
+    process.exit(1);
+  }
+
+  const existingUserCount = await prisma.user.count();
+  if (existingUserCount > 0) {
+    if (!args.includes("--confirm-wipe")) {
+      console.error(`数据库中已有 ${existingUserCount} 个用户和关联数据。`);
+      console.error("   如果确定要清空重建，请运行: npx tsx prisma/seed.ts --force --confirm-wipe");
+      process.exit(1);
+    }
+    // Auto-backup before wipe
+    console.log("正在备份数据库...");
+    const backupDir = join(__dirname, "../backups");
+    if (!existsSync(backupDir)) mkdirSync(backupDir, { recursive: true });
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const filename = `growth-${timestamp}-preseed.sql`;
+    const filepath = join(backupDir, filename);
+    try {
+      execSync(
+        `docker exec growth-miniprogram-db pg_dump -U growthuser -d growth-miniprogram --no-owner --no-acl -f - > "${filepath.replace(/\\/g, "/")}"`,
+        { stdio: "pipe", timeout: 30000, shell: true }
+      );
+      console.log(`已自动备份到: backend/backups/${filename}`);
+    } catch (e) {
+      console.error("备份失败，继续执行 seed:", e instanceof Error ? e.message : e);
+    }
+  }
   // Clean existing data
   await prisma.aISuccessCase.deleteMany();
   await prisma.aIReflection.deleteMany();

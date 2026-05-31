@@ -7,6 +7,7 @@ import planRoutes from "./routes/plans";
 import reviewRoutes from "./routes/reviews";
 import analysisRoutes from "./routes/analysis";
 import progressRoutes from "./routes/progress";
+import promptRoutes from "./routes/prompt";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/plans", planRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/analysis", analysisRoutes);
 app.use("/api/progress", progressRoutes);
+app.use("/api/prompt", promptRoutes);
 
 // Error handling
 app.use(notFoundHandler);

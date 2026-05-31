@@ -45,7 +45,7 @@ export class GoalService {
 
   // YearlyGoal
   async listYearlyGoals(userId: string, filters?: { lifeGoalId?: string; year?: number }) {
-    return prisma.yearlyGoal.findMany({ where: { userId, ...filters }, orderBy: { year: "desc" } });
+    return prisma.yearlyGoal.findMany({ where: { userId, ...filters }, orderBy: { year: "asc" } });
   }
 
   async createYearlyGoal(data: {

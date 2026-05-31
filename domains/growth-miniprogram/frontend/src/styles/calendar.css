@@ -1,0 +1,218 @@
+/* ─── Period Selector ─── */
+.date-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.date-picker label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.date-picker select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--bg-card);
+  color: var(--text);
+}
+
+.dim-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.dim-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.dim-btn:hover {
+  background: var(--bg-hover);
+}
+
+.dim-btn.active {
+  border-color: var(--accent);
+  background: var(--bg-accent);
+  color: var(--accent);
+}
+
+/* ─── Calendar Grid ─── */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-header {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  padding: 4px;
+}
+
+.cal-cell {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px;
+  min-height: 50px;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.cal-cell.clickable {
+  cursor: pointer;
+}
+.cal-cell.clickable:hover {
+  border-color: var(--accent);
+  background: #f0f7ff;
+}
+
+.cal-cell .day-num {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.cal-cell.other-month .day-num {
+  color: var(--text-muted);
+}
+
+.cal-cell.has-data {
+  background: #f0fdf4;
+}
+
+.cal-cell.today {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.cal-legend {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+.cal-month-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* ─── Year Grid ─── */
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.year-month-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.year-month-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-accent);
+}
+
+.year-month-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.year-month-rating {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.year-month-pct {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ─── Week Timeline ─── */
+.week-day-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.week-day-row:last-child {
+  border-bottom: none;
+}
+
+.week-day-name {
+  width: 28px;
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.week-day-date {
+  width: 60px;
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.week-day-summary {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Day Timeline ─── */
+.day-timeline-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.day-timeline-item:last-child {
+  border-bottom: none;
+}
+
+.day-time-block {
+  width: 60px;
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.day-content {
+  flex: 1;
+}
+
+.day-task-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.day-task-meta {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}

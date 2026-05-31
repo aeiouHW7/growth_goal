@@ -1,0 +1,92 @@
+/* ─── Reset & Base ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Navbar ─── */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 48px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.navbar-logo {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.3px;
+}
+
+.navbar-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.navbar-tab {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.navbar-tab:hover {
+  background: var(--bg-hover);
+}
+
+.navbar-tab.active {
+  border-color: var(--accent);
+  background: var(--bg-accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ─── Main Content ─── */
+.main-content {
+  flex: 1;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

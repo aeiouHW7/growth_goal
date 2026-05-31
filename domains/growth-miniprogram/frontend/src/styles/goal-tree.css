@@ -1,0 +1,176 @@
+/* ─── Filter Bar ─── */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filter-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.filter-btn:hover {
+  background: var(--bg-hover);
+}
+
+.filter-btn.active {
+  border-color: var(--accent);
+  background: var(--bg-accent);
+  color: var(--accent);
+}
+
+/* ─── Goal Tree ─── */
+.goal-tree-root {
+  padding: 8px;
+  background: #f0f0ff;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.goal-tree-root.done {
+  background: #f9fafb;
+  opacity: 0.45;
+}
+
+.goal-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+  background: var(--bg-card);
+  transition: background 0.15s;
+}
+
+.goal-node:hover {
+  background: var(--bg-hover);
+}
+
+.goal-node.done {
+  opacity: 0.45;
+}
+
+.goal-node.done .goal-title-text,
+.goal-node.done .goal-value-text {
+  color: var(--text-muted);
+}
+
+.goal-expand-icon {
+  color: var(--text-muted);
+  font-size: 10px;
+  width: 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.goal-title-text {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-year-tag {
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.goal-start-value,
+.goal-target-value {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.goal-start-value {
+  color: var(--text-muted);
+}
+
+.goal-tree-bar {
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.goal-value-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Children indentation */
+.goal-children {
+  margin-left: 20px;
+}
+
+/* ─── Time View ─── */
+.time-year-section {
+  margin-bottom: 12px;
+}
+
+.time-year-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  background: #f0f0ff;
+  border: 1px solid var(--border);
+  margin-bottom: 6px;
+  user-select: none;
+}
+
+.time-year-header:hover {
+  background: #e8e8ff;
+}
+
+.time-year-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.time-year-count {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+
+.time-year-body {
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
+  margin-left: 6px;
+}
+
+.time-month-section {
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.time-month-header {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  padding: 4px 8px;
+  background: var(--bg-card);
+  border-radius: 4px;
+  margin-bottom: 4px;
+}

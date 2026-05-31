@@ -1,0 +1,133 @@
+/* ─── Panel Tab Bar ─── */
+.panel-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.panel-tab {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.panel-tab:hover {
+  background: var(--bg-hover);
+}
+
+.panel-tab.active {
+  background: var(--bg-accent);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ─── Panel Content ─── */
+.panel-plan-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.panel-plan-item:last-child {
+  border-bottom: none;
+}
+
+.panel-plan-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.panel-plan-meta {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ─── Eval Panel ─── */
+.eval-rating {
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.eval-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.eval-stat {
+  text-align: center;
+}
+
+.eval-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.eval-stat-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* ─── Report Panel ─── */
+.report-section {
+  margin-bottom: 12px;
+}
+
+.report-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.report-section-content {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ─── Plans Page Layout ─── */
+.plans-layout {
+  display: flex;
+  gap: 12px;
+}
+
+.plans-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.plans-right {
+  width: 300px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .plans-layout {
+    flex-direction: column;
+  }
+  .plans-right {
+    width: 100%;
+  }
+}
+
+.plans-right-tip {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  text-align: center;
+}

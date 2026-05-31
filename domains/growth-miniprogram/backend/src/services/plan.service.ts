@@ -43,7 +43,7 @@ function validatePlanTransition(current: PlanStatus, next: PlanStatus): void {
 export class PlanService {
   // MonthlyPlan
   async listMonthlyPlans(userId: string, filters?: { yearlyGoalId?: string; year?: number; month?: number }) {
-    return prisma.monthlyPlan.findMany({ where: { userId, ...filters }, orderBy: [{ year: "desc" }, { month: "desc" }] });
+    return prisma.monthlyPlan.findMany({ where: { userId, ...filters }, orderBy: [{ year: "asc" }, { month: "asc" }] });
   }
 
   async createMonthlyPlan(data: {

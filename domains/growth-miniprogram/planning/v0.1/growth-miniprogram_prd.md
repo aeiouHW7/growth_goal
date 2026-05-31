@@ -3,7 +3,7 @@ version: "0.1.0"
 requirement: "growth-miniprogram 目标管理与复盘系统"
 status: draft
 created: "2026-05-16"
-updated: "2026-05-16"
+updated: "2026-05-17"
 modules: ["目标管理", "复盘系统", "AI分析引擎", "数据看板"]
 entities: ["User", "LifeGoal", "YearlyGoal", "MonthlyPlan", "DailyPlan", "DailyReview", "WeeklyReview", "MonthlyReview", "AIAnalysis", "AIAnalysisFeedback", "AIReflection", "AISuccessCase"]
 author: "ACE Planner"
@@ -495,14 +495,16 @@ AI 分析每次必须包含以下四层：
 | 周复盘 | AI 主动发起（周末检测） | 聚合周数据，搜索时事，分析 | 周报 |
 | 月复盘 | AI 主动发起（月末检测） | 聚合月数据，全面分析+外部视角 | 月报 |
 
-### Phase 2: Web 看板（后续阶段）
+### Phase 2: Web 看板（当前阶段）
 
 | 页面 | 数据源 | 核心内容 |
 |------|--------|---------|
-| 目标总览 | User → LifeGoal → YearlyGoal | 所有目标层级结构+进度条 |
-| 计划详情 | YearlyGoal → MonthlyPlan → DailyPlan | 某目标的完整拆解链 |
-| 复盘历史 | DailyReview | 按时间线查看复盘 |
-| 数据看板 | AIAnalysis 聚合 | 完成趋势、模式发现、AI 洞察 |
+| 总览 | User → LifeGoal → YearlyGoal + AIAnalysis 聚合 | 用户信息(hover)、人生总目标、进行中年度目标、AI 改进建议、当月每个目标完成进度 |
+| 目标链 | LifeGoal → YearlyGoal → MonthlyPlan | 三级目标层级树，支持全部/进行中/已完成筛选，已完成置灰 |
+| 计划 | 按年/月/周/日维度切换 | 年/月选择器 + 维度切换 + 左栏日历/时间线 + 右栏三面板(计划/评估/报告) |
+
+**主题**：浅色主题（#f5f5f7 背景，白色卡片）
+**技术栈**：Vite + React + TypeScript，端口 3002，API 代理到 localhost:3001
 
 ---
 

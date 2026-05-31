@@ -53,6 +53,7 @@ export class ReviewService {
   async updateDaily(id: string, data: {
     rawInput?: string; completed?: string; notCompleted?: string;
     obstacles?: string; emotionState?: string; mindsetNote?: string;
+    energyRate?: number;
   }) {
     return prisma.dailyReview.update({ where: { id }, data });
   }

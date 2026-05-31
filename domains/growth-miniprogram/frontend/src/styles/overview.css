@@ -1,0 +1,131 @@
+.overview-page {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overview-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+/* Life Goal Card */
+.life-goal-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.life-goal-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* Yearly Goals */
+.goal-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.goal-item:last-child {
+  border-bottom: none;
+}
+
+.goal-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.goal-dot.green { background: var(--success); }
+.goal-dot.yellow { background: var(--warning); }
+.goal-dot.red { background: var(--error); }
+.goal-dot.gray { background: var(--grayed); }
+
+.goal-title {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.goal-value {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.goal-bar-wrap {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+/* AI Suggestions */
+.ai-msg {
+  border-left: 3px solid #a855f7;
+  padding: 6px 10px;
+  margin: 6px 0;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.ai-msg.green { border-color: var(--success); }
+.ai-msg.yellow { border-color: var(--warning); }
+.ai-msg.red { border-color: var(--error); }
+
+/* Monthly Progress */
+.monthly-progress-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.monthly-progress-item:last-child {
+  border-bottom: none;
+}
+
+.monthly-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.monthly-progress-label {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.monthly-progress-value {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.monthly-progress-value.green { color: var(--success); }
+.monthly-progress-value.yellow { color: var(--warning); }
+.monthly-progress-value.red { color: var(--error); }
+
+/* Progress Bar */
+.progress-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.progress-fill.green { background: var(--success); }
+.progress-fill.yellow { background: var(--warning); }
+.progress-fill.red { background: var(--error); }
+.progress-fill.gray { background: var(--grayed); }

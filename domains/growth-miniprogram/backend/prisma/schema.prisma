@@ -68,6 +68,11 @@ model User {
   dailyReviews  DailyReview[]
   weeklyReviews WeeklyReview[]
   monthlyReviews MonthlyReview[]
+
+  behaviorPatterns  BehaviorPattern[]
+  cognitiveBiasLogs CognitiveBiasLog[]
+  capabilityScores  CapabilityScore[]
+  analysisSessions  AnalysisSession[]
 }
 
 model LifeGoal {
@@ -157,6 +162,7 @@ model DailyReview {
   obstacles    String?
   emotionState String?
   mindsetNote  String?
+  energyRate   Int?
   followUpLog  Json?
   status       ReviewStatus @default(INPUTTING)
   createdAt    DateTime     @default(now())
@@ -164,6 +170,9 @@ model DailyReview {
 
   user       User         @relation(fields: [userId], references: [id])
   aiAnalyses AIAnalysis[]
+
+  cognitiveBiasLogs CognitiveBiasLog[]
+  analysisSessions  AnalysisSession[]
 }
 
 model WeeklyReview {
@@ -182,6 +191,9 @@ model WeeklyReview {
 
   user       User         @relation(fields: [userId], references: [id])
   aiAnalyses AIAnalysis[]
+
+  cognitiveBiasLogs CognitiveBiasLog[]
+  analysisSessions  AnalysisSession[]
 }
 
 model MonthlyReview {
@@ -198,6 +210,9 @@ model MonthlyReview {
 
   user       User         @relation(fields: [userId], references: [id])
   aiAnalyses AIAnalysis[]
+
+  cognitiveBiasLogs CognitiveBiasLog[]
+  analysisSessions  AnalysisSession[]
 }
 
 model AIAnalysis {
@@ -250,4 +265,73 @@ model AISuccessCase {
   createdAt           DateTime @default(now())
 
   feedback AIAnalysisFeedback @relation(fields: [feedbackId], references: [id])
+}
+
+// ===== self-growth-analyst 引擎模型 =====
+
+/// 跨天行为模式追踪（替换 retrieval_index.json）
+model BehaviorPattern {
+  id            String   @id @default(uuid())
+  userId        String
+  pattern       String
+  dimension     String?
+  keywords      String[]
+  firstDetected DateTime
+  lastDetected  DateTime
+  frequency     Int      @default(1)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+/// 认知偏误日志（替换 cognitive_bias_log.md）
+model CognitiveBiasLog {
+  id            String   @id @default(uuid())
+  userId        String
+  dailyReviewId String?
+  weeklyReviewId String?
+  monthlyReviewId String?
+  biasType      String
+  triggerPhrase String
+  evidence      String
+  createdAt     DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  dailyReview  DailyReview?  @relation(fields: [dailyReviewId], references: [id])
+  weeklyReview  WeeklyReview? @relation(fields: [weeklyReviewId], references: [id])
+  monthlyReview MonthlyReview? @relation(fields: [monthlyReviewId], references: [id])
+}
+
+/// 能力维度评分（替换 dynamic_baseline.json）
+model CapabilityScore {
+  id        String   @id @default(uuid())
+  userId    String
+  dimension String
+  score     Float
+  evidence  String?
+  source    String   @default("daily_review")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+/// 分析会话状态（替换 orchestrator_state.json）
+model AnalysisSession {
+  id          String   @id @default(uuid())
+  userId      String
+  dailyReviewId String?
+  weeklyReviewId String?
+  monthlyReviewId String?
+  status      String   @default("idle")
+  currentStep String?
+  result      Json?
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+
+  user         User         @relation(fields: [userId], references: [id])
+  dailyReview  DailyReview?  @relation(fields: [dailyReviewId], references: [id])
+  weeklyReview  WeeklyReview? @relation(fields: [weeklyReviewId], references: [id])
+  monthlyReview MonthlyReview? @relation(fields: [monthlyReviewId], references: [id])
 }

@@ -4,9 +4,14 @@ export class ProgressService {
   async overview(userId: string) {
     const [lifeGoals, yearlyGoals, monthlyPlans, dailyReviews] = await Promise.all([
       prisma.lifeGoal.findMany({ where: { userId }, orderBy: { sortOrder: "asc" } }),
-      prisma.yearlyGoal.findMany({ where: { userId }, orderBy: { year: "desc" } }),
-      prisma.monthlyPlan.findMany({ where: { userId }, orderBy: [{ year: "desc" }, { month: "desc" }] }),
-      prisma.dailyReview.findMany({ where: { userId }, orderBy: { date: "desc" }, take: 30 }),
+      prisma.yearlyGoal.findMany({ where: { userId }, orderBy: { year: "asc" } }),
+      prisma.monthlyPlan.findMany({ where: { userId }, orderBy: [{ year: "asc" }, { month: "asc" }] }),
+      prisma.dailyReview.findMany({
+        where: { userId },
+        orderBy: { date: "desc" },
+        take: 30,
+        include: { aiAnalyses: { orderBy: { createdAt: "desc" }, take: 1 } },
+      }),
     ]);
 
     const total = lifeGoals.length + yearlyGoals.length + monthlyPlans.length;
@@ -21,6 +26,16 @@ export class ProgressService {
       monthlyPlans: monthlyPlans.map((g) => ({ id: g.id, title: g.title, year: g.year, month: g.month, status: g.status, targetValue: g.targetValue, currentValue: g.currentValue })),
       stats: { total, completed, completionRate: total > 0 ? Math.round((completed / total) * 100) : 0 },
       recentReviews: dailyReviews.map((r) => ({ id: r.id, date: r.date, status: r.status })),
+      // 每日指标汇总
+      dailyMetrics: {
+        energyRates: dailyReviews
+          .filter((r) => (r.aiAnalyses?.[0]?.structuredReport as any)?.energyRate !== undefined)
+          .map((r) => ({
+            date: r.date,
+            score: (r.aiAnalyses?.[0]?.structuredReport as any).energyRate,
+          })),
+        postureDays: dailyReviews.filter((r) => (r.aiAnalyses?.[0]?.structuredReport as any)?.postureTraining?.completed === true).length,
+      },
     };
   }
 
@@ -28,14 +43,14 @@ export class ProgressService {
     // Try LifeGoal first, then YearlyGoal
     const lifeGoal = await prisma.lifeGoal.findFirst({ where: { id: goalId, userId } });
     if (lifeGoal) {
-      const yearly = await prisma.yearlyGoal.findMany({ where: { lifeGoalId: goalId }, orderBy: { year: "desc" } });
-      const monthly = await prisma.monthlyPlan.findMany({ where: { yearlyGoalId: { in: yearly.map((y) => y.id) } }, orderBy: [{ year: "desc" }, { month: "desc" }] });
+      const yearly = await prisma.yearlyGoal.findMany({ where: { lifeGoalId: goalId }, orderBy: { year: "asc" } });
+      const monthly = await prisma.monthlyPlan.findMany({ where: { yearlyGoalId: { in: yearly.map((y) => y.id) } }, orderBy: [{ year: "asc" }, { month: "asc" }] });
       return { goal: lifeGoal, children: { yearlyGoals: yearly.map((y) => ({ ...y, monthlyPlans: monthly.filter((m) => m.yearlyGoalId === y.id) })) } };
     }
 
     const yearlyGoal = await prisma.yearlyGoal.findFirst({ where: { id: goalId, userId } });
     if (yearlyGoal) {
-      const monthly = await prisma.monthlyPlan.findMany({ where: { yearlyGoalId: goalId }, orderBy: [{ year: "desc" }, { month: "desc" }] });
+      const monthly = await prisma.monthlyPlan.findMany({ where: { yearlyGoalId: goalId }, orderBy: [{ year: "asc" }, { month: "asc" }] });
       return { goal: yearlyGoal, children: { monthlyPlans: monthly } };
     }
 
