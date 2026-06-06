@@ -202,31 +202,43 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-// 从用户输入中提取复盘日期。优先匹配"昨天""前天""X月Y日""X.Y"，否则返回今天
+// 从用户输入中提取复盘日期。按优先级匹配：
+//   1) "今天的复盘"/"今日复盘" → 今天
+//   2) "昨天的复盘"/"昨日复盘" → 昨天
+//   3) "前天" → 前天
+//   4) "X月Y日"/"X.Y"/"X-Y" → 指定日期
+//   5) "昨天"（单独在句首/开头）→ 昨天（兼容旧消息，但避免内容中的"昨天"干扰）
+//   6) 默认 → 今天
 function parseReviewDate(text) {
   const now = new Date();
   const y = now.getFullYear();
   const m = now.getMonth() + 1;
-  const d = now.getDate();
 
-  // "昨天"
-  if (/昨天/.test(text)) {
+  // 1) 明确说"今天的复盘" → 今天
+  if (/今[天日].*复盘/.test(text)) return todayStr();
+  // 2) 明确说"昨天的复盘" → 昨天
+  if (/昨[天日].*复盘/.test(text)) {
     const d2 = new Date(now); d2.setDate(d2.getDate() - 1);
     return `${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
   }
-  // "前天"
+  // 3) "前天"
   if (/前天/.test(text)) {
     const d2 = new Date(now); d2.setDate(d2.getDate() - 2);
     return `${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
   }
-  // "M月D日" or "M.D" or "M-D"
+  // 4) "M月D日" or "M.D" or "M-D"
   const match = text.match(/(\d{1,2})\s*[月.\-]\s*(\d{1,2})日?/);
   if (match) {
     let ym = parseInt(match[1], 10), yd = parseInt(match[2], 10);
-    // 如果月份大于当前月份，可能是去年的复盘
     let yy = ym > m ? y - 1 : y;
     return `${yy}-${String(ym).padStart(2,'0')}-${String(yd).padStart(2,'0')}`;
   }
+  // 5) "昨天" 出现在句首（前4个字符），避免内容中的"昨天"干扰
+  if (/^.{0,4}昨天/.test(text)) {
+    const d2 = new Date(now); d2.setDate(d2.getDate() - 1);
+    return `${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
+  }
+  // 6) 默认 → 今天
   return todayStr();
 }
 
@@ -718,7 +730,7 @@ async function runAnalysis(userId, session, fullInput, signal) {
 
 要求输出JSON，schema如下:
 
-${analysisRequirements || '分析要求（请按以下顺序执行）：\n\n1. **偏误分析** — 回顾用户输入中的表达方式，判断是否存在以下偏误：计划谬误（过度乐观）、自我美化（模糊表述）、基本归因错误（外归因）、确认偏误（只找支持自己的论据）、损失厌恶（怕损失>想获得）、事后合理化（为过去找理由）、现状偏差（懒得改）、聚类错觉（以偏概全）。每条偏误必须引用用户原文作为 triggerPhrase，输出到 detectedBiases\n\n2. **执行诊断（Fogg 模型）** — 对于"知道该做但没做"的问题，判断是动机(M)不足、能力(A)不足还是提示(P)不足，输出到 executionDiagnosis.issues 和 foggDiagnosis。写 issues 时注意每条表述要具体一致（如"运动计划未执行"），方便后续识别为同一问题的重复出现\n\n3. **模式对照** — 对照「行为模式」列表中已知的反复障碍。如果本次的某条 issue 和列表中的模式相似，在 detectedPatterns 中记录，frequency 直接使用列表中的已有次数+1\n\n4. **能力评分** — 对照「能力评分」基线，对本次复盘涉及到的维度打 0-10 分，在 evidence 中注明进步/退步/维持及行为证据。输出到 capabilityDeltas\n\n5. **洞察（三段式）** — unaware：他没意识到的言外之意（不推测情绪，只说"你说了A，可能在想B"）；pattern：模式判断（反复障碍/新话题）；missing：与目标相关的行动是否缺失\n\n6. **充沛率评估** — 根据用户输入的睡眠质量、日间精力、情绪状态、产出效率综合推断今日充沛率（1-100），不允许留空。输出到 energyRate'}
+${analysisRequirements || '分析要求（请按以下顺序执行）：\n\n1. **偏误分析** — 回顾用户输入中的表达方式，判断是否存在以下偏误：计划谬误（过度乐观）、自我美化（模糊表述）、基本归因错误（外归因）、确认偏误（只找支持自己的论据）、损失厌恶（怕损失>想获得）、事后合理化（为过去找理由）、现状偏差（懒得改）、聚类错觉（以偏概全）。每条偏误必须引用用户原文作为 triggerPhrase，输出到 detectedBiases\n\n2. **执行诊断（Fogg 模型）** — 对于"知道该做但没做"的问题，判断是动机(M)不足、能力(A)不足还是提示(P)不足，输出到 executionDiagnosis.issues 和 foggDiagnosis。写 issues 时注意每条表述要具体一致（如"运动计划未执行"），方便后续识别为同一问题的重复出现\n\n3. **模式对照** — 对照「行为模式」列表中已知的反复障碍。如果本次的某条 issue 和列表中的模式相似，在 detectedPatterns 中记录，frequency 直接使用列表中的已有次数+1\n\n4. **能力评分** — 对照「能力评分」基线，对本次复盘涉及到的维度打 0-10 分，在 evidence 中注明进步/退步/维持及行为证据。输出到 capabilityDeltas（注意：必须使用数组格式 [{dimension, score, evidence}]，不要用对象键值对格式）\n\n5. **洞察（三段式）** — unaware：他没意识到的言外之意（不推测情绪，只说"你说了A，可能在想B"）；pattern：模式判断（反复障碍/新话题）；missing：与目标相关的行动是否缺失\n\n6. **充沛率评估** — 根据用户输入的睡眠质量、日间精力、情绪状态、产出效率综合推断今日充沛率（1-100），不允许留空。输出到 energyRate'}
 
 {
   "completionSummary": { "completed": [], "notCompleted": [], "completionRate": "0%" },
@@ -730,6 +742,7 @@ ${analysisRequirements || '分析要求（请按以下顺序执行）：\n\n1. *
   "detectedBiases": [{ "type": "", "triggerPhrase": "", "evidence": "" }],
   "detectedPatterns": [{ "pattern": "", "dimension": "", "frequency": 0 }],
   "capabilityDeltas": [{ "dimension": "", "score": 0, "evidence": "" }],
+  "postureTraining": { "completed": false, "note": "" },
   "energyRate": 0,
   "signalScore": 0,
   "insight": { "unaware": "", "pattern": "", "missing": "" },
