@@ -1,9 +1,0 @@
-# Lifecycle runtime artifacts
-.pids/
-.logs/
-
-# Dependencies
-node_modules/
-
-# Environment
-.env.local

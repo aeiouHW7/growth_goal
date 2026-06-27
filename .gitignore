@@ -1,35 +1,4 @@
-# OS & IDE
-.DS_Store
-.vscode/
-.idea/
-
-# Dependencies
 node_modules/
-build/
-dist/
-
-# Local Environment
 .env
-.env.local
-
-# Temporary & Archive
-.tmp/
-.archive/
-*.backup
-*.log
-
-# SSH keys
-*_key
-*_key.pub
-
-# Archives
-*.zip
-
-# Claude Code
-.claude/worktrees/
-.claude/scheduled_tasks.lock
-
-# self-growth-analyst moved to domains/growth-miniprogram/references/self-growth-analyst/ (tracked)
-# Root-level self-growth is no longer present
-/self-growth-analyst/
-domains/my-app/self-growth-analyst/
+dist/
+.DS_Store
