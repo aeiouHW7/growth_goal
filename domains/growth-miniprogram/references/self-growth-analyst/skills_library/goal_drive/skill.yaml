@@ -1,0 +1,34 @@
+skill_name: 目标驱动校准
+dimension: goal_drive
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: pattern
+    value: "尽量做"
+    threshold: 4
+  - type: keyword
+    value: "差不多"
+    threshold: 3
+
+diagnosis_flow:
+  - step: 1
+    method: fogg_model
+    question: "你这周的目标，具体是什么？可衡量的指标是什么？"
+    output: "目标SMART程度评估"
+
+intervention:
+  type: micro_action
+  prompt: |
+    说不上来就是假目标。模糊的目标等于没有目标。
+    真正的目标必须有具体数字、有截止日期、有可衡量的结果。
+  action: "设定一个SMART目标：具体的、可衡量的、有时间截止的"
+
+success_metrics:
+  - "用户设定了SMART目标"
+  - "用户能说出可衡量的指标"
+  - "用户仍然说'尽量做'或'差不多'"
+
+escalation:
+  if: "用户连续3次设定非SMART目标"
+  then: "提醒：模糊目标是自我欺骗，需要对结果负责才能真正成长"

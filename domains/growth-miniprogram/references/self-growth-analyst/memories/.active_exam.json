@@ -1,0 +1,9 @@
+{
+  "type": "weekly_exam",
+  "exam_date": "2026-05-10",
+  "created_at": "2026-05-10T13:01:00+08:00",
+  "expires_at": "2026-05-11T13:01:00+08:00",
+  "week": "2026-W19",
+  "message_id": "om_x100b6f3c685438b0c216b2d67460f2f",
+  "status": "pending"
+}

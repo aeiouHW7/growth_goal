@@ -1,0 +1,32 @@
+skill_name: 抗压与韧性校准
+dimension: resilience
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: pattern
+    value: 用户重大失败后恢复时间超过2周
+    threshold: 1
+
+diagnosis_flow:
+  - step: 1
+    method: fogg_model
+    question: "这个挫折，1周后你怎么看它？1个月后呢？恢复时间越长，韧性越差。"
+    output: "恢复速度与韧性评估"
+
+intervention:
+  type: micro_action
+  prompt: |
+    韧性不是不倒下，而是倒下后爬起来的速度。
+    恢复周期超过2周，说明你被困在情绪里了，不是在处理问题。
+    福格模型：你是不知道怎么爬起来（能力），还是不想爬了（动机）？
+    这个问题现在要解决，第一步是什么？别想全局，想最小的一步。
+  action: "这个挫折发生后的第三天，你打算做什么？"
+
+success_metrics:
+  - "3天内制定出具体的第一步行动计划"
+  - "继续沉浸在情绪中无法行动"
+
+escalation:
+  if: "2周后仍无法正常行动"
+  then: "指出：'你不是在消化情绪，是在逃避现实。'"

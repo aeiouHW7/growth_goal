@@ -1,0 +1,62 @@
+{
+  "actions": [
+    {
+      "id": "pa-002",
+      "action": "汇报前用一句话确认核心观点",
+      "from_date": "2026-04-24",
+      "from_dimension": "communication",
+      "trigger_context": "沟通表达干预触发",
+      "verification_keywords": ["我先说了", "核心观点是", "一句话概括"],
+      "status": "pending",
+      "check_count": 0,
+      "last_check": null
+    },
+    {
+      "id": "pa-006",
+      "action": "明确'该手动/该用Agent'的决策边界",
+      "from_date": "2026-05-07",
+      "from_dimension": "execution",
+      "trigger_context": "用户建立了决策框架但没有说清边界",
+      "verification_keywords": ["手动边界明确了", "Agent使用边界", "决策原则具体化"],
+      "status": "completed",
+      "completed_date": "2026-05-12",
+      "completion_evidence": "周评估Q2回答：边界=哪个更快到目标",
+      "check_count": 1,
+      "last_check": "2026-05-12"
+    }
+  ],
+  "meta": {
+    "last_updated": "2026-05-12T21:46:00+08:00",
+    "total_pending": 1,
+    "archived": [
+      {
+        "id": "pa-001",
+        "action": "每天15分钟补偿机制",
+        "from_date": "2026-04-15",
+        "archive_date": "2026-04-27",
+        "archive_reason": "合同不匹配：用户主动替换任务（股票替代视频），非执行失败"
+      },
+      {
+        "id": "pa-003",
+        "action": "不管测试结果，先打开 Obsidian 创建'笔记整合-待处理'草稿标题",
+        "from_date": "2026-05-04",
+        "archive_date": "2026-05-07",
+        "archive_reason": "精神已执行：今天确实开始整理笔记，且改用Claude Code替代原插件方案"
+      },
+      {
+        "id": "pa-004",
+        "action": "Obsidian插件优化1",
+        "from_date": "2026-05-06",
+        "archive_date": "2026-05-07",
+        "archive_reason": "方案废弃：用户决定改用Claude Code"
+      },
+      {
+        "id": "pa-005",
+        "action": "Obsidian插件优化2",
+        "from_date": "2026-05-06",
+        "archive_date": "2026-05-07",
+        "archive_reason": "方案废弃：用户决定改用Claude Code"
+      }
+    ]
+  }
+}

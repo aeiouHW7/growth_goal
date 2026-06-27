@@ -1,0 +1,32 @@
+skill_name: 时间管理校准
+dimension: time_management
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: pattern
+    value: 用户碎片化时间被被动消耗（刷手机）
+    threshold: 1
+
+diagnosis_flow:
+  - step: 1
+    method: pattern
+    question: "你昨天专注工作了几个小时？刷手机占多少？时间颗粒度越粗，成长越慢。"
+    output: "时间颗粒度评估"
+
+intervention:
+  type: micro_action
+  prompt: |
+    刷手机不是休息，是逃避。逃避之后还有罪恶感，然后更刷。
+    你的时间被切得越碎，你能做的事情就越少。
+    心流时间是成长的加速器，碎片时间刷手机是成长的减速器。
+    你的时间颗粒度，决定了你能走多远。
+  action: "今天，关掉所有非必要通知，工作时手机放到看不见的地方。"
+
+success_metrics:
+  - "今天至少有2小时不间断的专注时间"
+  - "继续时间碎片化，刷手机无法控制"
+
+escalation:
+  if: "连续3天无法控制碎片时间消耗"
+  then: "追问：'你用刷手机来逃避什么？'"

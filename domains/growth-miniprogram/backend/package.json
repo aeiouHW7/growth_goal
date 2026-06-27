@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bash ../scripts/db-backup.sh pre-dev 2>/dev/null; tsx watch src/index.ts",
+    "predev": "bash ../scripts/db-backup.sh pre-dev",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "db:generate": "prisma generate",

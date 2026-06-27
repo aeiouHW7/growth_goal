@@ -1,0 +1,45 @@
+skill_name: 决策力校准
+dimension: decision
+version: 1.0
+created_at: 2026-04-25
+
+trigger_conditions:
+  - dimension_score_below: 6
+  - keywords: ["后悔", "当初该选", "如果当初", "选错了", "决策失误"]
+  - pattern: "决策" frequency_gte: 3
+  - attribution_type: "external_blame"  # 失败总是归因外部
+
+diagnosis_flow:
+  - step: 分析最近3个决策记录
+    method: 福格行为模型
+    question: "这个决策是冲动决定还是过度分析？"
+    output: 动机/能力/提示哪个不足
+
+  - step: 判断决策前信息收集度
+    method: 冰山模型
+    question: "你收集了多少反对意见？还是只找支持你想法的人？"
+    output: 信息收集完整度
+
+  - step: 诊断主导偏误
+    method: cognitive_bias_log查询
+    question: "你最近用'运气不好'解释过失败吗？"
+    output: 偏误类型（确认偏误/损失厌恶/事后合理化）
+
+intervention:
+  type: micro_action
+  prompt: |
+    你最近在做决策时，第N次出现"事后合理化"或"冲动决定"模式。
+    本周遇到下一个重要抉择时：
+    1. 先找一个人问"反对意见"，花5分钟听完再决定
+    2. 把决策写下来：为什么选A不选B，最坏结果是什么
+  expected_change: "下次碎碎念提到决策时，能说出'我问了反对意见'"
+  follow_up_window: 7days
+
+escalation:
+  if: "连续3次决策失误且无新行为"
+  then: "触发深度挑战：你是在'维持现状'还是'卡住了不敢动'？"
+
+example_responses:
+  good: "我昨天问了同事反对意见，虽然没改变决定但心里更有底了"
+  bad: "我当时觉得是对的，事后看也还可以"  # 事后合理化偏误
+  neutral: "这周有2个决策，我问了反对意见"  # 执行了行动

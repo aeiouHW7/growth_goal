@@ -96,4 +96,27 @@ export class GoalController {
       res.json({ data: goal });
     } catch (err) { next(err); }
   }
+
+  // ─── AI 目标拆解 ───
+
+  async aiSuggestYearly(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = await getUserId();
+      const data = await goalService.aiSuggestYearly(userId);
+      res.json({ data });
+    } catch (err) { next(err); }
+  }
+
+  async confirmYearlyGoals(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = await getUserId();
+      const { goals } = req.body;
+      if (!goals || !Array.isArray(goals) || goals.length === 0) {
+        res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "goals 为非空数组" } });
+        return;
+      }
+      const created = await goalService.confirmYearlyGoals(userId, goals);
+      res.status(201).json({ data: created });
+    } catch (err) { next(err); }
+  }
 }

@@ -1,0 +1,34 @@
+skill_name: 健康管理校准
+dimension: health_management
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: pattern
+    value: "感觉还行"
+    threshold: 4
+  - type: keyword
+    value: "没时间运动"
+    threshold: 3
+
+diagnosis_flow:
+  - step: 1
+    method: behavioral
+    question: "你有记录你的睡眠和运动数据吗？"
+    output: "健康数据记录习惯评估"
+
+intervention:
+  type: micro_action
+  prompt: |
+    不测量就无法管理，不管理就等于放弃。
+    你的身体是你最重要的资产，但你连数据都不记录，怎么知道它在变好还是变差？
+  action: "开始用手机或手环记录本周的睡眠时长和运动量"
+
+success_metrics:
+  - "用户开始记录健康数据"
+  - "用户能说出具体的睡眠和运动数据"
+  - "用户仍然凭感觉评估健康状况"
+
+escalation:
+  if: "用户连续2周没有任何健康数据记录"
+  then: "提醒：没有数据就没有健康管理，这是对自己身体的不负责任"

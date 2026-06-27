@@ -1,0 +1,34 @@
+skill_name: 社交智慧校准
+dimension: social_wisdom
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: keyword
+    value: "小圈子"
+    threshold: 3
+  - type: pattern
+    value: "只跟认识的人交流"
+    threshold: 2
+
+diagnosis_flow:
+  - step: 1
+    method: iceberg
+    question: "你最近联系的人，是跟你很像的还是不同的？"
+    output: "社交圈多样性评估"
+
+intervention:
+  type: micro_action
+  prompt: |
+    你最近联系的人，是跟你很像的还是不同的？社交圈越单一，认知越窄。
+    你需要主动接触不同领域、不同背景的人，他们的视角才能打破你的认知盲区。
+  action: "本周约一个不同行业或不同圈子的人喝咖啡/线上交流"
+
+success_metrics:
+  - "用户主动联系了不同领域的人"
+  - "用户表示接触了新的思维方式"
+  - "用户继续只在熟人圈子里交流"
+
+escalation:
+  if: "用户连续3次回避拓展社交圈的话题"
+  then: "提醒：社交圈固化是认知天花板，需要主动打破舒适区才能成长"

@@ -2,6 +2,9 @@ import { GoalStatus, PlanStatus, MetricType } from "@prisma/client";
 import { prisma } from "../prisma";
 import { validateMetric } from "../utils/metric-validator";
 import { validateDateString } from "../utils/date-validator";
+import { LifeArchiveService } from "./life-archive.service";
+import { buildMonthlyDecomposePrompt, type MonthlyDecomposeContext } from "../prompts/goal-decompose.prompt";
+import { callClaude } from "../utils/claude";
 
 const GOAL_STATUS_TRANSITIONS: Record<GoalStatus, GoalStatus[]> = {
   ACTIVE: [GoalStatus.COMPLETED, GoalStatus.ABANDONED, GoalStatus.ARCHIVED],
@@ -95,5 +98,67 @@ export class PlanService {
     const plan = await prisma.dailyPlan.findUniqueOrThrow({ where: { id } });
     validatePlanTransition(plan.status, status);
     return prisma.dailyPlan.update({ where: { id }, data: { status } });
+  }
+
+  // ─── AI 月度计划拆解 ───
+
+  /** AI 建议月度计划 */
+  async aiSuggestMonthly(userId: string, yearlyGoalId: string) {
+    const yearlyGoal = await prisma.yearlyGoal.findUniqueOrThrow({ where: { id: yearlyGoalId } });
+
+    const lifeArchiveService = new LifeArchiveService();
+    const archive = await lifeArchiveService.get(userId);
+
+    const resources = archive?.layerResources as Record<string, any> | null;
+
+    const ctx: MonthlyDecomposeContext = {
+      yearlyGoalTitle: yearlyGoal.title,
+      yearlyGoalTarget: yearlyGoal.targetValue,
+      yearlyGoalMetric: yearlyGoal.metricType,
+      yearlyGoalDescription: yearlyGoal.description || undefined,
+      timeResources: {
+        weekdayHours: (resources?.weekdayAvailableHours as number) ?? null,
+        weekendHours: (resources?.weekendAvailableHours as number) ?? null,
+      },
+      energy: resources?.energy as MonthlyDecomposeContext["energy"],
+    };
+
+    const prompt = buildMonthlyDecomposePrompt(ctx);
+
+    try {
+      const result = await callClaude<{
+        plans: Array<{ month: number; title: string; description?: string; targetValue: string }>;
+      }>({ prompt });
+
+      return (result.plans || []).map((p) => ({
+        ...p,
+        yearlyGoalId,
+        metricType: yearlyGoal.metricType,
+      }));
+    } catch (err: any) {
+      throw Object.assign(
+        new Error(`AI 月度拆解失败: ${err.message}`),
+        { status: 503, code: "AI_SERVICE_UNAVAILABLE" },
+      );
+    }
+  }
+
+  /** 确认 AI 建议的月度计划 */
+  async confirmMonthlyPlans(
+    userId: string,
+    plans: Array<{
+      yearlyGoalId: string; title: string; description?: string;
+      month: number; year: number; metricType: MetricType; targetValue: string;
+    }>,
+  ) {
+    const created = [];
+    for (const plan of plans) {
+      validateMetric(plan.metricType, plan.targetValue);
+      const p = await prisma.monthlyPlan.create({
+        data: { userId, ...plan, status: GoalStatus.ACTIVE },
+      });
+      created.push(p);
+    }
+    return created;
   }
 }

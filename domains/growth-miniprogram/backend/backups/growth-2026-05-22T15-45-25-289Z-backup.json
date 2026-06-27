@@ -1,0 +1,635 @@
+{
+  "meta": {
+    "backedUpAt": "2026-05-22T15:45:25.341Z",
+    "version": "1.0"
+  },
+  "users": [
+    {
+      "id": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "nickname": "lmh",
+      "age": 30,
+      "occupation": "AI产品经理",
+      "industry": "互联网、AI、新能源",
+      "city": null,
+      "weekdayAvailableHours": 3.67,
+      "weekdayTimeBlocks": [
+        {
+          "end": "08:40",
+          "start": "06:30"
+        },
+        {
+          "end": "22:30",
+          "start": "21:00"
+        }
+      ],
+      "weekendAvailableHours": 6,
+      "weekendTimeBlocks": [],
+      "goalDomains": [
+        "健身",
+        "健康",
+        "AI",
+        "美容院经营",
+        "自媒体"
+      ],
+      "pastExperience": null,
+      "createdAt": "2026-05-19T13:29:57.410Z",
+      "updatedAt": "2026-05-19T13:38:03.509Z"
+    }
+  ],
+  "lifeGoals": [
+    {
+      "id": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "title": "时间自由·健康·家庭幸福·快乐自由",
+      "description": "可以自由决定什么时间工作、什么时间休息。身体健康，家庭幸福，快乐自由地生活。",
+      "timeHorizon": "终身",
+      "status": "ACTIVE",
+      "sortOrder": 1,
+      "completedAt": null,
+      "createdAt": "2026-05-19T13:38:12.907Z",
+      "updatedAt": "2026-05-19T13:38:12.907Z"
+    }
+  ],
+  "yearlyGoals": [
+    {
+      "id": "0368f43a-86a0-4cc8-8f60-e8424ec2860b",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "家庭存款达到300w",
+      "description": "从当前10w积累到300w",
+      "year": 2028,
+      "metricType": "NUMERIC",
+      "targetValue": "3000000 元",
+      "currentValue": "2200000 元",
+      "startValue": "2200000 元",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T13:50:38.753Z",
+      "updatedAt": "2026-05-21T13:45:20.103Z"
+    },
+    {
+      "id": "039fb435-5dcc-4da5-9eca-d278fc4db1c6",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "练成薄肌挺拔身材（体脂率16%）",
+      "description": "不驼背、肩背挺直的薄肌身材，体脂率从22%降到16%",
+      "year": 2028,
+      "metricType": "NUMERIC",
+      "targetValue": "16 %",
+      "currentValue": "18 %",
+      "startValue": "18 %",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T13:50:38.753Z",
+      "updatedAt": "2026-05-21T13:45:20.094Z"
+    },
+    {
+      "id": "c5f5bc79-5793-44c0-83f4-d3bb5b84ca98",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "自媒体账号达到5000粉丝",
+      "description": "持续运营更新一个自媒体账号，积累5000粉丝",
+      "year": 2028,
+      "metricType": "NUMERIC",
+      "targetValue": "5000 粉丝",
+      "currentValue": "2500 粉丝",
+      "startValue": "2500 粉丝",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T13:50:38.753Z",
+      "updatedAt": "2026-05-21T13:45:20.085Z"
+    },
+    {
+      "id": "cfe13c61-f9c6-4b80-b3df-f743671d1ff7",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "家庭年收入达到110w",
+      "description": "从当前72w提升到110w，3年内实现",
+      "year": 2028,
+      "metricType": "NUMERIC",
+      "targetValue": "1100000 元",
+      "currentValue": "900000 元",
+      "startValue": "900000 元",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T13:50:38.753Z",
+      "updatedAt": "2026-05-21T13:45:20.066Z"
+    },
+    {
+      "id": "2f7cc77c-5e0d-46a2-bc68-b4c440afa940",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "6h睡眠保持高精力（充沛率≥85%）",
+      "description": "每天复盘时自评：①闹钟响起直接起？②下午不犯困？≥1个✅=当日充沛。月充沛率≥85%",
+      "year": 2028,
+      "metricType": "PERCENTAGE",
+      "targetValue": "85 %",
+      "currentValue": "65 %",
+      "startValue": "65 %",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T13:50:38.753Z",
+      "updatedAt": "2026-05-21T13:45:20.076Z"
+    },
+    {
+      "id": "83952657-fe93-4e89-854f-4590b978610a",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "自媒体粉丝达到500",
+      "description": "2026里程碑：从0积累到800粉丝，建立运营节奏",
+      "year": 2026,
+      "metricType": "NUMERIC",
+      "targetValue": "500 粉丝",
+      "currentValue": "59 粉丝",
+      "startValue": "0 粉丝",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T14:53:58.941Z",
+      "updatedAt": "2026-05-21T14:00:13.239Z"
+    },
+    {
+      "id": "1bd105f0-6658-4439-bef4-6bca8a11c244",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "年收入达到78w",
+      "description": "2026里程碑：从72w提升到78w",
+      "year": 2026,
+      "metricType": "NUMERIC",
+      "targetValue": "780000 元",
+      "currentValue": "720000 元",
+      "startValue": "720000 元",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T14:53:58.941Z",
+      "updatedAt": "2026-05-21T13:45:19.942Z"
+    },
+    {
+      "id": "171414ee-8aa5-4833-af89-69d3eb53e297",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "体脂率降到20%（薄肌身材）",
+      "description": "2026里程碑：从22%降到20%，建立规律训练习惯",
+      "year": 2026,
+      "metricType": "NUMERIC",
+      "targetValue": "20 %",
+      "currentValue": "22 %",
+      "startValue": "22 %",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T14:53:58.941Z",
+      "updatedAt": "2026-05-21T13:45:19.955Z"
+    },
+    {
+      "id": "50c0532e-26c6-439b-a7d2-2144ad972e16",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "充沛率≥50%（6h睡眠高精力）",
+      "description": "2026里程碑：晨起精力充沛率从40%提升到50%",
+      "year": 2026,
+      "metricType": "PERCENTAGE",
+      "targetValue": "50 %",
+      "currentValue": "40 %",
+      "startValue": "30 %",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T14:53:58.941Z",
+      "updatedAt": "2026-05-21T13:45:19.967Z"
+    },
+    {
+      "id": "4a9546d9-caa5-4f57-97c8-caa7c246bfbc",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "家庭存款达到150w",
+      "description": "2026里程碑：从10w积累到40w",
+      "year": 2026,
+      "metricType": "NUMERIC",
+      "targetValue": "1500000 元",
+      "currentValue": "1000000 元",
+      "startValue": "1000000 元",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T14:53:58.941Z",
+      "updatedAt": "2026-05-21T13:45:20.000Z"
+    },
+    {
+      "id": "8080c70c-5f47-44b1-aea3-be90bbe733cf",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "年收入达到90w",
+      "description": "2027里程碑：从78w提升到90w",
+      "year": 2027,
+      "metricType": "NUMERIC",
+      "targetValue": "900000 元",
+      "currentValue": "780000 元",
+      "startValue": "780000 元",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T14:53:58.948Z",
+      "updatedAt": "2026-05-21T13:45:20.012Z"
+    },
+    {
+      "id": "7f2a8323-8d91-49e0-8371-0e396f03ea43",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "体脂率降到18%（薄肌身材）",
+      "description": "2027里程碑：从20%降到18%，肩背挺拔初现",
+      "year": 2027,
+      "metricType": "NUMERIC",
+      "targetValue": "18 %",
+      "currentValue": "20 %",
+      "startValue": "20 %",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T14:53:58.948Z",
+      "updatedAt": "2026-05-21T13:45:20.024Z"
+    },
+    {
+      "id": "6f7b2869-8e70-422b-86bf-364640cf720e",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "充沛率≥65%（6h睡眠高精力）",
+      "description": "2027里程碑：晨起精力充沛率从50%提升到65%",
+      "year": 2027,
+      "metricType": "PERCENTAGE",
+      "targetValue": "65 %",
+      "currentValue": "50 %",
+      "startValue": "50 %",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T14:53:58.948Z",
+      "updatedAt": "2026-05-21T13:45:20.035Z"
+    },
+    {
+      "id": "04d5f19c-5db5-4431-8230-02cf0019aac6",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "自媒体粉丝达到2500",
+      "description": "2027里程碑：从800增长到2500粉丝",
+      "year": 2027,
+      "metricType": "NUMERIC",
+      "targetValue": "2500 粉丝",
+      "currentValue": "800 粉丝",
+      "startValue": "800 粉丝",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T14:53:58.948Z",
+      "updatedAt": "2026-05-21T13:45:20.046Z"
+    },
+    {
+      "id": "e8cb4d10-d5fd-4086-a509-7c1e27634b35",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "lifeGoalId": "496ae741-04f2-4791-9b8c-8139f658771a",
+      "title": "家庭存款达到220w",
+      "description": "2027里程碑：从40w积累到130w",
+      "year": 2027,
+      "metricType": "NUMERIC",
+      "targetValue": "2200000 元",
+      "currentValue": "1500000 元",
+      "startValue": "1500000 元",
+      "status": "ACTIVE",
+      "completedAt": null,
+      "createdAt": "2026-05-19T14:53:58.948Z",
+      "updatedAt": "2026-05-21T13:45:20.057Z"
+    }
+  ],
+  "monthlyPlans": [],
+  "dailyPlans": [],
+  "dailyReviews": [
+    {
+      "id": "5d72f90e-d05c-4095-9471-f6155bde30b7",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "date": "2026-05-21T00:00:00.000Z",
+      "rawInput": "今早6:30起床，做了李鸿章视频；目前定了完成到第3章结束，输出一个视频，目前第三章粗剪还差2个小片段；上班很多琐事，今天比较好的一点是一件件都做了，干完一件干一件，把琐事完成了，明天再搞大需求；晚上回来继续开发这个反思复盘软件；不过这周都还没有运动呢；情绪挺开心的；最近中午都是睡一会，还挺精神的",
+      "completed": "6:30起床、做了李鸿章视频、琐事一件件处理完、晚上开发复盘软件",
+      "notCompleted": "第三章粗剪还差2个小片段、本周还没运动",
+      "obstacles": "上班琐事多",
+      "emotionState": "开心",
+      "mindsetNote": null,
+      "followUpLog": null,
+      "status": "ANALYZING",
+      "createdAt": "2026-05-21T12:56:18.246Z",
+      "updatedAt": "2026-05-21T12:58:48.927Z"
+    },
+    {
+      "id": "d0a7b1e8-a12d-48ea-ad49-7354da6fcf03",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "date": "2026-05-22T00:00:00.000Z",
+      "rawInput": "今天6:30起来的；今天出的视频不顺利，计划6月底能完成视频第一期的视频剪辑；白天工作主要是处理知识库这个需求的一些产品方案；晚上回家做了运动；然后和男友看了会视频，现在继续把这个复盘小工具搞完，今天要是周六可以晚点睡觉",
+      "completed": "6:30起床、处理知识库产品方案、运动、和男友看视频",
+      "notCompleted": "视频第一期剪辑未完成",
+      "obstacles": "视频剪辑不顺利",
+      "emotionState": "开心，周五不下雨天气晴朗",
+      "mindsetNote": "周六可以晚点睡，轻松",
+      "followUpLog": [
+        {
+          "answer": "没有很按照流程走，视频生成比较难。已和男友反馈，下次一定都按流程来。",
+          "question": "视频剪辑具体哪里不顺利？遇到什么问题了？"
+        }
+      ],
+      "status": "ANALYZING",
+      "createdAt": "2026-05-22T14:19:55.320Z",
+      "updatedAt": "2026-05-22T15:19:26.340Z"
+    }
+  ],
+  "weeklyReviews": [],
+  "monthlyReviews": [],
+  "aiAnalyses": [
+    {
+      "id": "a0f678e1-7f27-4567-b0e7-e088690c786b",
+      "dailyReviewId": "5d72f90e-d05c-4095-9471-f6155bde30b7",
+      "weeklyReviewId": null,
+      "monthlyReviewId": null,
+      "analysisType": "DAILY",
+      "structuredReport": {
+        "completionSummary": "今早6:30准时起床，完成李鸿章视频粗剪(差2个小片段)。上班琐事一件件处理完。晚上开发复盘软件。",
+        "deviationAnalysis": "1) 视频粗剪差2个小片段未完成 2) 本周运动完全挂零",
+        "executionDiagnosis": {
+          "fogModel": {
+            "prompt": "缺少运动提醒机制",
+            "ability": "晚上时间被开发占用，运动时间被挤掉",
+            "motivation": "运动和视频剪辑动力不足，知道该做但拖延"
+          },
+          "rootCause": "时间分配冲突，琐事+开发占用了运动和剪辑时间"
+        },
+        "externalPerspective": "今天维护型工作偏多。明天需优先大需求，同时找回运动节奏"
+      },
+      "narrativeReport": "整体状态不错，早起高效。本周运动挂零需注意。情绪积极。",
+      "createdAt": "2026-05-21T12:58:41.635Z"
+    },
+    {
+      "id": "3730ccb8-bd9d-48ca-ad2e-984c8bc6220b",
+      "dailyReviewId": "d0a7b1e8-a12d-48ea-ad49-7354da6fcf03",
+      "weeklyReviewId": null,
+      "monthlyReviewId": null,
+      "analysisType": "DAILY",
+      "structuredReport": {
+        "insight": {
+          "missing": "目标行动方面：提到了6月底完成视频第一期剪辑的年度目标关联行动，但缺少具体的拆解步骤和里程碑。",
+          "pattern": "[模式信号] 视频制作已出现 3 次，持续出现流程跳过问题",
+          "unaware": "你说视频剪辑不顺利，但核心问题不是技术难度，而是缺少可复用的标准流程(checklist)。每次从头想流程比执行本身更耗能。"
+        },
+        "baseScore": 8,
+        "signalGap": "attribution_missing",
+        "energyNote": "睡了7h13min，醒来仍困，眼睛干",
+        "energyRate": 55,
+        "signalScore": 8,
+        "suggestions": [
+          {
+            "type": "critical",
+            "message": "视频制作前必须拉checklist，逐项确认后再开始"
+          },
+          {
+            "type": "critical",
+            "message": "与男友约定互相检查机制，确保流程不被跳过"
+          },
+          {
+            "type": "warning",
+            "message": "补偿机制失败：上次说'下次按流程'但未执行，需更强约束"
+          },
+          {
+            "type": "warning",
+            "message": "6月底目标缺少中间里程碑，建议拆解到每周"
+          },
+          {
+            "type": "positive",
+            "message": "早起+运动习惯稳定，继续保持"
+          },
+          {
+            "type": "positive",
+            "message": "情绪积极，天气转好有助状态提升"
+          }
+        ],
+        "foggDiagnosis": {
+          "detail": "视频制作跳过流程 -> 能力(A)不足：缺少标准操作流程(SOP)作为执行指引。上次反馈说'下次一定按流程走'但缺少具体步骤清单，属于能力维度不足而非动机不足。",
+          "missing": "A"
+        },
+        "defensePenalty": 0,
+        "detectedBiases": [],
+        "signalPatterns": [
+          {
+            "pattern": "视频制作",
+            "frequency": 3
+          },
+          {
+            "pattern": "运动",
+            "frequency": 3
+          },
+          {
+            "pattern": "复盘",
+            "frequency": 3
+          },
+          {
+            "pattern": "早起",
+            "frequency": 3
+          },
+          {
+            "pattern": "工作推进",
+            "frequency": 3
+          },
+          {
+            "pattern": "睡眠",
+            "frequency": 3
+          }
+        ],
+        "postureTraining": {
+          "note": "做了训练",
+          "completed": true
+        },
+        "detectedPatterns": [
+          {
+            "pattern": "视频制作",
+            "dimension": "execution",
+            "frequency": 3
+          },
+          {
+            "pattern": "运动",
+            "dimension": "health",
+            "frequency": 3
+          },
+          {
+            "pattern": "复盘",
+            "dimension": "self_awareness",
+            "frequency": 3
+          },
+          {
+            "pattern": "早起",
+            "dimension": "health",
+            "frequency": 3
+          },
+          {
+            "pattern": "工作推进",
+            "dimension": "execution",
+            "frequency": 3
+          },
+          {
+            "pattern": "睡眠",
+            "dimension": "health",
+            "frequency": 3
+          }
+        ],
+        "completionSummary": {
+          "completed": [
+            "6:30起床",
+            "处理知识库产品方案",
+            "运动",
+            "和男友看视频"
+          ],
+          "notCompleted": [
+            "视频第一期剪辑"
+          ],
+          "completionRate": "70%"
+        },
+        "deviationAnalysis": {
+          "behind": [
+            "视频剪辑进度 — 跳过流程导致返工风险"
+          ],
+          "onTrack": [
+            "作息规律(6:30起床)",
+            "运动习惯保持",
+            "工作推进"
+          ],
+          "riskLevel": "中"
+        },
+        "executionDiagnosis": {
+          "issues": [
+            "视频制作未按流程走导致生成困难 — 属于Fogg模型能力(A)不足",
+            "补偿机制检查：上次说'明天按流程来'，今日未执行 -> 补偿失败"
+          ],
+          "pattern": "创作类任务容易跳过流程直接做，缺少checklist约束",
+          "rootCause": "流程执行力不足 — 缺少最小可行流程(SOP)和前置checklist",
+          "foggAnalysis": {
+            "prompt": "不足（没有在开始前触发流程检查的机制）",
+            "ability": "不足（缺少标准化流程指引）",
+            "motivation": "足够（想做视频）",
+            "recommendation": "1. 建立视频制作checklist（打印/贴墙）；2. 每次开始前先逐项确认；3. 和男友约定互相检查机制"
+          }
+        },
+        "externalPerspective": {
+          "risks": [
+            "跳过流程 -> 返工 -> 时间成本翻倍 -> 影响6月底目标"
+          ],
+          "trendInsights": [
+            "AI视频工具迭代快，流程化是保证交付质量的关键能力"
+          ],
+          "directionCheck": "方向正确，需加强流程管理和执行SOP建设",
+          "timeAllocation": {
+            "waste": "跳过流程导致的返工时间",
+            "growth": "视频制作、复盘工具开发",
+            "suggestion": "减少消耗型时间（返工），用checklist把growth型任务标准化",
+            "maintenance": "工作处理知识库方案"
+          },
+          "newOpportunities": []
+        }
+      },
+      "narrativeReport": null,
+      "createdAt": "2026-05-22T15:19:26.334Z"
+    }
+  ],
+  "aiAnalysisFeedbacks": [
+    {
+      "id": "eb3a583e-0b46-46ed-bfd0-1144713ef682",
+      "aiAnalysisId": "a0f678e1-7f27-4567-b0e7-e088690c786b",
+      "userScore": 61,
+      "isPass": true,
+      "isExcellent": false,
+      "excellentReason": null,
+      "failReason": "分析没有引用当月目标做对比，缺少目标偏差评估",
+      "createdAt": "2026-05-21T13:03:35.801Z"
+    }
+  ],
+  "aiReflections": [],
+  "aiSuccessCases": [],
+  "behaviorPatterns": [
+    {
+      "id": "0e877b4f-3ed3-4f45-b91c-f37ece47fcff",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "pattern": "视频制作",
+      "dimension": "execution",
+      "keywords": [],
+      "firstDetected": "2026-05-22T15:19:26.276Z",
+      "lastDetected": "2026-05-22T15:19:26.276Z",
+      "frequency": 1,
+      "active": true,
+      "createdAt": "2026-05-22T15:19:26.277Z",
+      "updatedAt": "2026-05-22T15:19:26.277Z"
+    },
+    {
+      "id": "8f008356-3b8f-49d9-8576-137786e6b89a",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "pattern": "运动",
+      "dimension": "health",
+      "keywords": [],
+      "firstDetected": "2026-05-22T15:19:26.285Z",
+      "lastDetected": "2026-05-22T15:19:26.285Z",
+      "frequency": 1,
+      "active": true,
+      "createdAt": "2026-05-22T15:19:26.286Z",
+      "updatedAt": "2026-05-22T15:19:26.286Z"
+    },
+    {
+      "id": "853f9faa-27bb-4ef9-9005-cf83a6d6fda1",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "pattern": "复盘",
+      "dimension": "self_awareness",
+      "keywords": [],
+      "firstDetected": "2026-05-22T15:19:26.289Z",
+      "lastDetected": "2026-05-22T15:19:26.289Z",
+      "frequency": 1,
+      "active": true,
+      "createdAt": "2026-05-22T15:19:26.291Z",
+      "updatedAt": "2026-05-22T15:19:26.291Z"
+    },
+    {
+      "id": "1f838698-c7be-4daa-ba3f-3dccff0594b2",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "pattern": "早起",
+      "dimension": "health",
+      "keywords": [],
+      "firstDetected": "2026-05-22T15:19:26.294Z",
+      "lastDetected": "2026-05-22T15:19:26.294Z",
+      "frequency": 1,
+      "active": true,
+      "createdAt": "2026-05-22T15:19:26.295Z",
+      "updatedAt": "2026-05-22T15:19:26.295Z"
+    },
+    {
+      "id": "a9211276-869a-460e-a5b8-9d76aac081e4",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "pattern": "工作推进",
+      "dimension": "execution",
+      "keywords": [],
+      "firstDetected": "2026-05-22T15:19:26.301Z",
+      "lastDetected": "2026-05-22T15:19:26.301Z",
+      "frequency": 1,
+      "active": true,
+      "createdAt": "2026-05-22T15:19:26.302Z",
+      "updatedAt": "2026-05-22T15:19:26.302Z"
+    },
+    {
+      "id": "b8028deb-59a8-41ca-9c84-43bfc4fbf8e6",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "pattern": "睡眠",
+      "dimension": "health",
+      "keywords": [],
+      "firstDetected": "2026-05-22T15:19:26.306Z",
+      "lastDetected": "2026-05-22T15:19:26.306Z",
+      "frequency": 1,
+      "active": true,
+      "createdAt": "2026-05-22T15:19:26.307Z",
+      "updatedAt": "2026-05-22T15:19:26.307Z"
+    }
+  ],
+  "cognitiveBiasLogs": [],
+  "capabilityScores": [
+    {
+      "id": "dc80954d-e2c6-4334-8cef-c36942d20308",
+      "userId": "1e285969-0593-48fe-a438-dd213f99e7e0",
+      "dimension": "execution",
+      "score": 6.5,
+      "evidence": "今天按计划完成任务，效率不错",
+      "source": "daily_review",
+      "createdAt": "2026-05-22T15:06:17.612Z"
+    }
+  ],
+  "analysisSessions": []
+}

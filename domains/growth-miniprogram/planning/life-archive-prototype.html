@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Growth — 全站原型</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --text2: #6e6e73;
+    --text3: #aeaeb2;
+    --sep: #d2d2d7;
+    --accent: #0071e3;
+    --accent-bg: #e8f0fe;
+    --green: #30d158;
+    --yellow: #ffd60a;
+    --orange: #ff9f0a;
+    --red: #ff453a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    padding: 20px;
+    max-width: 940px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  .app {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--sep);
+    overflow: hidden;
+  }
+
+  /* Nav */
+  .nav {
+    display: flex;
+    align-items: center;
+    height: 52px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--sep);
+    gap: 24px;
+  }
+  .nav-logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; }
+  .nav-tabs { display: flex; gap: 2px; }
+  .nav-tab {
+    padding: 6px 14px; border-radius: 6px; border: none; background: transparent;
+    font-size: 13px; color: var(--text2); cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .nav-tab:hover { background: var(--bg); color: var(--text); }
+  .nav-tab.active { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+
+  .content { padding: 24px; }
+
+  /* Page header */
+  .hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .hdr h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .hdr p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+  /* Cards */
+  .c { background: var(--card); border: 1px solid var(--sep); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .c-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .c-action { font-size: 12px; color: var(--text3); }
+
+  /* Grid */
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  /* Progress bar */
+  .pb { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin: 6px 0; }
+  .pb-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  .pb-fill.green { background: var(--green); }
+  .pb-fill.yellow { background: var(--yellow); }
+  .pb-fill.orange { background: var(--orange); }
+  .pb-fill.red { background: var(--red); }
+
+  /* Goal item */
+  .gi { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f5f5f7; }
+  .gi:last-child { border-bottom: none; }
+  .gi-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .gi-dot.green { background: var(--green); }
+  .gi-dot.yellow { background: var(--yellow); }
+  .gi-dot.red { background: var(--red); }
+  .gi-title { flex: 1; font-size: 13px; }
+  .gi-val { font-size: 12px; font-weight: 600; min-width: 36px; text-align: right; }
+
+  /* Sections */
+  .sec { margin-bottom: 28px; }
+  .sec-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .sec-desc { font-size: 13px; color: var(--text2); margin-bottom: 14px; }
+
+  /* Forms */
+  .f { margin-bottom: 14px; }
+  .f-lbl { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 4px; }
+  .in, .sel, .ta {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--sep); border-radius: 10px;
+    font-size: 13px; color: var(--text); background: var(--card); font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .in:focus, .sel:focus, .ta:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,113,227,0.12); }
+  .ta { min-height: 70px; resize: vertical; }
+  .hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* Buttons */
+  .btn {
+    padding: 8px 18px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .btn-pri { background: var(--accent); color: white; }
+  .btn-pri:hover { opacity: 0.9; }
+  .btn-sec { background: var(--bg); color: var(--text); border: 1px solid var(--sep); }
+  .btn-sec:hover { background: var(--sep); }
+  .btn-sm { font-size: 11px; padding: 4px 12px; }
+  .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--sep); }
+
+  /* Sub tabs */
+  .stabs { display: flex; border-bottom: 1px solid var(--sep); margin-bottom: 20px; }
+  .stab {
+    padding: 10px 20px; border: none; background: transparent; font-size: 13px;
+    color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; font-family: inherit;
+  }
+  .stab:hover { color: var(--text); }
+  .stab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+  /* AI badge */
+  .ai-badge {
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+    background: var(--accent-bg); color: var(--accent); letter-spacing: 0.3px;
+  }
+
+  /* AI suggestion box */
+  .ai-box {
+    padding: 14px; background: var(--accent-bg); border-radius: 10px;
+    border-left: 3px solid var(--accent); margin-bottom: 12px;
+  }
+  .ai-box .title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .ai-box .body { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  /* Tag */
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px;
+    background: var(--accent-bg); color: var(--accent); border-radius: 6px;
+    font-size: 12px; font-weight: 500;
+  }
+
+  /* Period selector */
+  .psel { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .psel select { padding: 6px 10px; border: 1px solid var(--sep); border-radius: 8px; font-size: 13px; font-family: inherit; }
+  .psel .dim { display: flex; gap: 2px; }
+  .psel .dim button {
+    padding: 6px 12px; border: 1px solid var(--sep); background: var(--card);
+    font-size: 12px; cursor: pointer; font-family: inherit; color: var(--text2);
+  }
+  .psel .dim button:first-child { border-radius: 6px 0 0 6px; }
+  .psel .dim button:last-child { border-radius: 0 6px 6px 0; }
+  .psel .dim button.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+
+  /* Calendar */
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-hdr { font-size: 11px; color: var(--text3); text-align: center; padding: 6px 0; }
+  .cal-day {
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; border-radius: 8px; font-size: 13px; cursor: pointer;
+  }
+  .cal-day:hover { background: var(--bg); }
+  .cal-day.today { border: 2px solid var(--accent); }
+  .cal-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 2px; }
+
+  /* Timeline */
+  .tl { display: flex; flex-direction: column; gap: 8px; }
+  .tl-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: var(--bg); }
+  .tl-day { font-size: 12px; font-weight: 600; min-width: 36px; }
+  .tl-bar { flex: 1; }
+  .tl-bar .pb { margin: 2px 0; }
+
+  /* Panels */
+  .panel-tabs { display: flex; gap: 2px; margin-bottom: 12px; }
+  .panel-tab {
+    padding: 6px 14px; border: none; background: transparent; font-size: 12px;
+    color: var(--text2); cursor: pointer; border-radius: 6px; font-family: inherit;
+  }
+  .panel-tab.active { background: var(--bg); color: var(--text); font-weight: 600; }
+
+  /* Plans layout */
+  .plans-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <nav class="nav">
+    <span class="nav-logo">Growth</span>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-page="overview">总览</button>
+      <button class="nav-tab" data-page="goals">目标</button>
+      <button class="nav-tab" data-page="plans">计划</button>
+      <button class="nav-tab" data-page="archive">档案</button>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- ==================== 总览页 ==================== -->
+    <div id="page-overview">
+      <div class="hdr">
+        <div><h1>总览</h1></div>
+      </div>
+
+      <!-- LifeArchive 摘要卡片（新增） -->
+      <div class="c" style="border-left: 3px solid var(--accent);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="c-title">档案摘要</span>
+          <span class="ai-badge">AI 上下文</span>
+        </div>
+        <div style="font-size:13px;line-height:1.8;color:var(--text2)">
+          人格: INFP · 优势: 学习、战略、分析、责任
+          <br>精力: 晨型人，上午效率最高
+          <br>愿景: 成为独立 AI 产品人，时间自由
+        </div>
+      </div>
+
+      <!-- 人生目标 -->
+      <div class="c">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span class="c-title">人生目标</span>
+          <span class="c-action">10-20 年</span>
+        </div>
+        <div style="font-size:15px;font-weight:600">追求时间自由与作品成就感</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">在 AI 领域做自己的产品，实现被动收入</div>
+      </div>
+
+      <!-- 年度目标 -->
+      <div class="c">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span class="c-title">年度目标</span>
+          <span class="c-action">2026</span>
+        </div>
+        <div class="gi">
+          <span class="gi-dot green"></span>
+          <span class="gi-title">AI 产品上线</span>
+          <span class="gi-val">60%</span>
+          <div class="pb" style="width:80px"><div class="pb-fill green" style="width:60%"></div></div>
+        </div>
+        <div class="gi">
+          <span class="gi-dot yellow"></span>
+          <span class="gi-title">副业月收入 1w</span>
+          <span class="gi-val">40%</span>
+          <div class="pb" style="width:80px"><div class="pb-fill yellow" style="width:40%"></div></div>
+        </div>
+      </div>
+
+      <!-- 本周计划 -->
+      <div class="c">
+        <span class="c-title">本周计划</span>
+        <div class="gi">
+          <span style="width:28px;font-size:12px;color:var(--text3)">周一</span>
+          <span class="gi-title" style="font-size:12px">AI Agent 原型设计、体态训练</span>
+          <span style="font-size:11px;color:var(--text3)">1/2</span>
+        </div>
+        <div class="gi">
+          <span style="width:28px;font-size:12px;color:var(--text3)">周二</span>
+          <span class="gi-title" style="font-size:12px">数据库设计、UI 框架搭建</span>
+          <span style="font-size:11px;color:var(--text3)">2/2</span>
+        </div>
+        <div class="gi">
+          <span style="width:28px;font-size:12px;color:var(--text3)">周三</span>
+          <span class="gi-title" style="font-size:12px">API 开发</span>
+          <span style="font-size:11px;color:var(--text3)">0/1</span>
+        </div>
+      </div>
+
+      <!-- AI 建议 -->
+      <div class="c">
+        <span class="c-title">改进建议</span>
+        <div class="ai-box">
+          <div class="title">【建议】调整创作节奏</div>
+          <div class="body">最近 3 天视频产出下降，建议将创作任务调整到早间高效时段，晚间用作学习和规划。</div>
+        </div>
+        <div class="ai-box" style="border-left-color:var(--orange)">
+          <div class="title">【提醒】年度目标进度偏慢</div>
+          <div class="body">AI 产品上线目标当前 60%，按此速度年底可能只有 80%。建议评估是否需要增加每日投入时间。</div>
+        </div>
+      </div>
+
+      <!-- 当月进度 -->
+      <div class="c">
+        <span class="c-title">当月进度 · 6 月</span>
+        <div class="gi">
+          <span class="gi-title">AI 产品 MVP 开发</span>
+          <span style="font-size:12px">3 / 5 任务</span>
+          <div class="pb" style="width:80px"><div class="pb-fill green" style="width:60%"></div></div>
+        </div>
+        <div class="gi">
+          <span class="gi-title">副业收入</span>
+          <span style="font-size:12px">4000 / 8000</span>
+          <div class="pb" style="width:80px"><div class="pb-fill yellow" style="width:50%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 目标页 ==================== -->
+    <div id="page-goals" style="display:none">
+      <div class="hdr">
+        <div><h1>目标</h1></div>
+        <button class="btn btn-pri btn-sm">+ 新建目标</button>
+      </div>
+
+      <!-- AI 建议（新增） -->
+      <div class="c" style="border-left:3px solid var(--accent);background:var(--accent-bg)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span class="c-title">AI 年度目标建议</span>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">基于你的档案和愿景，AI 给出了以下年度目标建议</div>
+          </div>
+          <button class="btn btn-pri btn-sm" style="background:var(--card);color:var(--accent);border:1px solid var(--accent)">咨询 AI</button>
+        </div>
+        <div style="margin-top:12px">
+          <div class="ai-box" style="background:var(--card)">
+            <div style="display:flex;justify-content:space-between;align-items:start">
+              <div>
+                <div class="title">AI 产品 MVP 上线</div>
+                <div class="body">度量: 里程碑 · 目标值: 完成 MVP 开发并上线 · 建议起始: 2026-07</div>
+              </div>
+              <button class="btn btn-pri btn-sm">采纳</button>
+            </div>
+          </div>
+          <div class="ai-box" style="background:var(--card);border-left-color:var(--orange)">
+            <div style="display:flex;justify-content:space-between;align-items:start">
+              <div>
+                <div class="title">副业月收入稳定 1w</div>
+                <div class="body">度量: 数值 · 目标值: 10000 元/月 · 建议起始: 当前</div>
+              </div>
+              <button class="btn btn-pri btn-sm">采纳</button>
+            </div>
+          </div>
+        </div>
+        <div class="hint" style="margin-top:8px">点击「咨询 AI」将在终端中与 AI 对话，调整建议内容。采纳后的目标会写入年度目标列表。</div>
+      </div>
+
+      <!-- 目标层级 -->
+      <div class="c">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <span class="c-title">目标层级</span>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-sec btn-sm" style="background:var(--accent-bg);color:var(--accent)">层级</button>
+            <button class="btn btn-sec btn-sm">时间</button>
+          </div>
+        </div>
+
+        <!-- Filter -->
+        <div style="display:flex;gap:4px;margin-bottom:12px">
+          <button class="btn btn-sec btn-sm" style="background:var(--accent-bg);color:var(--accent)">全部</button>
+          <button class="btn btn-sec btn-sm">进行中</button>
+          <button class="btn btn-sec btn-sm">已完成</button>
+        </div>
+
+        <!-- Tree -->
+        <div>
+          <div style="padding:8px 0;border-bottom:1px solid #f5f5f7;cursor:pointer">
+            <span style="font-size:11px;color:var(--text3)">▼</span>
+            <span style="font-size:13px;font-weight:600;margin-left:4px">追求时间自由与作品成就感</span>
+            <span class="tag" style="margin-left:8px">进行中</span>
+          </div>
+          <div style="padding-left:24px">
+            <div class="gi">
+              <span class="gi-dot green"></span>
+              <span class="gi-title">AI 产品 MVP 上线 · 2026</span>
+              <span class="gi-val">60%</span>
+              <div class="pb" style="width:60px"><div class="pb-fill green" style="width:60%"></div></div>
+            </div>
+            <div style="padding-left:24px">
+              <div class="gi">
+                <span class="gi-dot green"></span>
+                <span class="gi-title">6月 · MVP 开发</span>
+                <span class="gi-val">3/5</span>
+              </div>
+              <div class="gi">
+                <span class="gi-dot yellow"></span>
+                <span class="gi-title">7月 · 内测上线</span>
+                <span class="gi-val">0/3</span>
+              </div>
+            </div>
+            <div class="gi">
+              <span class="gi-dot yellow"></span>
+              <span class="gi-title">副业月收入 1w · 2026</span>
+              <span class="gi-val">4k/10k</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 计划页 ==================== -->
+    <div id="page-plans" style="display:none">
+      <div class="hdr">
+        <div><h1>计划</h1></div>
+      </div>
+
+      <!-- Period + Dimension -->
+      <div class="psel">
+        <select><option>2026</option></select>
+        <select><option>6 月</option></select>
+        <div class="dim">
+          <button>年</button>
+          <button class="active">月</button>
+          <button>周</button>
+          <button>日</button>
+        </div>
+        <button class="btn btn-pri btn-sm" style="margin-left:auto">咨询 AI</button>
+      </div>
+
+      <div class="plans-layout">
+        <!-- 左侧：日历 -->
+        <div>
+          <div class="c" style="padding:12px">
+            <div class="cal">
+              <div class="cal-hdr">一</div><div class="cal-hdr">二</div><div class="cal-hdr">三</div>
+              <div class="cal-hdr">四</div><div class="cal-hdr">五</div><div class="cal-hdr">六</div><div class="cal-hdr">日</div>
+              <div class="cal-day" style="color:var(--text3)">26</div>
+              <div class="cal-day" style="color:var(--text3)">27</div>
+              <div class="cal-day" style="color:var(--text3)">28</div>
+              <div class="cal-day" style="color:var(--text3)">29</div>
+              <div class="cal-day" style="color:var(--text3)">30</div>
+              <div class="cal-day" style="color:var(--text3)">31</div>
+              <div class="cal-day">1</div>
+              <div class="cal-day">2</div>
+              <div class="cal-day">3</div>
+              <div class="cal-day">4</div>
+              <div class="cal-day">5</div>
+              <div class="cal-day">6</div><div class="cal-day">7</div>
+              <div class="cal-day">8</div><div class="cal-day">9</div><div class="cal-day">10</div>
+              <div class="cal-day">11</div><div class="cal-day">12</div><div class="cal-day">13</div>
+              <div class="cal-day today">14</div>
+              <div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div>
+              <div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day">20</div>
+              <div class="cal-day">21</div>
+              <div class="cal-day">22</div><div class="cal-day">23</div><div class="cal-day">24</div>
+              <div class="cal-day">25</div><div class="cal-day">26</div><div class="cal-day">27</div>
+              <div class="cal-day">28</div>
+              <div class="cal-day">29</div><div class="cal-day">30</div>
+              <div style="display:flex;gap:4px;grid-column:span 7;justify-content:center;padding:4px 0;font-size:10px;color:var(--text3)">
+                <span style="display:flex;align-items:center;gap:2px"><span style="width:6px;height:6px;border-radius:50%;background:var(--green)"></span>≥80</span>
+                <span style="display:flex;align-items:center;gap:2px"><span style="width:6px;height:6px;border-radius:50%;background:var(--yellow)"></span>≥60</span>
+                <span style="display:flex;align-items:center;gap:2px"><span style="width:6px;height:6px;border-radius:50%;background:var(--red)"></span>&lt;60</span>
+                <span style="display:flex;align-items:center;gap:2px"><span style="width:6px;height:6px;border-radius:50%;background:var(--sep)"></span>无评分</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 周视图（新增 web 编辑） -->
+          <div class="c">
+            <span class="c-title">本周</span>
+            <div class="tl">
+              <div class="tl-row">
+                <span class="tl-day">周一</span>
+                <div class="tl-bar">
+                  <span style="font-size:12px">AI Agent 原型设计</span>
+                  <div class="pb"><div class="pb-fill green" style="width:100%"></div></div>
+                </div>
+                <span style="font-size:11px;color:var(--text3)">✅</span>
+              </div>
+              <div class="tl-row">
+                <span class="tl-day">周二</span>
+                <div class="tl-bar">
+                  <span style="font-size:12px">数据库设计</span>
+                  <div class="pb"><div class="pb-fill green" style="width:100%"></div></div>
+                </div>
+                <span style="font-size:11px">✅</span>
+              </div>
+              <div class="tl-row" style="opacity:0.5">
+                <span class="tl-day">周三</span>
+                <div class="tl-bar">
+                  <span style="font-size:12px;color:var(--text3)">API 开发（待完成）</span>
+                  <div class="pb"><div class="pb-fill" style="width:0%"></div></div>
+                </div>
+                <span style="font-size:11px;color:var(--text3)">◻</span>
+              </div>
+            </div>
+            <div style="margin-top:10px;text-align:right">
+              <button class="btn btn-sec btn-sm">+ 添加日计划</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：三面板 -->
+        <div>
+          <div class="panel-tabs">
+            <button class="panel-tab active">计划</button>
+            <button class="panel-tab">评估</button>
+            <button class="panel-tab">报告</button>
+          </div>
+          <div class="c">
+            <!-- Plan panel -->
+            <div class="gi">
+              <span class="gi-dot green"></span>
+              <span>AI 产品 MVP 开发</span>
+              <span style="font-size:12px;color:var(--text2)">目标: 5 任务</span>
+            </div>
+            <div class="gi">
+              <span class="gi-dot yellow"></span>
+              <span>副业收入</span>
+              <span style="font-size:12px;color:var(--text2)">目标: 8000</span>
+            </div>
+
+            <!-- Eval panel (hidden) -->
+            <div style="display:none">评估内容</div>
+            <!-- Report panel (hidden) -->
+            <div style="display:none">报告内容</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 档案页 ==================== -->
+    <div id="page-archive" style="display:none">
+      <div class="hdr">
+        <div><h1>档案</h1><p>AI 教练的长期记忆 — 每次对话前加载</p></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sec btn-sm">刷新摘要</button>
+          <button class="btn btn-pri btn-sm">保存</button>
+        </div>
+      </div>
+
+      <div class="stabs">
+        <button class="stab active">人格特质</button>
+        <button class="stab">能力与资源</button>
+        <button class="stab">行为模式</button>
+        <button class="stab">未来蓝图</button>
+      </div>
+
+      <!-- 人格特质 -->
+      <div class="stab-page">
+        <div class="sec">
+          <div class="sec-title">MBTI 人格类型</div>
+          <div class="sec-desc">选择你的 MBTI 类型，AI 将据此调整分析风格</div>
+          <div class="g2">
+            <div class="f">
+              <label class="f-lbl">精力来源</label>
+              <select class="sel"><option>E（外向）</option><option selected>I（内向）</option></select>
+            </div>
+            <div class="f">
+              <label class="f-lbl">认知方式</label>
+              <select class="sel"><option selected>S（实感）</option><option>N（直觉）</option></select>
+            </div>
+            <div class="f">
+              <label class="f-lbl">决策方式</label>
+              <select class="sel"><option>T（思考）</option><option selected>F（情感）</option></select>
+            </div>
+            <div class="f">
+              <label class="f-lbl">生活态度</label>
+              <select class="sel"><option selected>J（判断）</option><option>P（感知）</option></select>
+            </div>
+          </div>
+          <div class="hint">结果: ISFJ</div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-title">大五人格 (OCEAN)</div>
+          <div class="sec-desc">拖动滑块评估各维度 1–100</div>
+          <div class="f">
+            <label class="f-lbl">开放性: 75</label>
+            <input type="range" min="1" max="100" value="75" style="width:100%;accent-color:var(--accent)">
+          </div>
+          <div class="f">
+            <label class="f-lbl">尽责性: 60</label>
+            <input type="range" min="1" max="100" value="60" style="width:100%;accent-color:var(--accent)">
+          </div>
+          <div class="f">
+            <label class="f-lbl">外向性: 30</label>
+            <input type="range" min="1" max="100" value="30" style="width:100%;accent-color:var(--accent)">
+          </div>
+          <div class="f">
+            <label class="f-lbl">宜人性: 80</label>
+            <input type="range" min="1" max="100" value="80" style="width:100%;accent-color:var(--accent)">
+          </div>
+          <div class="f">
+            <label class="f-lbl">神经质: 45</label>
+            <input type="range" min="1" max="100" value="45" style="width:100%;accent-color:var(--accent)">
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-title">盖洛普优势</div>
+          <div class="sec-desc">输入你的前 5 优势主题</div>
+          <div class="tag-area" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--sep);border-radius:10px">
+            <span class="tag">学习 ×</span>
+            <span class="tag">战略 ×</span>
+            <span class="tag">分析 ×</span>
+            <span class="tag">责任 ×</span>
+            <input style="border:none;outline:none;font-size:12px;flex:1;min-width:80px" placeholder="输入后回车...">
+          </div>
+        </div>
+      </div>
+
+      <!-- 能力与资源 (隐藏) -->
+      <div class="stab-page" style="display:none">
+        <div class="sec">
+          <div class="sec-title">核心能力</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="padding:14px;border:1px solid var(--sep);border-radius:10px">
+              <div class="g2">
+                <div class="f"><label class="f-lbl">专业领域</label><input class="in" value="AI 产品经理"></div>
+                <div class="f"><label class="f-lbl">等级</label><select class="sel"><option>初级</option><option selected>中级</option><option>高级</option></select></div>
+                <div class="f"><label class="f-lbl">年限</label><input class="in" value="5"></div>
+                <div class="f"><label class="f-lbl">描述</label><input class="in" value="NLP 产品设计、知识库"></div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:10px"><button class="btn btn-sec btn-sm">+ 添加技能</button></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">时间资源</div>
+          <div class="g2">
+            <div class="f"><label class="f-lbl">工作日可支配总小时数</label><input class="in" value="3.7"></div>
+            <div class="f"><label class="f-lbl">周末可支配总小时数</label><input class="in" value="6"></div>
+            <div class="f"><label class="f-lbl">工作日时段</label><input class="in" value="早间 06:30-08:40"></div>
+            <div class="f"><label class="f-lbl">周末时段</label><input class="in" value="上午 09:00-12:00"></div>
+          </div>
+          <div class="f"><label class="f-lbl">固定时间支出</label><textarea class="ta">工作9h，通勤1.5h，睡眠7h</textarea></div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">能量精力 <span class="ai-badge">AI 写入</span></div>
+          <div style="padding:14px;background:var(--bg);border-radius:10px;font-size:13px">
+            <div style="font-weight:500;margin-bottom:4px">当前评估</div>
+            "晨型人，上午效率最高，晚间创造力较强"
+            <div style="margin-top:8px;font-size:11px;color:var(--text3)">最近: 2026-06-14 · 上一版: "下午效率最高"</div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">财务状况</div>
+          <div class="g2">
+            <div class="f"><label class="f-lbl">财务安全垫</label><input class="in" value="可支撑 12 个月"></div>
+            <div class="f"><label class="f-lbl">收入结构</label><input class="in" value="主业 80% 副业 20%"></div>
+            <div class="f"><label class="f-lbl">每月可投资金</label><input class="in" value="约 3000 元"></div>
+            <div class="f"><label class="f-lbl">财务阶段</label><select class="sel"><option>生存期</option><option selected>积累期</option><option>自由期</option></select></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">支持系统</div>
+          <div class="g2">
+            <div class="f"><label class="f-lbl">导师/前辈</label><input class="in" value="2 位前技术总监"></div>
+            <div class="f"><label class="f-lbl">协作搭档</label><input class="in" value="1 位 AI 合伙人"></div>
+            <div class="f"><label class="f-lbl">情感支持</label><input class="in" value="伴侣 + 2 好友"></div>
+            <div class="f"><label class="f-lbl">社交网络</label><input class="in" value="AI/互联网圈子"></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">健康基础 <span class="ai-badge">AI 辅助</span></div>
+          <div class="g2">
+            <div class="f"><label class="f-lbl">身体健康</label><input class="in" value="肩颈不适，体态训练中"></div>
+            <div class="f"><label class="f-lbl">心理状态</label><input class="in" value="压力中等"></div>
+            <div class="f"><label class="f-lbl">运动习惯</label><input class="in" value="每天 15min 体态"></div>
+            <div class="f"><label class="f-lbl">消耗性习惯</label><input class="in" value="偶尔刷短视频超时"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 行为模式 (隐藏) -->
+      <div class="stab-page" style="display:none">
+        <div class="sec">
+          <div class="sec-title">成功规律 <span class="ai-badge">AI 自动</span></div>
+          <div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">
+            暂无足够数据<br><span style="font-size:12px">完成更多复盘后自动总结</span>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">失败模式 <span class="ai-badge">AI 自动</span></div>
+          <div style="padding:14px;border:1px solid var(--sep);border-radius:10px;margin-bottom:8px">
+            <div style="font-weight:600;font-size:13px">视频创作未持续</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">放弃阶段: 第 2-3 周 · 出现 3 次</div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">情绪与生产力 <span class="ai-badge">AI 自动</span></div>
+          <div style="padding:14px;background:var(--bg);border-radius:10px;font-size:13px">
+            <div>压力下: 适度压力能推动输出</div>
+            <div>轻松时: 创造力更强</div>
+            <div>拖延根因: "怕做不好"、"觉得没意义"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 未来蓝图 (隐藏) -->
+      <div class="stab-page" style="display:none">
+        <div class="sec">
+          <div class="sec-title">10 年愿景</div>
+          <textarea class="ta">在 AI 领域有自己的一席之地，时间自由，可以做真正想做的产品。</textarea>
+        </div>
+        <div class="sec">
+          <div class="sec-title">3 年目标</div>
+          <textarea class="ta">成为独立 AI 产品人，有自己的产品线和稳定收入。</textarea>
+        </div>
+        <div class="sec">
+          <div class="sec-title">1 年成果</div>
+          <textarea class="ta">完成一个 AI 产品从 0 到 1 的开发上线。</textarea>
+        </div>
+        <div class="sec">
+          <div class="sec-title">目标来源</div>
+          <div class="g2">
+            <div class="f"><label class="f-lbl">自驱还是社会压力？</label><textarea class="ta" rows="2">自己渴望的，内核是自驱</textarea></div>
+            <div class="f"><label class="f-lbl">为什么是现在？</label><textarea class="ta" rows="2">AI 行业窗口期</textarea></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">结果区间</div>
+          <div class="g2">
+            <div class="f"><label class="f-lbl">最低可接受</label><input class="in" value="能接单养活自己"></div>
+            <div class="f"><label class="f-lbl">理想结果</label><input class="in" value="产品 + 被动收入"></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-title">榜样与反例</div>
+          <div class="g2">
+            <div class="f"><label class="f-lbl">欣赏谁？</label><textarea class="ta" rows="2">Indie hackers 独立开发者</textarea></div>
+            <div class="f"><label class="f-lbl">避免成为？</label><textarea class="ta" rows="2">大厂螺丝钉，没自己的作品</textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row"><button class="btn btn-sec">取消</button><button class="btn btn-pri">保存</button></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Tab switching
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.content > div[id^="page-"]').forEach(p => p.style.display = 'none');
+    document.getElementById('page-' + tab.dataset.page).style.display = '';
+  });
+});
+
+// Archive sub-tab switching
+document.querySelectorAll('.stab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const parent = tab.closest('.content');
+    const pages = parent.querySelectorAll(':scope > #page-archive .stab-page');
+    document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    pages.forEach((p, i) => p.style.display = i === Array.from(document.querySelectorAll('.stab')).indexOf(tab) ? '' : 'none');
+  });
+});
+</script>
+</body>
+</html>

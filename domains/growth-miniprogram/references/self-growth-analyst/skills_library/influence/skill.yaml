@@ -1,0 +1,32 @@
+skill_name: 影响力校准
+dimension: influence
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: pattern
+    value: 用户说服人时是让人信了话还是成了盟友
+    threshold: 1
+
+diagnosis_flow:
+  - step: 1
+    method: behavioral
+    question: "你最近说服了谁？他是因为你的职位信你，还是因为你的逻辑？"
+    output: "影响力来源评估"
+
+intervention:
+  type: micro_action
+  prompt: |
+    让人信了你的话，那叫传播。
+    让人成了你的盟友，那叫影响。
+    靠职位压人，被架空就失效；靠逻辑服人，换了环境还能赢。
+    你现在是用权力在影响，还是用逻辑在影响？
+  action: "找一件事，用纯粹的逻辑说服一个人，而不是借助任何职位或面子。"
+
+success_metrics:
+  - "用逻辑而非职位完成过一次说服"
+  - "继续靠职位或资历让人服从"
+
+escalation:
+  if: "连续3次都靠权力而非逻辑"
+  then: "追问：'如果明天没了这个职位，你还能影响谁？'"

@@ -17,4 +17,8 @@ router.post("/daily", c.createDailyPlan.bind(c));
 router.put("/daily/:id", c.updateDailyPlan.bind(c));
 router.patch("/daily/:id/status", c.updateDailyPlanStatus.bind(c));
 
+// AI 计划拆解
+router.post("/ai-suggest/monthly", c.aiSuggestMonthly.bind(c));
+router.post("/ai-suggest/monthly/confirm", c.confirmMonthlyPlans.bind(c));
+
 export default router;

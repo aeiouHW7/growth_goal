@@ -17,4 +17,8 @@ router.put("/yearly/:id", c.updateYearlyGoal.bind(c));
 router.patch("/yearly/:id/status", c.updateYearlyGoalStatus.bind(c));
 router.patch("/yearly/:id/progress", c.updateYearlyGoalProgress.bind(c));
 
+// AI 目标拆解
+router.post("/ai-suggest/yearly", c.aiSuggestYearly.bind(c));
+router.post("/ai-suggest/yearly/confirm", c.confirmYearlyGoals.bind(c));
+
 export default router;

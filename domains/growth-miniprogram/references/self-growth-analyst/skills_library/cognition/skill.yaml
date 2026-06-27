@@ -1,0 +1,31 @@
+skill_name: 认知深度校准
+dimension: cognition
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: pattern
+    value: 用户描述事情只说现象不说背后结构
+    threshold: 1
+
+diagnosis_flow:
+  - step: 1
+    method: iceberg
+    question: "这件事，背后谁获益、谁受损？结构是什么？"
+    output: "利益相关方分析"
+
+intervention:
+  type: micro_action
+  prompt: |
+    你说的都是现象。现象背后是结构，结构背后是利益。
+    谁在这件事里拿到了好处？谁在付出代价？这个利益格局是怎么形成的？
+    看不到结构的人，永远被结构安排。
+  action: "用一句话说出这件事中，各方的利益分别是什么。"
+
+success_metrics:
+  - "能清晰说出利益相关方和各自得失"
+  - "继续只描述表面现象，不挖结构"
+
+escalation:
+  if: "连续3次触发，仍然只说现象"
+  then: "直接指出：'你在回避什么？'"

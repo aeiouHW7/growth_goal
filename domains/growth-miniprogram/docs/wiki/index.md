@@ -7,11 +7,16 @@
 - [API Design](api-design.md) — REST API 设计、错误处理、注意事项
 - [Prompt System](prompt-system.md) — Prompts 架构、分析框架、偏误检测
 - [Deployment](deployment.md) — 独立实例部署指南（多用户支持）
+- [File Structure](file-structure.md) — 完整项目文件树与说明
 
 ## 复盘记录
 
 - [core-goal-review-system](retros/core-goal-review-system.md) — 首版实现复盘
 - [growth-miniprogram-v0.1-phase1](retros/growth-miniprogram-v0.1-phase1.md) — Phase 1 完整复盘（含飞书 CLI、Bridge、分析引擎）
+
+## 项目进度
+
+- [progress.md](progress.md) — 人生教练演进进度（每日更新）
 
 ## 模式与最佳实践
 
