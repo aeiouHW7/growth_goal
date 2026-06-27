@@ -1,0 +1,46 @@
+skill_name: 沟通表达校准
+dimension: communication
+version: 1.0
+created_at: 2026-04-25
+
+trigger_conditions:
+  - dimension_score_below: 6
+  - keywords: ["说不清楚", "没抓住重点", "表达不清晰", "讲了没人懂"]
+  - pattern: "表达不清晰自知" frequency_gte: 2
+  - self_awareness_high: true  # 他知道自己表达有问题
+
+diagnosis_flow:
+  - step: 分析表达不清晰的场景
+    method: behavioral_pattern分析
+    question: "你说'没抓住重点'，具体是哪次？是对谁说的？"
+    output: 场景/对象/失败原因
+
+  - step: 判断是思维不清还是表达技巧问题
+    method: 冰山模型
+    question: "你有没有想清楚但说不清楚的时候？还是想都没想清楚就说出来了？"
+    output: 思维问题 vs 技巧问题
+
+  - step: 检查是否有反馈来源
+    method: social查询
+    question: "有人给过你具体的反馈吗？关于你表达哪里可以改？"
+    output: 有/无反馈来源
+
+intervention:
+  type: micro_action
+  prompt: |
+    你知道自己表达不清晰（4/19和4/24都主动提到），但没有采取任何改变行动。
+    本周尝试一个最小行动：
+    1. 下次开会/发消息前，先把核心观点用一句话写下来
+    2. 发完消息后，问一个人"我刚才说清楚了吗？"
+    3. 把那个人的反馈记下来
+  expected_change: "下次碎碎念提到'我问了反馈，他说...'"
+  follow_up_window: 7days
+
+escalation:
+  if: "连续3次提到表达问题但无任何改变行动"
+  then: "触发挑战：你到底是想改变，还是只想'知道自己有问题'就够了？"
+
+example_responses:
+  good: "我试了，结论先行法真的有用，开会效率高了很多"
+  bad: "我试了但还是老样子"  # 无改变
+  neutral: "今天试了结论先行法，发了3条消息，有1条被说很清楚"  # 开始行动

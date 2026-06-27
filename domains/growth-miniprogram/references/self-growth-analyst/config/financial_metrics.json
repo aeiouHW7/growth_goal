@@ -1,0 +1,25 @@
+{
+  "net_worth": {
+    "current": null,
+    "target_12m": null,
+    "history": []
+  },
+  "income_sources": {
+    "active": [],
+    "passive": [],
+    "diversification_score": 0
+  },
+  "passive_income_ratio": {
+    "current": null,
+    "target": "≥30%"
+  },
+  "monthly_savings_rate": {
+    "current": null,
+    "history": []
+  },
+  "investment_portfolio": {
+    "allocation": {},
+    "annual_return": null
+  },
+  "last_updated": null
+}

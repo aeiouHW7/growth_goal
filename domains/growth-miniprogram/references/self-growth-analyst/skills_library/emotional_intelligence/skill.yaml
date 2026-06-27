@@ -1,0 +1,32 @@
+skill_name: 情绪智力校准
+dimension: emotional_intelligence
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: pattern
+    value: 用户在高压或冲突时是情绪宣泄还是沉默回避
+    threshold: 1
+
+diagnosis_flow:
+  - step: 1
+    method: iceberg
+    question: "你现在的情绪是什么？愤怒？沮丧？还是别的？精准说出来。"
+    output: "情绪精准命名"
+
+intervention:
+  type: micro_action
+  prompt: |
+    情绪不能管理，前提是精准命名。
+    "我很烦躁"不是命名，"我对被忽视感到愤怒"才是。
+    模糊的情绪感受会堆满胸口，最后要么爆发要么压抑。
+    说不出名字的情绪，控制不了。
+  action: "用一句话精准命名你现在的核心情绪，以及它指向谁。"
+
+success_metrics:
+  - "能精准命名情绪并说出来源"
+  - "继续情绪模糊或爆发/压抑"
+
+escalation:
+  if: "连续3次无法精准命名情绪"
+  then: "指出：'你在用情绪逃避什么？'"

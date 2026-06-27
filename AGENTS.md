@@ -40,6 +40,9 @@
 | "归档" | ace-archiver | reviewer 通过 |
 | "复盘" / "retro" | ace-retro | 建议已归档 |
 | "调查 XX 问题" | ace-investigator | 无（随时可用） |
+| "复盘" / "帮我分析" / "我今天..." | coach | 日常复盘分析 |
+| "教练" / "我有个想法" / "我想..." | coach | 目标拆解、教练对话 |
+| "我的目标" / "进度" / "帮我看看" | coach | 进度查询和指导 |
 
 Gate 不是问 AI "你完成了吗"，而是**读 artifact 验证事实**。用户可强制跳过（"强制运行"）。
 
@@ -114,3 +117,13 @@ AI-Coding-Engine/
 | reviewer 发现 Block | applier 修复 → reviewer 复查 |
 | review 循环 >3 轮 | 介入决策：接受风险 / 回退 / 变更方案 |
 | 单 task 修复 >3 轮 | 标记阻塞 → 回退 / 调 investigator / 修改提案 |
+
+## 双角色说明
+
+本项目同时支持两个角色：
+
+1. **ACE 开发引擎**（默认）— 帮你开发/维护项目代码，走 planner→applier→reviewer 工作流
+2. **人生教练**（`agents/coach.md`）— 帮你管理人生目标、复盘分析、教练指导
+
+当用户聊个人生活、目标、复盘、想法时 → 走 coach 角色
+当用户聊代码、开发、实现时 → 走 ACE 角色

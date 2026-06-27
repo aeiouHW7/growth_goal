@@ -1,0 +1,32 @@
+{
+  "dimensions": {
+    "cognition": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 7, "leverage_weight": 1.5},
+    "learning": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 7, "leverage_weight": 1.5},
+    "self_awareness": {"current_score": 0, "history": [], "key_behaviors": ["意识到知道但不做模式（04-12）", "意识到计划太紧凑（04-14）", "意识到精力不足是客观现实（04-15）", "想明白产品经理角色（04-16）"], "trend": "positive", "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 8, "leverage_weight": 2.0},
+    "execution": {"current_score": 0, "history": [], "key_behaviors": ["补偿机制定了但没执行（04-12）", "健身计划被工作打断就跳过（04-13,04-14）", "公众号暂停只弄开发（04-22）", "知道但不做：验证失败但没改（04-22）"], "trend": "negative", "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 8, "leverage_weight": 2.5},
+    "decision": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 8, "leverage_weight": 2.5},
+    "emotional_intelligence": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 7, "leverage_weight": 1.5},
+    "communication": {"current_score": 0, "history": [], "key_behaviors": ["自己发现表达不清晰（04-19）", "承认需要提升总结能力"], "trend": "neutral", "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 7, "leverage_weight": 1.2},
+    "influence": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 8, "leverage_weight": 2.0},
+    "business_acumen": {"current_score": 0, "history": [], "key_behaviors": ["公众号方向确定：银发经济（04-12）", "模型选择判断：DeepSeek/Gemini/Claude各有问题（04-22）", "skill价值定位：Plan=规划+探索（04-24）"], "trend": "positive", "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 9, "leverage_weight": 3.0},
+    "strategic_thinking": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 9, "leverage_weight": 2.5},
+    "creativity": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 7, "leverage_weight": 2.0},
+    "resilience": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 7, "leverage_weight": 1.5},
+    "time_management": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 7, "leverage_weight": 1.5},
+    "social_wisdom": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 8, "leverage_weight": 2.0},
+    "leadership": {"current_score": 0, "history": [], "key_behaviors": ["新领导问题：不懂业务但着急（04-14,04-15）", "意识到汇报策略：用结果堵追问（04-24）", "想明白听话+有想法策略（04-16）"], "trend": "neutral", "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 8, "leverage_weight": 2.0},
+    "financial_literacy": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 8, "leverage_weight": 2.5},
+    "health_management": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 7, "leverage_weight": 1.0},
+    "political_wisdom": {"current_score": 0, "history": [], "key_behaviors": ["想明白职场政治：让领导满意=升职（04-16）", "打感情牌获取信息（04-24）"], "trend": "positive", "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 8, "leverage_weight": 2.0},
+    "information_integration": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 7, "leverage_weight": 1.5},
+    "goal_drive": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 8, "leverage_weight": 2.5},
+    "investment_judgment": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 7, "leverage_weight": 2.5},
+    "leverage_awareness": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 8, "leverage_weight": 3.0},
+    "asset_diversity": {"current_score": 0, "history": [], "key_behaviors": [], "trend": "neutral", "system_calculated_score": null, "blind_spot_index": null, "wealth_anchor": 6, "leverage_weight": 1.5}
+  },
+  "metadata": {
+    "last_updated": "2026-04-26T00:00:00+08:00",
+    "version": "3.0",
+    "note": "v3.0: 新增 wealth_anchor + leverage_weight 字段，新增3个财富维度（investment_judgment/leverage_awareness/asset_diversity）"
+  }
+}

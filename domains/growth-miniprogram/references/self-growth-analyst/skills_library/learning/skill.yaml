@@ -1,0 +1,32 @@
+skill_name: 学习力校准
+dimension: learning
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: pattern
+    value: 用户收藏东西但48小时内没应用
+    threshold: 1
+
+diagnosis_flow:
+  - step: 1
+    method: fogg_model
+    question: "你收藏后，48小时内打开过吗？是什么阻止了你用？"
+    output: "动机/能力/提示缺失定位"
+
+intervention:
+  type: micro_action
+  prompt: |
+    光收藏不动，等于没学。
+    福格模型说行为要有动机、有能力、有提示。你现在缺哪个？
+    是不知道用了？还是知道但觉得麻烦？还是根本没想起来？
+    不落地的知识，叫信息噪音。
+  action: "选一个你收藏过的内容，今天用一句话实践它。"
+
+success_metrics:
+  - "48小时内打开并应用了收藏内容"
+  - "继续收藏但不行动"
+
+escalation:
+  if: "连续3次只收藏不动"
+  then: "追问：'你是不是害怕用了没用？'"

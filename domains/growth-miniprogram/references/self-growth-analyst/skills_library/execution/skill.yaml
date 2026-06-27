@@ -1,0 +1,46 @@
+skill_name: 执行力校准
+dimension: execution
+version: 1.0
+created_at: 2026-04-25
+
+trigger_conditions:
+  - dimension_score_below: 6
+  - keywords: ["没做完", "又跳过了", "计划被打断", "补偿机制", "明天再开始"]
+  - pattern: "计划被打断就跳过" frequency_gte: 2
+  - pattern: "知道但不做" frequency_gte: 2
+
+diagnosis_flow:
+  - step: 分析计划被打断的原因
+    method: 福格行为模型
+    question: "是因为不想做（动机）？觉得太难（能力）？还是忘记了（提示）？"
+    output: 动机/能力/提示哪个不足
+
+  - step: 判断是否是"完美主义拖延"
+    method: 冰山模型
+    question: "你是真的没时间，还是在用'没时间'当借口回避？"
+    output: 真实原因 vs 借口
+
+  - step: 检查补偿机制执行情况
+    method: pattern_triggers查询
+    question: "上次说'明天补'，真的补了吗？"
+    output: 补偿机制成功/失败次数
+
+intervention:
+  type: micro_action
+  prompt: |
+    你这周第N次出现"计划被打断就跳过"模式。
+    今天做一个最小的补偿行动：
+    1. 找出你今天跳过的最重要的一件事
+    2. 花5分钟做它，哪怕只做5分钟
+    3. 发碎碎念告诉我你做了
+  expected_change: "下次碎碎念提到'今天做了跳过的任务'"
+  follow_up_window: 3days
+
+escalation:
+  if: "连续4次跳过且无任何补偿行动"
+  then: "触发深度挑战：你在'维持现状'还是'卡住了不敢动'？"
+
+example_responses:
+  good: "今天把昨天跳过的读书补上了，只读了15分钟但完成了"
+  bad: "今天又忙了，所以还是没做"  # 无改变
+  neutral: "我尝试做了但只做了5分钟就不想继续了"  # 开始行动

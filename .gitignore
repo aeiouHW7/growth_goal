@@ -28,5 +28,8 @@ dist/
 # Claude Code
 .claude/worktrees/
 .claude/scheduled_tasks.lock
-self-growth-analyst/
+
+# self-growth-analyst moved to domains/growth-miniprogram/references/self-growth-analyst/ (tracked)
+# Root-level self-growth is no longer present
+/self-growth-analyst/
 domains/my-app/self-growth-analyst/

@@ -1,0 +1,32 @@
+skill_name: 战略思维校准
+dimension: strategic_thinking
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: pattern
+    value: 用户看一步走一步，没有路线图
+    threshold: 1
+
+diagnosis_flow:
+  - step: 1
+    method: pattern
+    question: "你现在做的事，3个月后会有什么结果？说不上来就是瞎干。"
+    output: "时间维度规划能力"
+
+intervention:
+  type: micro_action
+  prompt: |
+    没有路线图的人，永远被别人的路线图推着走。
+    战略不是计划未来，是把现在的选择连接到未来的结果。
+    你今天做的事，1个月后你在哪？3个月后呢？1年后呢？
+    说不上来，就是用战术上的勤奋掩盖战略上的懒惰。
+  action: "画一条时间线：从现在到3个月后，你现在做的事会产生什么结果？"
+
+success_metrics:
+  - "能说清未来3个月的大致路径和预期结果"
+  - "继续只看眼前，只做当下"
+
+escalation:
+  if: "连续3次只有眼前没有路线"
+  then: "追问：'你是不是不敢想未来？因为想了就要负责？'"

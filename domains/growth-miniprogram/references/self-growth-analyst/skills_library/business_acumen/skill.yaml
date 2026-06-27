@@ -1,0 +1,32 @@
+skill_name: 商业嗅觉校准
+dimension: business_acumen
+version: 1.0
+created_at: 2026-04-25
+
+trigger_on:
+  - type: pattern
+    value: 用户说不清自己产品的核心收入来源
+    threshold: 1
+
+diagnosis_flow:
+  - step: 1
+    method: pattern
+    question: "你负责的产品，公司的钱从哪来？你的价值在哪里？"
+    output: "商业模式理解度"
+
+intervention:
+  type: micro_action
+  prompt: |
+    说不清这个，等于不知道自己干嘛。
+    收入从哪来、成本往哪去、凭什么用户愿意付钱——这是商业的基本语法。
+    做产品的不懂商业，就像写代码的不懂架构。
+    不是要你会财务，是要你知道你的工作在喂谁、饿谁。
+  action: "用一句话说清楚：你做的工作，帮公司在哪赚到了钱？"
+
+success_metrics:
+  - "能清晰说出收入来源和自己在其中的价值"
+  - "继续说不清自己的商业价值"
+
+escalation:
+  if: "连续2次说不清"
+  then: "要求：'把你做的所有工作列出来，问自己一句：少了哪个，老板会少赚钱？'"

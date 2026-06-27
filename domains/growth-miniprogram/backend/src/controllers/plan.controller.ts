@@ -103,4 +103,32 @@ export class PlanController {
       res.json({ data: plan });
     } catch (err) { next(err); }
   }
+
+  // ─── AI 月度计划拆解 ───
+
+  async aiSuggestMonthly(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = await getUserId();
+      const { yearlyGoalId } = req.body;
+      if (!yearlyGoalId) {
+        res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "yearlyGoalId 为必填项" } });
+        return;
+      }
+      const data = await planService.aiSuggestMonthly(userId, yearlyGoalId);
+      res.json({ data });
+    } catch (err) { next(err); }
+  }
+
+  async confirmMonthlyPlans(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = await getUserId();
+      const { plans } = req.body;
+      if (!plans || !Array.isArray(plans) || plans.length === 0) {
+        res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "plans 为非空数组" } });
+        return;
+      }
+      const created = await planService.confirmMonthlyPlans(userId, plans);
+      res.status(201).json({ data: created });
+    } catch (err) { next(err); }
+  }
 }
