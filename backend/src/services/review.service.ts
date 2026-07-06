@@ -39,21 +39,30 @@ export class ReviewService {
   }
 
   async createDaily(userId: string, date: string, rawInput: string) {
+    const validatedDate = validateDateString(date);
+    // 应用层预检（快速失败优化，不承担数据完整性职责）
     const existing = await prisma.dailyReview.findFirst({
-      where: { userId, date: validateDateString(date) },
+      where: { userId, date: validatedDate },
     });
     if (existing) {
       throw Object.assign(new Error("该日期已有复盘记录"), { status: 409, code: "REVIEW_ALREADY_EXISTS" });
     }
-    return prisma.dailyReview.create({
-      data: { userId, date: validateDateString(date), rawInput, status: ReviewStatus.ANALYZING },
-    });
+    try {
+      return await prisma.dailyReview.create({
+        data: { userId, date: validatedDate, rawInput, status: ReviewStatus.ANALYZING },
+      });
+    } catch (err: any) {
+      // P2002 = 唯一约束违反（并发情况下的兜底）
+      if (err?.code === "P2002") {
+        throw Object.assign(new Error("该日期已有复盘记录"), { status: 409, code: "REVIEW_ALREADY_EXISTS" });
+      }
+      throw err;
+    }
   }
 
   async updateDaily(id: string, data: {
     rawInput?: string; completed?: string; notCompleted?: string;
     obstacles?: string; emotionState?: string; mindsetNote?: string;
-    energyRate?: number;
   }) {
     return prisma.dailyReview.update({ where: { id }, data });
   }

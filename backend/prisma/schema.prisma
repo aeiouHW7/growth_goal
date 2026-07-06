@@ -3,9 +3,13 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+// SQLite 不支持原生 String[]，Prisma 会自动序列化为 JSON 字符串。
+// 以下字段已在对应位置标注为 JSON 字符串：
+//   User.goalDomains, BehaviorPattern.keywords
 
 enum GoalStatus {
   ACTIVE
@@ -56,7 +60,7 @@ model User {
   weekdayTimeBlocks    Json?
   weekendAvailableHours Float
   weekendTimeBlocks    Json?
-  goalDomains          String[]
+  goalDomains          String  // SQLite: JSON 字符串数组，如 '["财务","健康"]'
   pastExperience       String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
@@ -163,7 +167,6 @@ model DailyReview {
   obstacles    String?
   emotionState String?
   mindsetNote  String?
-  energyRate   Int?
   followUpLog  Json?
   status       ReviewStatus @default(INPUTTING)
   createdAt    DateTime     @default(now())
@@ -174,6 +177,8 @@ model DailyReview {
 
   cognitiveBiasLogs CognitiveBiasLog[]
   analysisSessions  AnalysisSession[]
+
+  @@unique([userId, date])
 }
 
 model WeeklyReview {
@@ -276,7 +281,7 @@ model BehaviorPattern {
   userId        String
   pattern       String
   dimension     String?
-  keywords      String[]
+  keywords      String?  // SQLite: JSON 字符串数组，如 '["拖延","分心"]'
   firstDetected DateTime
   lastDetected  DateTime
   frequency     Int      @default(1)
