@@ -11,16 +11,6 @@ import { PatternService } from "./pattern.service";
 import { BiasDetectionService } from "./bias-detection.service";
 import { CapabilityService } from "./capability.service";
 
-const USER_PROFILE = `
-- 主业：新能源公司AI产品经理（营销服平台智能化，当前聚焦知识库+客服），工作日可用约3.7h（早6:30-8:40、晚21:00-22:30）
-- 长期目标：逐步脱离主业，靠副业实现自由
-- 副业矩阵：延吉实体美容院运营、小红书情侣号创作、AI视频制作、AI编程探索
-- 目标领域：健身、健康、AI、美容院经营、自媒体
-- 核心习惯：早起6:30、每日体态训练
-- 当前重点：知识库+客服产品、美容院运营、小红书情侣号、AI视频、AI编程
-- 特殊注意：有经前疲劳期周期，影响下午精力；有伴侣（男友），创作涉及外部协作
-`;
-
 const ANALYSIS_REQUIREMENTS = `
 1. **偏误分析** — 回顾用户输入中的表达方式，判断是否存在以下偏误：计划谬误（过度乐观）、自我美化（模糊表述）、基本归因错误（外归因）、确认偏误（只找支持自己的论据）、损失厌恶（怕损失>想获得）、事后合理化（为过去找理由）、现状偏差（懒得改）、聚类错觉（以偏概全）。每条偏误必须引用用户原文作为 triggerPhrase，输出到 detectedBiases
 
@@ -70,9 +60,39 @@ export class AnalysisRunner {
     if (!review) throw new Error(`Review ${reviewId} not found`);
     const userId = review.userId;
 
-    // 2. 获取上下文
+    // 2. 获取上下文（用户画像 + 复盘上下文）
     const todayStr = review.date.toISOString().slice(0, 10);
     const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+
+    // 动态加载用户画像（替代硬编码 USER_PROFILE）
+    const [user, archive] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.lifeArchive.findUnique({ where: { userId } }),
+    ]);
+    const profileParts: string[] = [];
+    if (user) {
+      const fields = [
+        user.occupation && `主业：${user.occupation}`,
+        user.industry && `行业：${user.industry}`,
+        user.weekdayAvailableHours != null && `工作日可用：约${user.weekdayAvailableHours}h`,
+        user.weekendAvailableHours != null && `周末可用：约${user.weekendAvailableHours}h`,
+      ].filter(Boolean);
+      if (fields.length) profileParts.push(fields.join('、'));
+      if (user.goalDomains) {
+        try {
+          const domains = JSON.parse(user.goalDomains);
+          if (Array.isArray(domains) && domains.length) {
+            profileParts.push(`关注领域：${domains.join('、')}`);
+          }
+        } catch { /* 忽略解析失败 */ }
+      }
+    }
+    if (archive?.summary) {
+      profileParts.push(`\nAI 摘要：${archive.summary}`);
+    }
+    const userProfileText = profileParts.length > 0
+      ? profileParts.join('\n')
+      : '暂无用户画像数据';
 
     const [plansRes, patternsRes, biasesRes, capsRes] = await Promise.all([
       prisma.dailyPlan.findMany({ where: { userId, date: review.date } }).catch(() => []),
@@ -111,7 +131,7 @@ ${patternsText}
 ${biasesText}
 - 能力评分:
 ${capsText}
-- 用户画像: ${USER_PROFILE.trim()}
+- 用户画像: ${userProfileText}
 
 要求输出JSON，schema如下:
 
