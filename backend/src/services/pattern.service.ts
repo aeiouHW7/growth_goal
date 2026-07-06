@@ -72,8 +72,9 @@ export class PatternService {
       // 用 bigram Jaccard 匹配已有模式
       let matched = existingPatterns.find(p => bigramJaccard(issue, p.pattern) >= SIMILARITY_THRESHOLD);
 
+      let updated: typeof matched;
       if (matched) {
-        await db.behaviorPattern.update({
+        updated = await db.behaviorPattern.update({
           where: { id: matched.id },
           data: {
             lastDetected: new Date(),
@@ -81,7 +82,7 @@ export class PatternService {
           },
         });
       } else {
-        const created = await db.behaviorPattern.create({
+        updated = await db.behaviorPattern.create({
           data: {
             userId,
             pattern: issue.trim().slice(0, 200),
@@ -91,11 +92,7 @@ export class PatternService {
             frequency: 1,
           },
         });
-        matched = created;
       }
-
-      // 获取最新频率
-      const updated = await db.behaviorPattern.findUnique({ where: { id: matched.id } });
       if (updated) {
         results.push({
           pattern: updated.pattern,
