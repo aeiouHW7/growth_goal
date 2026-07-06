@@ -1,3 +1,4 @@
+import { type Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 
 export interface DetectedBias {
@@ -50,9 +51,10 @@ export class BiasDetectionService {
   /**
    * 记录偏误到数据库
    */
-  async logBiases(userId: string, dailyReviewId: string, biases: DetectedBias[]) {
+  async logBiases(userId: string, dailyReviewId: string, biases: DetectedBias[], tx?: Prisma.TransactionClient) {
+    const db = tx || prisma;
     for (const bias of biases) {
-      await prisma.cognitiveBiasLog.create({
+      await db.cognitiveBiasLog.create({
         data: {
           userId,
           dailyReviewId,
@@ -67,10 +69,10 @@ export class BiasDetectionService {
   /**
    * 从 AI 分析结果（structuredReport.detectedBiases）写入 CognitiveBiasLog 表
    */
-  async logFromAnalysis(userId: string, dailyReviewId: string | null, report: Record<string, any>) {
+  async logFromAnalysis(userId: string, dailyReviewId: string | null, report: Record<string, any>, tx?: Prisma.TransactionClient) {
     const biases = report.detectedBiases as DetectedBias[] | undefined;
     if (!biases || !Array.isArray(biases) || biases.length === 0) return [];
-    await this.logBiases(userId, dailyReviewId || "", biases);
+    await this.logBiases(userId, dailyReviewId || "", biases, tx);
     return biases;
   }
 

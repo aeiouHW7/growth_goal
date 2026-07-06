@@ -1,3 +1,4 @@
+import { type Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 import { bigramJaccard } from "../utils/string-sim";
 
@@ -17,11 +18,12 @@ export class PatternService {
   /**
    * 将超过 N 天未更新的模式标记为 inactive
    */
-  async decayOldPatterns(userId: string, maxAgeDays = this.PATTERN_DECAY_DAYS): Promise<number> {
+  async decayOldPatterns(userId: string, maxAgeDays = this.PATTERN_DECAY_DAYS, tx?: Prisma.TransactionClient): Promise<number> {
+    const db = tx || prisma;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - maxAgeDays);
 
-    const result = await prisma.behaviorPattern.updateMany({
+    const result = await db.behaviorPattern.updateMany({
       where: { userId, active: true, lastDetected: { lt: cutoff } },
       data: { active: false },
     });
@@ -32,9 +34,10 @@ export class PatternService {
    * 从 AI 分析结果中提取反复出现的障碍，追踪到 BehaviorPattern 表
    * 来源：executionDiagnosis.issues、foggDiagnosis
    */
-  async trackIssuesFromAnalysis(userId: string, structuredReport: Record<string, any>): Promise<DetectedPattern[]> {
+  async trackIssuesFromAnalysis(userId: string, structuredReport: Record<string, any>, tx?: Prisma.TransactionClient): Promise<DetectedPattern[]> {
+    const db = tx || prisma;
     // 先衰减过期模式，保持活跃列表干净
-    await this.decayOldPatterns(userId);
+    await this.decayOldPatterns(userId, this.PATTERN_DECAY_DAYS, tx);
 
     const issues: string[] = [];
 
@@ -58,7 +61,7 @@ export class PatternService {
     const results: DetectedPattern[] = [];
 
     // 获取所有已有模式用于相似度匹配
-    const existingPatterns = await prisma.behaviorPattern.findMany({
+    const existingPatterns = await db.behaviorPattern.findMany({
       where: { userId, active: true },
       select: { id: true, pattern: true },
     });
@@ -70,7 +73,7 @@ export class PatternService {
       let matched = existingPatterns.find(p => bigramJaccard(issue, p.pattern) >= SIMILARITY_THRESHOLD);
 
       if (matched) {
-        await prisma.behaviorPattern.update({
+        await db.behaviorPattern.update({
           where: { id: matched.id },
           data: {
             lastDetected: new Date(),
@@ -78,7 +81,7 @@ export class PatternService {
           },
         });
       } else {
-        const created = await prisma.behaviorPattern.create({
+        const created = await db.behaviorPattern.create({
           data: {
             userId,
             pattern: issue.trim().slice(0, 200),
@@ -92,7 +95,7 @@ export class PatternService {
       }
 
       // 获取最新频率
-      const updated = await prisma.behaviorPattern.findUnique({ where: { id: matched.id } });
+      const updated = await db.behaviorPattern.findUnique({ where: { id: matched.id } });
       if (updated) {
         results.push({
           pattern: updated.pattern,

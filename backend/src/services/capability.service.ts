@@ -1,3 +1,4 @@
+import { type Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 
 // 20 维能力框架（来源：self-growth-analyst capability_framework.md）
@@ -90,13 +91,14 @@ export class CapabilityService {
    * 从 AI 分析结果（capabilityDeltas）批量写入 CapabilityScore 表
    * 每条包含 dimension + score（绝对值）+ evidence
    */
-  async logFromAnalysis(userId: string, deltas: Array<{ dimension: string; score: number; evidence: string }>) {
+  async logFromAnalysis(userId: string, deltas: Array<{ dimension: string; score: number; evidence: string }>, tx?: Prisma.TransactionClient) {
+    const db = tx || prisma;
     const results: Array<{ dimension: string; delta: number; previousScore?: number; score: number; evidence: string }> = [];
 
     for (const item of deltas) {
       if (!item.dimension || item.score === undefined || item.score < 0 || item.score > 10) continue;
       const { delta, previousScore } = await this.getDelta(userId, item.dimension, item.score);
-      await prisma.capabilityScore.create({
+      await db.capabilityScore.create({
         data: { userId, dimension: item.dimension, score: item.score, evidence: item.evidence || null },
       });
       results.push({ dimension: item.dimension, delta, previousScore, score: item.score, evidence: item.evidence });
