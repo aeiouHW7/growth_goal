@@ -44,7 +44,7 @@ export class LifeArchiveService {
   }
 
   /** 更新第二层：能力与资源 */
-  async updateLayerResources(userId: string, layerResources: Record<string, unknown>) {
+  async updateLayerResources(userId: string, layerResources: any) {
     return prisma.lifeArchive.upsert({
       where: { userId },
       create: { userId, layerResources },
@@ -53,7 +53,7 @@ export class LifeArchiveService {
   }
 
   /** 更新第四层：未来蓝图 */
-  async updateLayerFuture(userId: string, layerFuture: Record<string, unknown>) {
+  async updateLayerFuture(userId: string, layerFuture: any) {
     return prisma.lifeArchive.upsert({
       where: { userId },
       create: { userId, layerFuture },
@@ -65,11 +65,12 @@ export class LifeArchiveService {
 
   /** 更新能量精力（带版本保留） */
   async updateEnergy(userId: string, data: { energyDescription: string }) {
-    const archive = await prisma.lifeArchive.findUnique({ where: { userId } });
-    const current = (archive?.layerResources as Record<string, unknown>) || {};
+    return prisma.$transaction(async (tx) => {
+      const archive = await tx.lifeArchive.findUnique({ where: { userId } });
+      const current = (archive?.layerResources as Record<string, unknown>) || {};
 
-    return prisma.lifeArchive.upsert({
-      where: { userId },
+      return tx.lifeArchive.upsert({
+        where: { userId },
       create: {
         userId,
         layerResources: {
@@ -91,6 +92,7 @@ export class LifeArchiveService {
         },
       },
     });
+    });
   }
 
   /** 更新健康基础（带版本保留） */
@@ -100,26 +102,28 @@ export class LifeArchiveService {
     exerciseRoutine?: string;
     addictiveHabits?: string;
   }) {
-    const archive = await prisma.lifeArchive.findUnique({ where: { userId } });
-    const current = ((archive?.layerResources as Record<string, unknown>)?.health as Record<string, unknown>) || {};
+    return prisma.$transaction(async (tx) => {
+      const archive = await tx.lifeArchive.findUnique({ where: { userId } });
+      const current = ((archive?.layerResources as Record<string, unknown>)?.health as Record<string, unknown>) || {};
 
-    const health = {
-      ...current,
-      ...data,
-      previousPhysicalHealth: data.physicalHealth ? (current.physicalHealth || null) : undefined,
-      previousMentalState: data.mentalState ? (current.mentalState || null) : undefined,
-      previousExerciseRoutine: data.exerciseRoutine ? (current.exerciseRoutine || null) : undefined,
-    };
-    // De-duplicate: if previous* matches current value, skip versioning
-    if (health.previousPhysicalHealth === data.physicalHealth) delete health.previousPhysicalHealth;
-    if (health.previousMentalState === data.mentalState) delete health.previousMentalState;
-    if (health.previousExerciseRoutine === data.exerciseRoutine) delete health.previousExerciseRoutine;
+      const health = {
+        ...current,
+        ...data,
+        previousPhysicalHealth: data.physicalHealth ? (current.physicalHealth || null) : undefined,
+        previousMentalState: data.mentalState ? (current.mentalState || null) : undefined,
+        previousExerciseRoutine: data.exerciseRoutine ? (current.exerciseRoutine || null) : undefined,
+      };
+      // De-duplicate: if previous* matches current value, skip versioning
+      if (health.previousPhysicalHealth === data.physicalHealth) delete health.previousPhysicalHealth;
+      if (health.previousMentalState === data.mentalState) delete health.previousMentalState;
+      if (health.previousExerciseRoutine === data.exerciseRoutine) delete health.previousExerciseRoutine;
 
-    const resources = (archive?.layerResources as Record<string, unknown>) || {};
-    return prisma.lifeArchive.upsert({
-      where: { userId },
-      create: { userId, layerResources: { ...resources, health } },
-      update: { layerResources: { ...resources, health } },
+      const resources = (archive?.layerResources as Record<string, unknown>) || {};
+      return tx.lifeArchive.upsert({
+        where: { userId },
+        create: { userId, layerResources: { ...resources, health } },
+        update: { layerResources: { ...resources, health } },
+      });
     });
   }
 
@@ -130,31 +134,33 @@ export class LifeArchiveService {
     productivityPatterns?: Record<string, unknown>;
     decisionMistakes?: unknown[];
   }) {
-    const archive = await prisma.lifeArchive.findUnique({ where: { userId } });
-    const current = (archive?.layerBehavior as Record<string, unknown>) || {};
+    return prisma.$transaction(async (tx) => {
+      const archive = await tx.lifeArchive.findUnique({ where: { userId } });
+      const current = (archive?.layerBehavior as Record<string, unknown>) || {};
 
-    // Merge: append new patterns, de-duplicate by description
-    const merge = <T extends { description?: string }>(existing: T[] | undefined, incoming: T[] | undefined): T[] => {
-      if (!incoming || incoming.length === 0) return existing || [];
-      if (!existing) return incoming;
-      const merged = [...existing];
-      for (const item of incoming) {
-        const dup = merged.find((e) => e.description === item.description);
-        if (!dup) merged.push(item);
-      }
-      return merged;
-    };
+      // Merge: append new patterns, de-duplicate by description
+      const merge = <T extends { description?: string }>(existing: T[] | undefined, incoming: T[] | undefined): T[] => {
+        if (!incoming || incoming.length === 0) return existing || [];
+        if (!existing) return incoming;
+        const merged = [...existing];
+        for (const item of incoming) {
+          const dup = merged.find((e) => e.description === item.description);
+          if (!dup) merged.push(item);
+        }
+        return merged;
+      };
 
-    const merged: Record<string, unknown> = {};
-    if (data.successPatterns) merged.successPatterns = merge(current.successPatterns as any[], data.successPatterns as any[]);
-    if (data.failurePatterns) merged.failurePatterns = merge(current.failurePatterns as any[], data.failurePatterns as any[]);
-    if (data.productivityPatterns) merged.productivityPatterns = { ...(current.productivityPatterns as object || {}), ...data.productivityPatterns };
-    if (data.decisionMistakes) merged.decisionMistakes = merge(current.decisionMistakes as any[], data.decisionMistakes as any[]);
+      const merged: Record<string, unknown> = {};
+      if (data.successPatterns) merged.successPatterns = merge(current.successPatterns as any[], data.successPatterns as any[]);
+      if (data.failurePatterns) merged.failurePatterns = merge(current.failurePatterns as any[], data.failurePatterns as any[]);
+      if (data.productivityPatterns) merged.productivityPatterns = { ...(current.productivityPatterns as object || {}), ...data.productivityPatterns };
+      if (data.decisionMistakes) merged.decisionMistakes = merge(current.decisionMistakes as any[], data.decisionMistakes as any[]);
 
-    return prisma.lifeArchive.upsert({
-      where: { userId },
-      create: { userId, layerBehavior: merged },
-      update: { layerBehavior: merged },
+      return tx.lifeArchive.upsert({
+        where: { userId },
+        create: { userId, layerBehavior: merged },
+        update: { layerBehavior: merged },
+      });
     });
   }
 
@@ -214,9 +220,9 @@ export class LifeArchiveService {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return;
 
-    const layerResources: Record<string, unknown> = {};
+    const layerResources: any = {};
     const layerBehavior: Record<string, unknown> = {};
-    const layerFuture: Record<string, unknown> = {};
+    const layerFuture: any = {};
 
     // 职业 → 核心能力
     if (user.occupation || user.industry) {
@@ -241,9 +247,12 @@ export class LifeArchiveService {
     }
 
     // 目标领域 → 愿景
-    if (user.goalDomains?.length) {
+    const goalDomains: string[] = typeof user.goalDomains === "string"
+      ? (() => { try { return JSON.parse(user.goalDomains); } catch { return []; } })()
+      : user.goalDomains ?? [];
+    if (goalDomains.length) {
       layerFuture.vision = {
-        years10: `在 ${user.goalDomains.join("、")} 领域取得成就`,
+        years10: `在 ${goalDomains.join("、")} 领域取得成就`,
         years3: "",
         year1: "",
       };
