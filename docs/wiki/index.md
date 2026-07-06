@@ -20,4 +20,5 @@
 
 ## 模式与最佳实践
 
-- [patterns.md](patterns.md) — 技术模式与最佳实践（待创建）
+- [Database Safety](database-safety.md) — 数据库安全规范、备份策略、事故复盘
+- [patterns.md](patterns.md) — 技术模式与最佳实践（数据库事务、查询优化、Claude CLI 安全调用）
