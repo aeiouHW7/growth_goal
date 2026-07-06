@@ -40,9 +40,13 @@ export class CapabilityService {
    * 获取最新评分（每个维度取最新一条）
    */
   async getLatestScores(userId: string) {
+    const since = new Date();
+    since.setDate(since.getDate() - 90);
+
     const scores = await prisma.capabilityScore.findMany({
-      where: { userId },
+      where: { userId, createdAt: { gte: since } },
       orderBy: { createdAt: "desc" },
+      take: 100,
     });
 
     // 每个维度取最新一条
