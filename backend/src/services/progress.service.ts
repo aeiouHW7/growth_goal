@@ -28,12 +28,6 @@ export class ProgressService {
       recentReviews: dailyReviews.map((r) => ({ id: r.id, date: r.date, status: r.status })),
       // 每日指标汇总
       dailyMetrics: {
-        energyRates: dailyReviews
-          .filter((r) => (r.aiAnalyses?.[0]?.structuredReport as any)?.energyRate !== undefined)
-          .map((r) => ({
-            date: r.date,
-            score: (r.aiAnalyses?.[0]?.structuredReport as any).energyRate,
-          })),
         postureDays: dailyReviews.filter((r) => (r.aiAnalyses?.[0]?.structuredReport as any)?.postureTraining?.completed === true).length,
       },
     };
@@ -74,11 +68,24 @@ export class ProgressService {
     ]);
 
     const daysInMonth = endDate.getDate();
+
+    // 预建 O(1) 查找 Map
+    const plansByDate = new Map<string, typeof dailyPlans>();
+    for (const p of dailyPlans) {
+      const key = p.date.toISOString().slice(0, 10);
+      if (!plansByDate.has(key)) plansByDate.set(key, []);
+      plansByDate.get(key)!.push(p);
+    }
+    const reviewByDate = new Map<string, (typeof dailyReviews)[0]>();
+    for (const r of dailyReviews) {
+      reviewByDate.set(r.date.toISOString().slice(0, 10), r);
+    }
+
     const days = [];
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      const plans = dailyPlans.filter((p) => p.date.toISOString().slice(0, 10) === dateStr);
-      const review = dailyReviews.find((r) => r.date.toISOString().slice(0, 10) === dateStr);
+      const plans = plansByDate.get(dateStr) || [];
+      const review = reviewByDate.get(dateStr);
       const analysis = review?.aiAnalyses[0];
       const feedback = analysis?.feedbacks[0];
 
