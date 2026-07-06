@@ -51,6 +51,15 @@ export class AnalysisRunner {
       await this.runInternal(reviewId);
     } catch (err) {
       console.error(`[AnalysisRunner] Failed for review ${reviewId}:`, err);
+      // 回退复盘状态为 INPUTTING，允许用户重新提交
+      try {
+        await prisma.dailyReview.update({
+          where: { id: reviewId },
+          data: { status: "INPUTTING" },
+        });
+      } catch (dbErr) {
+        console.error(`[AnalysisRunner] Failed to revert review status for ${reviewId}:`, dbErr);
+      }
     }
   }
 
@@ -61,7 +70,6 @@ export class AnalysisRunner {
     const userId = review.userId;
 
     // 2. 获取上下文（用户画像 + 复盘上下文）
-    const todayStr = review.date.toISOString().slice(0, 10);
     const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 
     // 动态加载用户画像（替代硬编码 USER_PROFILE）
@@ -139,23 +147,35 @@ ${ANALYSIS_REQUIREMENTS.trim()}
 
 ${JSON_SCHEMA}
 
-只输出JSON，不要其他内容。`;
+只输出JSON，不要其他内容。
+输出以 __JSON_START__ 开头，__JSON_END__ 结尾。`;
 
     // 4. 调 claude CLI
     const analysisText = await this.callClaude(userPrompt);
 
-    // 5. 解析 JSON
-    const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON found in Claude response");
-    const report = JSON.parse(jsonMatch[0]);
+    // 5. 解析 JSON（优先通过 __JSON__ 标记提取，fallback 到最外层大括号）
+    let jsonStr: string;
+    const markerMatch = analysisText.match(/__JSON_START__([\s\S]*?)__JSON_END__/);
+    if (markerMatch) {
+      jsonStr = markerMatch[1].trim();
+    } else {
+      // Fallback: 取最外层大括号内容
+      const firstBrace = analysisText.indexOf('{');
+      const lastBrace = analysisText.lastIndexOf('}');
+      if (firstBrace === -1 || lastBrace <= firstBrace) {
+        throw new Error("No JSON found in Claude response");
+      }
+      jsonStr = analysisText.slice(firstBrace, lastBrace + 1);
+    }
+    const report = JSON.parse(jsonStr);
 
-    // 6. 保存分析 + 追踪 pattern/bias/capability（事务包裹，保证原子性）
+    // 6. 保存分析报告（事务保护，只保证 AIAnalysis 写入原子性）
     const patternService = new PatternService();
     const biasDetection = new BiasDetectionService();
     const capabilityService = new CapabilityService();
 
-    await prisma.$transaction(async (tx) => {
-      const analysis = await tx.aIAnalysis.create({
+    const analysis = await prisma.$transaction(async (tx) => {
+      return tx.aIAnalysis.create({
         data: {
           dailyReviewId: review.id,
           analysisType: "DAILY",
@@ -163,19 +183,25 @@ ${JSON_SCHEMA}
           narrativeReport: null,
         },
       });
-
-      await Promise.allSettled([
-        patternService.trackIssuesFromAnalysis(userId, report, tx).catch(() => {}),
-        biasDetection.logFromAnalysis(userId, review.id, report, tx).catch(() => {}),
-        capabilityService.logFromAnalysis(userId, report.capabilityDeltas || [], tx).catch(() => {}),
-      ]);
     });
+
+    // 7. 追踪 pattern/bias/capability（独立于事务执行，失败不影响主报告）
+    await Promise.allSettled([
+      patternService.trackIssuesFromAnalysis(userId, report).catch((e) => {
+        console.error(`[AnalysisRunner] Pattern tracking failed:`, e);
+      }),
+      biasDetection.logFromAnalysis(userId, review.id, report).catch((e) => {
+        console.error(`[AnalysisRunner] Bias logging failed:`, e);
+      }),
+      capabilityService.logFromAnalysis(userId, report.capabilityDeltas || []).catch((e) => {
+        console.error(`[AnalysisRunner] Capability logging failed:`, e);
+      }),
+    ]);
   }
 
   private callClaude(prompt: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const proc = spawn('claude', ['-p', '-'], {
-        shell: true,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
       let out = '', errOut = '';
