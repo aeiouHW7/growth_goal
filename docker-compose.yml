@@ -1,15 +1,18 @@
-services:
-  db:
-    image: postgres:15-alpine
-    container_name: growth-miniprogram-db
-    environment:
-      POSTGRES_USER: growthuser
-      POSTGRES_PASSWORD: growthpass
-      POSTGRES_DB: growth-miniprogram
-    ports:
-      - "5434:5432"
-    volumes:
-      - growth-miniprogram-data:/var/lib/postgresql/data
-
-volumes:
-  growth-miniprogram-data:
+# ⚠️ 已弃用 — 项目已从 PostgreSQL 迁移到本地 SQLite
+# 无需启动此容器，直接运行 prisma db push 即可
+# 如需恢复 PostgreSQL 模式，取消下面注释并运行 docker compose up -d
+#
+# services:
+#   db:
+#     image: postgres:15-alpine
+#     container_name: growth-miniprogram-db
+#     environment:
+#       POSTGRES_USER: growthuser
+#       POSTGRES_PASSWORD: growthpass
+#       POSTGRES_DB: growth-miniprogram
+#     ports:
+#       - "5434:5432"
+#     volumes:
+#       - growth-miniprogram-data:/var/lib/postgresql/data
+# volumes:
+#   growth-miniprogram-data:

@@ -18,6 +18,17 @@ async function post<T>(path: string, body: any): Promise<T> {
   return json.data as T;
 }
 
+async function patch<T>(path: string, body: any): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message || json.error.code);
+  return json.data as T;
+}
+
 export interface User {
   id: string; nickname?: string; age: number; occupation: string; industry: string;
   city?: string; weekdayAvailableHours: number; weekendAvailableHours: number;
@@ -85,6 +96,64 @@ export interface CalendarData {
   year: number; month: number; days: CalendarDay[];
 }
 
+// ——— LifeArchive ———
+export interface LifeArchive {
+  id: string;
+  userId: string;
+  layerCore?: {
+    personality?: {
+      mbti?: string;
+      bigFive?: {
+        openness?: number;
+        conscientiousness?: number;
+        extraversion?: number;
+        agreeableness?: number;
+        neuroticism?: number;
+      };
+      gallup?: string[];
+    };
+  };
+  layerResources?: {
+    skills?: Array<{ skillName: string; level: string; yearsOfExperience: number; description?: string }>;
+    weekdayAvailableHours?: number;
+    weekendAvailableHours?: number;
+    weekdayTimeBlocks?: string;
+    weekendTimeBlocks?: string;
+    fixedExpenditure?: string;
+    finance?: {
+      safetyNet?: string;
+      incomeStructure?: string;
+      investableFunds?: string;
+      financialStage?: string;
+    };
+    support?: {
+      guidance?: string;
+      collaboration?: string;
+      emotionalSupport?: string;
+      socialNetwork?: string;
+    };
+    energyDescription?: string;
+    health?: {
+      physicalHealth?: string;
+      mentalState?: string;
+      exerciseRoutine?: string;
+      addictiveHabits?: string;
+    };
+  };
+  layerBehavior?: Record<string, any>;
+  layerFuture?: {
+    vision?: { years10?: string; years3?: string; year1?: string };
+    goalSource?: { motivation?: string; whyNow?: string };
+    outcomeRange?: { description?: string; minimum?: string; ideal?: string };
+    roleModels?: { positive?: string; negative?: string };
+  };
+  summary?: string;
+}
+
+export type LayerCoreInput = NonNullable<LifeArchive['layerCore']>;
+export type LayerResourcesInput = NonNullable<LifeArchive['layerResources']>;
+export type LayerFutureInput = NonNullable<LifeArchive['layerFuture']>;
+
 export interface Suggestion {
   type: 'positive' | 'warning' | 'critical';
   message: string;
@@ -112,6 +181,15 @@ export interface MonthlyReviewData {
   aiAnalyses?: AIAnalysis[];
   monthlyPlans?: MonthlyPlan[];
 }
+
+export const ARCHIVE_API = {
+  get: () => get<LifeArchive | null>('/life-archive'),
+  updateLayerCore: (data: LayerCoreInput) => patch<LifeArchive>('/life-archive/layer-core', data),
+  updateLayerResources: (data: LayerResourcesInput) => patch<LifeArchive>('/life-archive/layer-resources', data),
+  updateLayerFuture: (data: LayerFutureInput) => patch<LifeArchive>('/life-archive/layer-future', data),
+  getSummary: () => get<{ summary: string } | null>('/life-archive/summary'),
+  refreshSummary: () => post<{ summary: string }>('/life-archive/summary/refresh', {}),
+};
 
 export const api = {
   getUser: () => get<User>('/user'),

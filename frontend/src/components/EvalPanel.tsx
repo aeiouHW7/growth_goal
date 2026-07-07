@@ -4,7 +4,7 @@ interface Props {
   completionRate?: number;
   fallbackLabel?: string;
   fallbackScore?: number;
-  dailyMetrics?: { energyRate?: number; postureDone?: boolean };
+  dailyMetrics?: { postureDone?: boolean };
 }
 
 function getRatingEmoji(rating?: string): string {
@@ -23,10 +23,6 @@ export function EvalPanel({ rating, score, completionRate, fallbackLabel, fallba
           <div className="eval-stat">
             <div className="eval-stat-value">{score != null ? score : '-'}</div>
             <div className="eval-stat-label">AI 评分</div>
-          </div>
-          <div className="eval-stat">
-            <div className="eval-stat-value">{dailyMetrics.energyRate != null ? dailyMetrics.energyRate : '-'}</div>
-            <div className="eval-stat-label">充沛率</div>
           </div>
           <div className="eval-stat">
             <div className="eval-stat-value">{dailyMetrics.postureDone ? '✅' : '❌'}</div>

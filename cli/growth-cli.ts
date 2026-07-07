@@ -143,6 +143,7 @@ function showMenu() {
   console.log(`  ${color(C.green, "4")}. 写每日复盘`);
   console.log(`  ${color(C.green, "5")}. 查看进度总览`);
   console.log(`  ${color(C.green, "6")}. 周/月复盘检查`);
+  console.log(`  ${color(C.green, "7")}. 同步今日计划 → Mac 日历`);
   console.log(`  ${color(C.green, "0")}. 退出\n`);
 }
 
@@ -653,6 +654,38 @@ async function reviewCheck() {
   }
 }
 
+// ─── Sync to Calendar ───
+async function syncCalendar() {
+  title("同步到 Mac 日历");
+  console.log("  正在将今日计划写入 Calendar.app…");
+
+  const { execSync } = await import("child_process");
+  const { resolve, dirname } = await import("path");
+  const { fileURLToPath } = await import("url");
+  const scriptPath = resolve(dirname(fileURLToPath(import.meta.url)), "../backend/scripts/sync-calendar.ts");
+
+  try {
+    const output = execSync(`npx tsx "${scriptPath}" 2>&1`, {
+      encoding: "utf-8",
+      timeout: 30000,
+      shell: true,
+    });
+    console.log(`  ${color(C.green, output.trim().split("\n").join("\n  "))}`);
+  } catch (err: any) {
+    console.log(`  ${color(C.red, "✗ 同步失败: " + (err.stderr || err.message || err).slice(0, 200))}`);
+    console.log(`  ${color(C.gray, "   请在「系统设置 → 隐私与安全性 → 自动化」允许终端控制日历")}`);
+  }
+}
+
+/** 询问用户是否同步当日计划到日历 */
+async function askSyncCalendar(showPrompt = true) {
+  if (!showPrompt) return;
+  const ans = await ask(color(C.yellow, `\n  要同步今日计划到 Mac 日历吗? (y/n): `));
+  if (ans.toLowerCase() === "y") {
+    await syncCalendar();
+  }
+}
+
 // ─── Main ───
 async function main() {
   console.log(`\n${color(C.bold + C.blue, "  Growth 目标管理系统 CLI")} ${color(C.gray, "v0.1")}`);
@@ -660,15 +693,16 @@ async function main() {
 
   while (true) {
     showMenu();
-    const v = (await ask(color(C.yellow, "  请选择 [0-6]: "))).trim();
+    const v = (await ask(color(C.yellow, "  请选择 [0-7]: "))).trim();
     switch (v) {
       case "1": await manageUser(); break;
       case "2": await manageGoals(); break;
-      case "3": await managePlans(); break;
+      case "3": await managePlans(); await askSyncCalendar(); break;
       case "4": await writeDailyReview(); break;
       case "5": await viewProgress(); break;
       case "6": await reviewCheck(); break;
-      case "0":
+	      case "7": await syncCalendar(); break;
+	      case "0":
         console.log(`\n${color(C.green, "  再见! 👋")}\n`);
         rl.close();
         return;

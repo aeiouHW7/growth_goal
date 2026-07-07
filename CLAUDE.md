@@ -60,3 +60,28 @@ planner → applier → reviewer → archiver → retro
 - **最小变更**：只做用户要求的事
 - **先读后写**：修改代码前先读完整文件
 - **知识库优先**：查找信息前先读 docs/wiki/index.md
+
+## 数据库安全（重要）
+
+**实际数据库路径**: `backend/prisma/dev.db`
+**⚠️ 不是 `backend/dev.db`（那是空文件）**
+
+### 备份命令
+
+```bash
+# 手动备份
+bash scripts/db-backup.sh "备注"
+
+# shutdown 时自动备份（已集成）
+bash scripts/shutdown.sh
+
+# 恢复：拷贝备份文件覆盖
+cp backend/backups/growth-xxx.db backend/prisma/dev.db
+```
+
+### 硬性规则
+
+1. **任何批量写数据库的操作（恢复、迁移、重算），必须先执行 `bash scripts/db-backup.sh "pre-操作名"`**
+2. **永远不允许 `deleteMany()`、`DELETE FROM` 等清表操作** — 改用 upsert
+3. **备份文件在 `backend/backups/` 下，保留最近 30 个**
+4. 前端、CLI、飞书 Bridge 都写到同一个数据库，备份一份即可覆盖全部入口

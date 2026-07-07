@@ -2,7 +2,7 @@
 # growth-miniprogram 一键停止
 # 用法: bash scripts/shutdown.sh
 #
-# 停止后端(3001) + 前端(3002)，保留 PostgreSQL 和 Bridge 继续运行
+# 停止后端(3001) + 前端(3002)
 
 set -euo pipefail
 
@@ -28,5 +28,10 @@ pkill -f "tsx watch.*backend" 2>/dev/null || true
 pkill -f "vite.*frontend" 2>/dev/null || true
 pkill -f "node.*dev" 2>/dev/null || true
 
-echo "✓ Services stopped (PostgreSQL + Bridge still running)"
+# 3) 自动备份数据库
+echo "▶ Backing up database..."
+bash "$(cd "$(dirname "$0")" && pwd)/db-backup.sh" "shutdown" 2>/dev/null || true
+
+echo "✓ Services stopped (Bridge still running if managed by PM2)"
 echo "   Start again:  bash scripts/startup.sh"
+echo "   Last backup:  ls backend/backups/growth-*"

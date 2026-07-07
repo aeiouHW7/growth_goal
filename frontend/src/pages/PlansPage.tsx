@@ -57,6 +57,26 @@ export function PlansPage() {
   const [year, setYear] = useState(defaultYear);
   const [month, setMonth] = useState(defaultMonth);
   const [dimension, setDimension] = useState<Dimension>('month');
+  const [initialized, setInitialized] = useState(false);
+
+  // First load: navigate to most recent month with review data
+  useEffect(() => {
+    if (initialized) return;
+    api.getProgressOverview().then(overview => {
+      const reviews = overview.recentReviews;
+      if (reviews && reviews.length > 0) {
+        const latest = reviews[0]; // most recent first
+        const d = new Date(latest.date);
+        const reviewYear = d.getFullYear();
+        const reviewMonth = d.getMonth() + 1;
+        if (reviewYear !== defaultYear || reviewMonth !== defaultMonth) {
+          setYear(reviewYear);
+          setMonth(reviewMonth);
+        }
+      }
+      setInitialized(true);
+    }).catch(() => setInitialized(true));
+  }, [initialized]);
   const [activePanel, setActivePanel] = useState<Panel>('plan');
   const [selectedDay, setSelectedDay] = useState<number | undefined>(undefined);
   const [monthlyPlans, setMonthlyPlans] = useState<MonthlyPlan[] | null>(undefined);
@@ -202,7 +222,7 @@ export function PlansPage() {
             <EvalPanel
               score={aiScore}
               completionRate={da?.completionSummary?.completionRate != null ? parseFloat(da.completionSummary.completionRate) / 100 : monthlyReview?.completionRate}
-              dailyMetrics={da ? { energyRate: da.energyRate, postureDone: da.postureTraining?.completed } : undefined}
+              dailyMetrics={da ? { postureDone: da.postureTraining?.completed } : undefined}
             />
           );
         }

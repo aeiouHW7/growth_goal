@@ -1,13 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { AnalysisService } from "../services/analysis.service";
+import { AnalysisRunner } from "../services/analysis-runner.service";
 import { UserService } from "../services/user.service";
 import { SignalDepthService } from "../services/signal-depth.service";
 import { PatternService } from "../services/pattern.service";
 import { BiasDetectionService } from "../services/bias-detection.service";
 import { CapabilityService } from "../services/capability.service";
-import type { StructuredReport } from "../types/structured-report";
+
 
 const analysisService = new AnalysisService();
+const analysisRunner = new AnalysisRunner();
 const userService = new UserService();
 const signalDepth = new SignalDepthService();
 const patternService = new PatternService();
@@ -31,17 +33,18 @@ export class AnalysisController {
         return;
       }
 
-      // 每日复盘指标（可选，有则校验）
-      if (analysisType === "DAILY") {
-        const report = structuredReport as StructuredReport;
-        if (report.energyRate != null && (report.energyRate < 1 || report.energyRate > 100)) {
-          res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "energyRate 必须在 1-100 之间" } });
-          return;
-        }
-      }
 
       const analysis = await analysisService.generate({ dailyReviewId, weeklyReviewId, monthlyReviewId, analysisType, structuredReport, narrativeReport });
       res.status(201).json({ data: analysis });
+    } catch (err) { next(err); }
+  }
+
+  async runAnalysis(req: Request, res: Response, next: NextFunction) {
+    try {
+      const reviewId = pv(req, "reviewId");
+      // 异步执行，不阻塞响应
+      analysisRunner.run(reviewId);
+      res.json({ data: { message: "分析已触发，后台运行中", reviewId } });
     } catch (err) { next(err); }
   }
 

@@ -80,6 +80,64 @@
 
 ## 每日进度日志
 
+### 2026-06-27 — 前端档案页 + 真实数据恢复 + Apple 风格 + 复盘链路修复
+
+**做了什么：**
+
+**前端档案页（LifeArchive）**
+- 新增 `ArchivePage.tsx` 三子标签页面（核心特质/资源能力/未来蓝图）
+- 新增 `archive.css` Apple 风格样式
+- App.tsx 导航栏增加「档案」Tab
+- API 增加 LifeArchive 类型 + `ARCHIVE_API` 客户端（初版用 POST 有 bug，后修复为 PATCH）
+- 表单改为始终可编辑 + 常驻保存按钮
+
+**真实数据恢复**
+- 从备份 JSON (growth-2026-05-22T16-05-13-638Z) 恢复 lmh 完整数据
+- 1 个用户、1 个人生目标、15 个年度目标、7 个月度计划、2 条复盘、6 个行为模式
+- 修复 PostgreSQL → SQLite 迁移中的 `String[]` → JSON 字符串类型转换
+- 修复 Prisma 数据库文件路径问题（实际位置 `prisma/dev.db`）
+
+**Apple 风格样式**
+- 主题色从 indigo `#6366f1` 改为 Apple blue `#0071e3`
+- 字体改为 SF Pro 系列
+- 颜色系统对齐 Apple 设计语言
+- 全局字体抗锯齿优化
+
+**复盘链路修复**
+- 走通了真实 AI 分析链路：复盘提交 → Claude CLI 分析 → 回写全部服务
+- 行为模式追踪（6 条更新）、偏误记录（3 条）、能力评分（4 个维度）
+- 后续不允许跳流程
+
+**待办**
+- 档案页 3年/1年愿景待用户补充
+- 档案摘要待刷新
+- 充沛率 4/100 可能偏低，待用户确认调整
+
+### 2026-06-27 — PostgreSQL → SQLite 数据库迁移
+
+**做了什么：**
+- 🔄 完成 PostgreSQL → SQLite 数据库迁移（去除 Docker 依赖）
+- 核心改动：
+  - `backend/prisma/schema.prisma` — provider 改为 sqlite
+  - `backend/.env` — `DATABASE_URL` 改为 `file:./dev.db`
+  - `docker-compose.yml` — 标记为已弃用（注释掉，留作参考）
+  - `scripts/startup.sh` — 去掉 Docker 启动和等待步骤
+  - `scripts/shutdown.sh` — 去掉 PostgreSQL 保留提示
+  - `scripts/db-backup.sh` / `db-restore.sh` — 改为 SQLite 文件拷贝模式
+  - `backend/prisma/seed.ts` — 去掉 `docker exec pg_dump` 备份
+  - `backend/package.json` — 去掉依赖 Docker 的 `predev` 备份
+  - `README.md` — 更新技术栈、快速开始、架构图
+  - `docs/wiki/deployment.md` — 重写为 SQLite 本地部署指南
+  - `domain.yaml` — 更新数据库类型
+
+**效果：**
+- ✅ 不再需要 Docker Desktop 或任何容器运行时
+- ✅ 启动简化：`cd backend && npx prisma db push && npm run dev`
+- ✅ 换电脑迁移：拷 `backend/dev.db` 一个文件即可
+- ✅ 备份简化：`bash scripts/db-backup.sh` → 直接拷贝 .db 文件
+- ✅ 个人电脑资源占用大幅降低（无 Docker 开销）
+- ⚠️ SQLite 不支持原生 `String[]`，`goalDomains` 和 `keywords` 改为 JSON 字符串存储，Service 层自动序列化/反序列化
+
 ### 2026-06-14
 
 **做了什么：**

@@ -5,14 +5,14 @@ version: 0.1.0
 tech_stack:
   frontend: Taro (React + TypeScript) — 跨端支持微信小程序和 H5/Web
   backend: Node.js + TypeScript + Prisma
-  database: PostgreSQL
+  database: SQLite (本地文件)
 
 services:
   backend:
     port: 3001
   database:
-    type: postgresql
-    port: 5434
+    type: sqlite
+    port: null
 
 scripts:
   dev: "cd backend && npm run dev"

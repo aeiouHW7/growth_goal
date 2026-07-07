@@ -284,22 +284,6 @@ let _startingServices = false;
 
 async function checkServiceStatus() {
   const lines = [];
-  // Check Docker daemon first
-  try {
-    await new Promise((resolve, reject) => {
-      exec('docker info', { timeout: 5000 }, err => err ? reject() : resolve());
-    });
-    lines.push('[Docker] running');
-  } catch { lines.push('[Docker] not running — start Docker Desktop first'); }
-  try {
-    const dbStatus = await new Promise(resolve => {
-      exec('docker ps --filter name=growth-miniprogram-db --format "{{.Status}}"', (err, stdout) => {
-        if (err) return resolve('stopped');
-        resolve(stdout.trim() || 'stopped');
-      });
-    });
-    lines.push('[DB] ' + dbStatus);
-  } catch { lines.push('[DB] error'); }
   try {
     await fetch('GET', '/api/health');
     lines.push('[Backend] running (port 3001)');
@@ -326,48 +310,9 @@ async function startManagedServices() {
   _startingServices = true;
   const results = ['Starting services...'];
 
-  // 0. Wait for Docker daemon to be ready
-  for (let i = 0; i < 30; i++) {
-    try {
-      await new Promise((resolve, reject) => {
-        exec('docker info', { timeout: 5000 }, err => err ? reject() : resolve());
-      });
-      results.push('[Docker] daemon ready');
-      break;
-    } catch {
-      if (i === 9) results.push('[Docker] waiting for daemon...');
-      if (i === 29) results.push('[Docker] daemon not ready — continuing');
-      await new Promise(r => setTimeout(r, 2000));
-    }
-  }
+  // DB is SQLite (local file), no server to start
 
-  // 1. Docker compose up
-  try {
-    await new Promise((resolve, reject) => {
-      exec('docker compose up -d', { cwd: PROJECT_ROOT, timeout: 60000 }, (err, stdout, stderr) => {
-        if (err && !/already/i.test(stderr + stdout)) return reject(err);
-        resolve();
-      });
-    });
-    results.push('[DB] started');
-  } catch (err) { results.push('[DB] error: ' + err.message.slice(0, 60)); }
-
-  // 2. Wait for DB to be ready
-  for (let i = 0; i < 30; i++) {
-    try {
-      await new Promise((resolve, reject) => {
-        exec('docker exec growth-miniprogram-db pg_isready -U growthuser -d growth-miniprogram',
-          err => err ? reject() : resolve());
-      });
-      results.push('[DB] ready');
-      break;
-    } catch {
-      if (i === 29) results.push('[DB] wait timeout — continuing');
-      await new Promise(r => setTimeout(r, 1000));
-    }
-  }
-
-  // 3. Backend
+  // 1. Backend
   const backend = spawn('npm', ['run', 'dev'], { cwd: BACKEND_DIR, shell: true, stdio: ['ignore', 'pipe', 'pipe'] });
   managedProcesses.backend = backend;
   backend.stdout.on('data', d => process.stdout.write('[backend] ' + d));
@@ -386,7 +331,7 @@ async function startManagedServices() {
     }
   }
 
-  // 4. Frontend
+  // 2. Frontend
   const frontend = spawn('npm', ['run', 'dev'], { cwd: FRONTEND_DIR, shell: true, stdio: ['ignore', 'pipe', 'pipe'] });
   managedProcesses.frontend = frontend;
   frontend.stdout.on('data', d => process.stdout.write('[frontend] ' + d));

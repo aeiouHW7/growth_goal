@@ -31,9 +31,28 @@ export interface UpdateUserInput {
   pastExperience?: string;
 }
 
+/** Serialize string[] fields to JSON strings for SQLite compatibility */
+function toDb(input: CreateUserInput | UpdateUserInput): Record<string, any> {
+  const data = { ...input } as Record<string, any>;
+  if (data.goalDomains !== undefined) {
+    data.goalDomains = JSON.stringify(data.goalDomains);
+  }
+  return data;
+}
+
+/** Deserialize JSON string fields from SQLite back to objects */
+function fromDb(user: Record<string, any> | null): any {
+  if (!user) return user;
+  if (typeof user.goalDomains === "string") {
+    try { user.goalDomains = JSON.parse(user.goalDomains); } catch {}
+  }
+  return user;
+}
+
 export class UserService {
   async get() {
-    return prisma.user.findFirst({ orderBy: { createdAt: "asc" } });
+    const user = await prisma.user.findFirst({ orderBy: { createdAt: "asc" } });
+    return fromDb(user as any);
   }
 
   async create(data: CreateUserInput) {
@@ -44,7 +63,8 @@ export class UserService {
         code: "USER_ALREADY_EXISTS",
       });
     }
-    return prisma.user.create({ data });
+    const user = await prisma.user.create({ data: toDb(data) as any });
+    return fromDb(user as any);
   }
 
   async update(data: UpdateUserInput) {
@@ -55,6 +75,7 @@ export class UserService {
         code: "USER_NOT_FOUND",
       });
     }
-    return prisma.user.update({ where: { id: user.id }, data });
+    const updated = await prisma.user.update({ where: { id: user.id }, data: toDb(data) as any });
+    return fromDb(updated as any);
   }
 }

@@ -1,16 +1,30 @@
 :root {
+  /* Colors - Apple Design System */
   --bg: #f5f5f7;
   --bg-card: #ffffff;
   --bg-hover: #f9fafb;
-  --bg-accent: #eef2ff;
-  --text: #111827;
-  --text-dim: #6b7280;
-  --text-muted: #9ca3af;
-  --border: #e5e7eb;
-  --accent: #6366f1;
-  --success: #22c55e;
-  --warning: #eab308;
-  --error: #ef4444;
-  --grayed: #9ca3af;
+  --bg-accent: #e8f0fe;
+
+  --text: #1d1d1f;
+  --text-dim: #6e6e73;
+  --text-muted: #aeaeb2;
+
+  --border: #d2d2d7;
+
+  --accent: #0071e3;
+  --accent-hover: #0060c9;
+
+  --success: #30d158;
+  --warning: #ffd60a;
+  --orange: #ff9f0a;
+  --error: #ff453a;
+  --grayed: #aeaeb2;
+
   --radius: 12px;
+  --radius-lg: 16px;
+  --radius-sm: 8px;
+
+  /* Font */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-mono: "SF Mono", "Menlo", monospace;
 }

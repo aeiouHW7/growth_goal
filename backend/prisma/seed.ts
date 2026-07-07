@@ -1,7 +1,4 @@
 import { PrismaClient, GoalStatus, PlanStatus, ReviewStatus, AnalysisType } from "@prisma/client";
-import { execSync } from "child_process";
-import { existsSync, mkdirSync } from "fs";
-import { join } from "path";
 
 const prisma = new PrismaClient();
 
@@ -21,22 +18,9 @@ async function main() {
       console.error("   如果确定要清空重建，请运行: npx tsx prisma/seed.ts --force --confirm-wipe");
       process.exit(1);
     }
-    // Auto-backup before wipe
-    console.log("正在备份数据库...");
-    const backupDir = join(__dirname, "../backups");
-    if (!existsSync(backupDir)) mkdirSync(backupDir, { recursive: true });
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-    const filename = `growth-${timestamp}-preseed.sql`;
-    const filepath = join(backupDir, filename);
-    try {
-      execSync(
-        `docker exec growth-miniprogram-db pg_dump -U growthuser -d growth-miniprogram --no-owner --no-acl -f - > "${filepath.replace(/\\/g, "/")}"`,
-        { stdio: "pipe", timeout: 30000, shell: true }
-      );
-      console.log(`已自动备份到: backend/backups/${filename}`);
-    } catch (e) {
-      console.error("备份失败，继续执行 seed:", e instanceof Error ? e.message : e);
-    }
+    // 如需备份现有数据，先运行: npx tsx backend/scripts/backup.ts
+    // 恢复时运行: npx tsx backend/scripts/restore.ts
+    console.log("⚠️  跳过自动备份。如需保留数据请先手动备份。");
   }
   // Clean existing data
   await prisma.aISuccessCase.deleteMany();
@@ -62,7 +46,7 @@ async function main() {
       weekdayTimeBlocks: [{ start: "09:00", end: "12:00" }, { start: "14:00", end: "18:00" }],
       weekendAvailableHours: 8,
       weekendTimeBlocks: [{ start: "10:00", end: "12:00" }, { start: "14:00", end: "17:00" }],
-      goalDomains: ["财务", "健康", "学习"],
+      goalDomains: JSON.stringify(["财务", "健康", "学习"]),
     },
   });
 

@@ -9,7 +9,6 @@ interface StructuredReport {
   capabilityDeltas?: Array<{ dimension: string; score: number; evidence: string }>;
   insight?: { unaware?: string; pattern?: string; missing?: string };
   suggestions?: Array<{ type: string; message: string }>;
-  energyRate?: number;
   postureTraining?: { completed: boolean; note?: string };
   signalScore?: number;
 }
@@ -263,10 +262,9 @@ export function StructuredReportPanel({ report }: Props) {
     }
   }
 
-  // === Energy & Metrics ===
-  if (report.energyRate != null || report.postureTraining != null) {
+  // === Metrics ===
+  if (report.postureTraining != null) {
     const metrics: string[] = [];
-    if (report.energyRate != null) metrics.push(`充沛率: ${report.energyRate}/100`);
     if (report.postureTraining != null) metrics.push(`体态: ${report.postureTraining.completed ? '✅' : '❌'}`);
     sections.push(
       <div key="metrics" className="report-section">

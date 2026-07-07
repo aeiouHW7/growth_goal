@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { ReviewService } from "../services/review.service";
+import { AnalysisRunner } from "../services/analysis-runner.service";
 import { UserService } from "../services/user.service";
 
 const reviewService = new ReviewService();
+const analysisRunner = new AnalysisRunner();
 const userService = new UserService();
 
 function pv(req: Request, key: string): string { return req.params[key] as string; }
@@ -41,6 +43,8 @@ export class ReviewController {
         return;
       }
       const review = await reviewService.createDaily(userId, date, rawInput);
+      // 自动触发 AI 分析（异步）
+      analysisRunner.run(review.id);
       res.status(201).json({ data: review });
     } catch (err) { next(err); }
   }

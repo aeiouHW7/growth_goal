@@ -42,8 +42,6 @@ export interface StructuredReport {
 
   // ===== 每日必填指标 =====
 
-  /** 充沛率 (1-100) */
-  energyRate?: number;
   /** 体态训练 */
   postureTraining?: {
     completed: boolean;

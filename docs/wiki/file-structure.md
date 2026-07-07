@@ -8,8 +8,8 @@ domains/growth-miniprogram/
 │
 ├── README.md                        — 项目总览：功能特性、系统架构、快速开始
 ├── CLAUDE.md                        — AI 协作指令（ACE 工作流、命令、编码规范）
-├── domain.yaml                      — 领域定义（技术栈: Taro+Express+Prisma+PG）
-├── docker-compose.yml               — PostgreSQL 15 容器定义（端口 5434）
+├── domain.yaml                      — 领域定义（技术栈: Express+Prisma+SQLite）
+├── docker-compose.yml               — PostgreSQL 容器（已弃用，改用 SQLite 本地文件）
 │
 ├── planning/                        ── 规划设计
 │   └── v0.1/
@@ -32,10 +32,10 @@ domains/growth-miniprogram/
 │               ├── specs.md
 │               └── tasks.md
 │
-├── backend/                         ── Express + Prisma + PostgreSQL API 服务
+├── backend/                         ── Express + Prisma + SQLite API 服务
 │   ├── package.json                 — 依赖：express, prisma, cors, tsx, jest
 │   ├── tsconfig.json                — TypeScript 编译配置
-│   ├── .env / .env.example          — DATABASE_URL=postgresql://...
+│   ├── .env / .env.example          — DATABASE_URL=file:./dev.db
 │   │
 │   ├── prisma/
 │   │   ├── schema.prisma            — 16 个数据模型 + 4 枚举（337 行）
@@ -176,8 +176,8 @@ domains/growth-miniprogram/
 
 ```
                    ┌──────────────┐
-                   │   PostgreSQL  │
-                   │   (端口 5434) │
+                   │    SQLite    │
+                   │  (dev.db)    │
                    └──────┬───────┘
                           │ Prisma
               ┌───────────┴───────────┐

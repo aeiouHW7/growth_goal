@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Growth — 前端原型</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --text2: #6e6e73;
+    --text3: #aeaeb2;
+    --sep: #d2d2d7;
+    --accent: #6366f1;
+    --accent-bg: #eef2ff;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    padding: 24px;
+    max-width: 960px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  .app { background: var(--card); border-radius: 16px; border: 1px solid var(--sep); overflow: hidden; box-shadow: var(--shadow); }
+
+  /* Nav */
+  .nav { display: flex; align-items: center; height: 52px; padding: 0 20px; border-bottom: 1px solid var(--sep); gap: 20px; }
+  .nav-logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 6px; }
+  .nav-logo svg { width: 18px; height: 18px; }
+  .nav-tabs { display: flex; gap: 2px; margin-left: auto; }
+  .nav-tab {
+    padding: 6px 14px; border-radius: 6px; border: none; background: transparent;
+    font-size: 13px; color: var(--text2); cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .nav-tab:hover { background: var(--bg); color: var(--text); }
+  .nav-tab.active { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+
+  .content { padding: 24px; display: none; }
+  .content.active { display: block; }
+
+  /* Page header */
+  .hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .hdr h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .hdr p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+  /* Cards */
+  .c { background: var(--card); border: 1px solid var(--sep); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .c-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+  /* Grid */
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Goal item */
+  .goal-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+  .goal-item:last-child { border-bottom: none; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.green { background: var(--green); }
+  .dot.yellow { background: var(--yellow); }
+  .dot.red { background: var(--red); }
+  .dot.gray { background: var(--text3); }
+  .goal-info { flex: 1; }
+  .goal-name { font-size: 13px; }
+  .goal-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  .pb { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin: 4px 0; }
+  .pb-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  .pb-fill.green { background: var(--green); }
+  .pb-fill.accent { background: var(--accent); }
+  .pb-fill.yellow { background: var(--yellow); }
+
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px;
+    font-weight: 500; flex-shrink: 0;
+  }
+  .badge.active { background: #dcfce7; color: #166534; }
+  .badge.completed { background: #f0f0f0; color: var(--text3); }
+  .badge.pending { background: #fef9c3; color: #854d0e; }
+  .badge.ai { background: var(--accent-bg); color: var(--accent); }
+
+  /* Suggestion items */
+  .sug { padding: 10px 0 10px 12px; border-left: 3px solid; margin-bottom: 8px; }
+  .sug:last-child { margin-bottom: 0; }
+  .sug.positive { border-color: var(--green); }
+  .sug.warning { border-color: var(--yellow); }
+  .sug.critical { border-color: var(--red); }
+  .sug-text { font-size: 13px; }
+  .sug-src { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* Sub tabs */
+  .sub-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--sep); padding-bottom: 0; }
+  .sub-tab {
+    padding: 8px 16px; border: none; background: transparent; cursor: pointer;
+    font-size: 13px; color: var(--text2); font-family: inherit;
+    border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s;
+  }
+  .sub-tab:hover { color: var(--text); }
+  .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .sub-pane { display: none; }
+  .sub-pane.active { display: block; }
+
+  /* Form fields */
+  .f-group { margin-bottom: 16px; }
+  .f-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 4px; display: block; }
+  .f-hint { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .f-row { display: flex; gap: 8px; align-items: center; }
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--sep); border-radius: 8px;
+    font-size: 13px; font-family: inherit; outline: none; transition: border 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 60px; }
+  select { width: auto; min-width: 80px; }
+
+  /* Tags */
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px;
+    background: var(--accent-bg); color: var(--accent); border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+  }
+  .tag-x { cursor: pointer; font-size: 14px; opacity: 0.6; }
+  .tag-x:hover { opacity: 1; }
+  .tag-input { border: none; border-bottom: 1px solid var(--sep); padding: 4px 0; font-size: 13px; outline: none; width: 120px; background: transparent; }
+  .tag-input:focus { border-bottom-color: var(--accent); }
+
+  /* MBTI */
+  .mbti-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .mbti-group { display: flex; flex-direction: column; gap: 4px; }
+  .mbti-group label { font-size: 11px; color: var(--text3); }
+  .mbti-btn-group { display: flex; gap: 2px; }
+  .mbti-btn {
+    padding: 6px 14px; border: 1px solid var(--sep); background: var(--card);
+    cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 600;
+    transition: all 0.1s;
+  }
+  .mbti-btn:first-child { border-radius: 6px 0 0 6px; }
+  .mbti-btn:last-child { border-radius: 0 6px 6px 0; }
+  .mbti-btn.selected { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* Two column for archive */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Buttons */
+  .btn {
+    padding: 8px 18px; border-radius: 8px; border: none; font-size: 13px;
+    font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-outline { background: transparent; border: 1px solid var(--sep); color: var(--text); }
+  .btn-outline:hover { background: var(--bg); }
+  .btn-ghost { background: transparent; color: var(--text2); border: none; }
+  .btn-ghost:hover { color: var(--accent); }
+  .btn-sm { padding: 4px 12px; font-size: 12px; }
+  .btn-success { background: #dcfce7; color: #166534; border: none; }
+  .btn-danger { background: #fef2f2; color: #dc2626; border: none; }
+
+  /* AI suggest card */
+  .ai-card { background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%); border: 1px solid #c7d2fe; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .ai-card .c-title { color: var(--accent); }
+
+  /* Modal overlay */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: var(--card); border-radius: 16px; padding: 24px; max-width: 560px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+  .modal-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .modal-hdr h2 { font-size: 18px; }
+  .modal-close { width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .suggest-item { padding: 14px; border: 1px solid var(--sep); border-radius: 10px; margin-bottom: 10px; }
+  .suggest-item .actions { display: flex; gap: 6px; margin-top: 10px; }
+
+  /* Status tags */
+  .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+  .status-dot.pending { background: var(--yellow); }
+  .status-dot.active { background: var(--green); }
+  .status-dot.completed { background: var(--text3); }
+
+  /* AI Summary card */
+  .summary-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
+  .summary-grid .label { color: var(--text3); }
+  .summary-grid .value { color: var(--text); }
+
+  /* Loading placeholder */
+  .skeleton { height: 12px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .gap-8 { gap: 8px; }
+
+  /* Calendar mini */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-hdr { font-size: 11px; color: var(--text3); text-align: center; padding: 4px 0; }
+  .cal-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; font-size: 12px; cursor: pointer; }
+  .cal-cell:hover { background: var(--bg); }
+  .cal-cell.today { border: 2px solid var(--accent); }
+  .cal-cell .cal-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 2px; }
+  .cal-cell .cal-dot.green { background: var(--green); }
+  .cal-cell .cal-dot.yellow { background: var(--yellow); }
+  .cal-cell .cal-dot.red { background: var(--red); }
+
+  .legend { display: flex; gap: 12px; font-size: 11px; color: var(--text2); margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      growth
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-page="overview">总览</button>
+      <button class="nav-tab" data-page="goals">目标链</button>
+      <button class="nav-tab" data-page="plans">计划</button>
+      <button class="nav-tab" data-page="archive">档案</button>
+    </div>
+  </nav>
+
+  <!-- ============ 总览页 ============ -->
+  <div class="content active" id="page-overview">
+    <div class="hdr">
+      <div>
+        <h1>总览</h1>
+        <p>2026年6月27日 · 星期六</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-outline btn-sm" onclick="showAISuggest()">🤖 AI 建议</button>
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:14px;cursor:pointer" title="点击查看用户信息">H</div>
+      </div>
+    </div>
+
+    <!-- AI Summary Card -->
+    <div class="ai-card">
+      <div class="c-title">🤖 AI 对你的了解</div>
+      <div class="summary-grid">
+        <span class="label">人格</span>
+        <span class="value">INTJ · 开放性 72 · 尽责性 85 · 外向性 45</span>
+        <span class="label">盖洛普</span>
+        <span class="value">思维 · 战略 · 学习 · 成就 · 分析</span>
+        <span class="label">技能</span>
+        <span class="value">AI 产品经理 (5年) · NLP 产品设计 · AI Agent 落地</span>
+        <span class="label">精力</span>
+        <span class="value">晨型人，上午效率最高</span>
+        <span class="label">愿景</span>
+        <span class="value">成为 AI 领域的技术 leader</span>
+      </div>
+      <div style="margin-top:10px">
+        <a href="#" onclick="switchPage('archive');return false" style="font-size:12px;color:var(--accent);text-decoration:none">编辑档案 →</a>
+      </div>
+    </div>
+
+    <div class="g2">
+      <!-- 进行中的年度目标 -->
+      <div class="c">
+        <div class="c-title">2026 年度目标 · 进行中</div>
+        <div class="goal-item">
+          <div class="dot green"></div>
+          <div class="goal-info">
+            <div class="goal-name">年收入达到 50 万</div>
+            <div class="pb"><div class="pb-fill green" style="width:35%"></div></div>
+            <div class="goal-meta">12 万 / 50 万 · 35%</div>
+          </div>
+          <span class="badge active">进行中</span>
+        </div>
+        <div class="goal-item">
+          <div class="dot yellow"></div>
+          <div class="goal-info">
+            <div class="goal-name">完成 3 个开源项目</div>
+            <div class="pb"><div class="pb-fill yellow" style="width:20%"></div></div>
+            <div class="goal-meta">0 / 3 · 进度偏慢</div>
+          </div>
+          <span class="badge active">进行中</span>
+        </div>
+      </div>
+
+      <!-- AI 改进建议 -->
+      <div class="c">
+        <div class="c-title">AI 改进建议</div>
+        <div class="sug positive">
+          <div class="sug-text">✅ 最近完成了项目提案，执行节奏不错，保持下去</div>
+          <div class="sug-src">来自 6/26 复盘</div>
+        </div>
+        <div class="sug warning">
+          <div class="sug-text">⚠️ 开源项目进度偏慢，建议每周固定 4h 专项投入</div>
+          <div class="sug-src">来自 6/25 复盘</div>
+        </div>
+        <div class="sug critical">
+          <div class="sug-text">🔴 会议时间占用趋势上升，注意保护上午深度工作时间</div>
+          <div class="sug-src">来自本周模式分析</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 六月进度 -->
+    <div class="c">
+      <div class="c-title">6 月目标完成进度</div>
+      <div class="goal-item">
+        <div class="dot green"></div>
+        <div class="goal-info">
+          <div class="goal-name">Q2 冲刺：季度收入 15 万</div>
+          <div class="pb"><div class="pb-fill accent" style="width:45%"></div></div>
+          <div class="goal-meta">5 万 / 15 万</div>
+        </div>
+      </div>
+      <div class="goal-item">
+        <div class="dot yellow"></div>
+        <div class="goal-info">
+          <div class="goal-name">开源项目 MVP</div>
+          <div class="pb"><div class="pb-fill yellow" style="width:25%"></div></div>
+          <div class="goal-meta">设计阶段 · 代码未开始</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 目标链页 ============ -->
+  <div class="content" id="page-goals">
+    <div class="hdr">
+      <div>
+        <h1>目标链</h1>
+        <p>LifeGoal → YearlyGoal → MonthlyPlan</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="showAISuggest()">🤖 AI 建议目标</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="btn btn-sm" style="background:var(--accent-bg);color:var(--accent);font-weight:600">全部</button>
+      <button class="btn btn-sm btn-outline">进行中</button>
+      <button class="btn btn-sm btn-outline">已完成</button>
+    </div>
+    <div class="c" style="padding:0">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--sep);cursor:pointer;display:flex;align-items:center;gap:10px">
+        <span>▶</span>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">实现财务自由</div>
+          <div style="font-size:12px;color:var(--text2)">10年 · 通过被动收入覆盖生活支出</div>
+        </div>
+        <span class="badge active">进行中</span>
+      </div>
+      <div style="padding:10px 16px 10px 46px;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;align-items:center;gap:10px">
+        <span>▶</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">年收入达到 50 万</div>
+          <div class="pb" style="margin:4px 0"><div class="pb-fill green" style="width:35%"></div></div>
+          <div style="font-size:11px;color:var(--text2)">12 万 / 50 万 · 2026</div>
+        </div>
+        <span class="badge active">进行中</span>
+      </div>
+      <div style="padding:10px 16px 10px 66px;display:flex;align-items:center;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">Q2 冲刺：季度收入 15 万</div>
+          <div class="pb" style="margin:4px 0"><div class="pb-fill accent" style="width:45%"></div></div>
+          <div style="font-size:11px;color:var(--text2)">5 万 / 15 万 · 6月</div>
+        </div>
+        <span class="badge active">进行中</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 计划页 ============ -->
+  <div class="content" id="page-plans">
+    <div class="hdr">
+      <div>
+        <h1>计划</h1>
+        <p>周期视图 + 三面板</p>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="showAISuggest()">🤖 AI 建议计划</button>
+    </div>
+
+    <!-- Period Selector -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <select><option>2026</option></select>
+      <select><option>6月</option></select>
+      <div style="display:flex;gap:2px;margin-left:auto">
+        <button class="btn btn-sm btn-outline">年</button>
+        <button class="btn btn-sm" style="background:var(--accent-bg);color:var(--accent);font-weight:600">月</button>
+        <button class="btn btn-sm btn-outline">周</button>
+        <button class="btn btn-sm btn-outline">日</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <!-- Left: Calendar -->
+      <div class="c">
+        <div class="c-title">2026年6月</div>
+        <div class="cal-grid">
+          <div class="cal-hdr">一</div><div class="cal-hdr">二</div><div class="cal-hdr">三</div><div class="cal-hdr">四</div><div class="cal-hdr">五</div><div class="cal-hdr">六</div><div class="cal-hdr">日</div>
+          <div class="cal-cell"></div><div class="cal-cell"></div><div class="cal-cell"></div>
+          <div class="cal-cell"><span>1</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>2</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>3</span><div class="cal-dot yellow"></div></div>
+          <div class="cal-cell"><span>4</span></div>
+          <div class="cal-cell"><span>5</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>6</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>7</span></div>
+          <div class="cal-cell"><span>8</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>9</span><div class="cal-dot red"></div></div>
+          <div class="cal-cell"><span>10</span><div class="cal-dot yellow"></div></div>
+          <div class="cal-cell"><span>11</span></div>
+          <div class="cal-cell"><span>12</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>13</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>14</span></div>
+          <div class="cal-cell"><span>15</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>16</span><div class="cal-dot yellow"></div></div>
+          <div class="cal-cell"><span>17</span><div class="cal-dot yellow"></div></div>
+          <div class="cal-cell"><span>18</span></div>
+          <div class="cal-cell"><span>19</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>20</span></div>
+          <div class="cal-cell"><span>21</span></div>
+          <div class="cal-cell"><span>22</span><div class="cal-dot yellow"></div></div>
+          <div class="cal-cell"><span>23</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>24</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>25</span></div>
+          <div class="cal-cell"><span>26</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell today"><span>27</span><div class="cal-dot green"></div></div>
+          <div class="cal-cell"><span>28</span></div>
+          <div class="cal-cell"><span>29</span></div>
+          <div class="cal-cell"><span>30</span></div>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green)"></span> ≥80</span>
+          <span class="legend-item"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--yellow)"></span> 60-79</span>
+          <span class="legend-item"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red)"></span> &lt;60</span>
+        </div>
+      </div>
+
+      <!-- Right: Panel tabs -->
+      <div>
+        <div style="display:flex;gap:4px;margin-bottom:10px">
+          <button class="btn btn-sm" style="background:var(--accent-bg);color:var(--accent);font-weight:600">计划</button>
+          <button class="btn btn-sm btn-outline">评估</button>
+          <button class="btn btn-sm btn-outline">报告</button>
+        </div>
+        <div class="c">
+          <div class="c-title">6月27日 计划</div>
+          <div class="goal-item">
+            <div class="dot green"></div>
+            <div class="goal-info">
+              <div class="goal-name">写项目提案</div>
+              <div class="goal-meta">目标: 1 份 · COMPLETED</div>
+            </div>
+            <span class="badge completed">已完成</span>
+          </div>
+          <div class="goal-item">
+            <div class="dot yellow"></div>
+            <div class="goal-info">
+              <div class="goal-name">健身</div>
+              <div class="goal-meta">目标: 1 次 · PENDING</div>
+            </div>
+            <span class="badge pending">待开始</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 档案页 ============ -->
+  <div class="content" id="page-archive">
+    <div class="hdr">
+      <div>
+        <h1>人生档案</h1>
+        <p>AI 教练的长期记忆 · 让每次建议更贴合你</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="alert('已保存 ✓')">💾 保存</button>
+    </div>
+
+    <!-- Sub tabs -->
+    <div class="sub-tabs">
+      <button class="sub-tab active" data-sub="core">🧬 核心特质</button>
+      <button class="sub-tab" data-sub="resources">📦 资源能力</button>
+      <button class="sub-tab" data-sub="future">🎯 未来蓝图</button>
+    </div>
+
+    <!-- Sub Tab 1: 核心特质 -->
+    <div class="sub-pane active" id="sub-core">
+      <div class="two-col">
+        <div>
+          <div class="f-group">
+            <label class="f-label">MBTI</label>
+            <div class="mbti-row">
+              <div class="mbti-group">
+                <label>能量来源</label>
+                <div class="mbti-btn-group">
+                  <button class="mbti-btn selected" onclick="selectMBTI(this)">E</button>
+                  <button class="mbti-btn" onclick="selectMBTI(this)">I</button>
+                </div>
+              </div>
+              <div class="mbti-group">
+                <label>认知方式</label>
+                <div class="mbti-btn-group">
+                  <button class="mbti-btn" onclick="selectMBTI(this)">N</button>
+                  <button class="mbti-btn selected" onclick="selectMBTI(this)">S</button>
+                </div>
+              </div>
+              <div class="mbti-group">
+                <label>决策方式</label>
+                <div class="mbti-btn-group">
+                  <button class="mbti-btn selected" onclick="selectMBTI(this)">T</button>
+                  <button class="mbti-btn" onclick="selectMBTI(this)">F</button>
+                </div>
+              </div>
+              <div class="mbti-group">
+                <label>生活态度</label>
+                <div class="mbti-btn-group">
+                  <button class="mbti-btn selected" onclick="selectMBTI(this)">J</button>
+                  <button class="mbti-btn" onclick="selectMBTI(this)">P</button>
+                </div>
+              </div>
+            </div>
+            <div class="f-hint">当前: ENTJ</div>
+          </div>
+
+          <div class="f-group">
+            <label class="f-label">盖洛普优势 (最多5项)</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="text" class="tag-input" placeholder="输入优势后回车" id="gallup-input" onkeydown="if(event.key==='Enter')addGallup()">
+            </div>
+            <div class="tags" id="gallup-tags">
+              <span class="tag">思维 <span class="tag-x" onclick="this.parentElement.remove()">×</span></span>
+              <span class="tag">战略 <span class="tag-x" onclick="this.parentElement.remove()">×</span></span>
+              <span class="tag">学习 <span class="tag-x" onclick="this.parentElement.remove()">×</span></span>
+              <span class="tag">成就 <span class="tag-x" onclick="this.parentElement.remove()">×</span></span>
+              <span class="tag">分析 <span class="tag-x" onclick="this.parentElement.remove()">×</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="f-group">
+            <label class="f-label">大五人格</label>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div><div style="display:flex;justify-content:space-between;font-size:12px"><span>开放性</span><span>72</span></div><input type="range" min="1" max="100" value="72" style="width:100%" oninput="this.nextElementSibling.textContent=this.value"><span hidden></span></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px"><span>尽责性</span><span>85</span></div><input type="range" min="1" max="100" value="85" style="width:100%" oninput="this.nextElementSibling.textContent=this.value"><span hidden></span></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px"><span>外向性</span><span>45</span></div><input type="range" min="1" max="100" value="45" style="width:100%" oninput="this.nextElementSibling.textContent=this.value"><span hidden></span></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px"><span>宜人性</span><span>60</span></div><input type="range" min="1" max="100" value="60" style="width:100%" oninput="this.nextElementSibling.textContent=this.value"><span hidden></span></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:12px"><span>神经质</span><span>38</span></div><input type="range" min="1" max="100" value="38" style="width:100%" oninput="this.nextElementSibling.textContent=this.value"><span hidden></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub Tab 2: 资源能力 -->
+    <div class="sub-pane" id="sub-resources">
+      <div class="two-col">
+        <div>
+          <div class="c" style="border-color:var(--sep);margin-bottom:16px">
+            <div class="c-title">💻 核心技能</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <div style="flex:1;min-width:140px">
+                <div style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--sep);border-radius:8px;margin-bottom:6px">
+                  <div style="flex:1">
+                    <div style="font-size:13px;font-weight:500">AI 产品经理</div>
+                    <div style="font-size:11px;color:var(--text2)">高级 · 5年</div>
+                  </div>
+                  <button class="btn-ghost" style="font-size:16px;border:none;cursor:pointer">✕</button>
+                </div>
+                <button class="btn btn-outline btn-sm" style="width:100%">+ 添加技能</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="c" style="border-color:var(--sep);margin-bottom:16px">
+            <div class="c-title">💰 财务状况</div>
+            <div class="f-group">
+              <label class="f-label">财务安全垫</label>
+              <input type="text" value="当前储蓄可支撑 12 个月无收入生活">
+            </div>
+            <div class="f-group">
+              <label class="f-label">收入结构</label>
+              <input type="text" value="主业薪资 80%，副业 20%，波动中等">
+            </div>
+            <div class="f-group">
+              <label class="f-label">每月可投入自我发展的资金</label>
+              <input type="text" value="约 3000 元/月">
+            </div>
+            <div class="f-group">
+              <label class="f-label">财务阶段</label>
+              <select style="width:100%"><option>积累期：有一定选择空间，但尚未自由</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="c" style="border-color:var(--sep);margin-bottom:16px">
+            <div class="c-title">⏰ 时间资源</div>
+            <div class="f-group">
+              <label class="f-label">工作日可支配时间 (小时)</label>
+              <input type="number" value="4">
+            </div>
+            <div class="f-group">
+              <label class="f-label">周末可支配时间 (小时)</label>
+              <input type="number" value="8">
+            </div>
+            <div class="f-group">
+              <label class="f-label">固定时间支出</label>
+              <textarea>工作 9h，通勤 1.5h，睡眠 7h 早间 06:30-08:40 可用，晚间 21:00-22:30 可用</textarea>
+            </div>
+          </div>
+
+          <div class="c" style="border-color:var(--sep)">
+            <div class="c-title">🤝 支持系统</div>
+            <div class="f-group">
+              <label class="f-label">导师/前辈资源</label>
+              <textarea>有 2 位前技术总监可提供职业建议</textarea>
+            </div>
+            <div class="f-group">
+              <label class="f-label">协作搭档</label>
+              <textarea>有 1 位合伙人做 AI 视频项目</textarea>
+            </div>
+            <div class="f-group">
+              <label class="f-label">情感支持</label>
+              <textarea>伴侣、2 位好友可深度交流</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:12px;color:var(--text3);padding:12px 0;border-top:1px solid var(--sep);margin-top:8px">
+        ⚡ 能量精力和健康状态由 AI 在复盘后自动分析写入，无需手动编辑
+      </div>
+    </div>
+
+    <!-- Sub Tab 3: 未来蓝图 -->
+    <div class="sub-pane" id="sub-future">
+      <div class="two-col">
+        <div>
+          <div class="c" style="border-color:var(--sep);margin-bottom:16px">
+            <div class="c-title">🎯 愿景</div>
+            <div class="f-group">
+              <label class="f-label">10 年愿景 <span style="color:var(--red)">*</span></label>
+              <textarea rows="3">成为 AI 领域的技术 leader，通过被动收入覆盖生活支出，不再依赖工资收入</textarea>
+            </div>
+            <div class="f-group">
+              <label class="f-label">3 年目标 <span style="color:var(--red)">*</span></label>
+              <textarea rows="2">在 AI 产品领域建立个人品牌，年收入达到 80 万</textarea>
+            </div>
+            <div class="f-group">
+              <label class="f-label">1 年目标 <span style="color:var(--red)">*</span></label>
+              <textarea rows="2">年收入 50 万，完成 3 个开源项目</textarea>
+            </div>
+          </div>
+
+          <div class="c" style="border-color:var(--sep)">
+            <div class="c-title">💡 动力来源</div>
+            <div class="f-group">
+              <label class="f-label">核心动机 <span style="color:var(--red)">*</span></label>
+              <textarea rows="2">希望能用 AI 技术解决实际问题，同时获得时间和财务上的自由</textarea>
+            </div>
+            <div class="f-group">
+              <label class="f-label">为什么是现在 <span style="color:var(--red)">*</span></label>
+              <textarea rows="2">AI 行业正处于爆发期，现在入场有先发优势；当前工作有积累但天花板明显</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="c" style="border-color:var(--sep);margin-bottom:16px">
+            <div class="c-title">📊 结果区间</div>
+            <div class="f-group">
+              <label class="f-label">最低可接受结果 <span style="color:var(--red)">*</span></label>
+              <input type="text" value="年收入稳定在 30 万以上，有明确的副业收入来源">
+            </div>
+            <div class="f-group">
+              <label class="f-label">理想结果 <span style="color:var(--red)">*</span></label>
+              <input type="text" value="被动收入覆盖月支出 2 万，实现 FI（财务独立）">
+            </div>
+            <div class="f-group">
+              <label class="f-label">描述</label>
+              <textarea rows="2">理想状态是白天做自己感兴趣的项目，晚上和周末完全自由</textarea>
+            </div>
+          </div>
+
+          <div class="c" style="border-color:var(--sep)">
+            <div class="c-title">👤 榜样与反思</div>
+            <div class="f-group">
+              <label class="f-label">正面榜样 <span style="color:var(--red)">*</span></label>
+              <textarea rows="2">行业里那些既懂技术又懂产品的 AI 独立开发者</textarea>
+            </div>
+            <div class="f-group">
+              <label class="f-label">反面警示 <span style="color:var(--red)">*</span></label>
+              <textarea rows="2">在大公司呆了 10 年技能单一、出来后发现跟不上市场的人</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AI 建议弹窗 ============ -->
+<div class="modal-overlay" id="ai-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2>🤖 AI 目标建议</h2>
+      <button class="modal-close" onclick="closeAISuggest()">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px">
+      基于你的 10 年愿景「成为 AI 领域的技术 leader」和当前能力评估，AI 建议如下：
+    </div>
+    <div class="suggest-item">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <span style="font-size:18px">📊</span>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">年收入达到 50 万</div>
+          <div style="font-size:12px;color:var(--text2);margin:4px 0">类型: 数值 · 目标: 500,000 · 起始: 300,000</div>
+          <div style="font-size:12px;color:var(--text3)">基于当前收入 30 万和 AI 行业增长趋势，这是一个有挑战但可行的目标</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-sm btn-success">✓ 接受</button>
+        <button class="btn btn-sm btn-outline">✏️ 修改</button>
+        <button class="btn btn-sm btn-danger">✕ 拒绝</button>
+      </div>
+    </div>
+    <div class="suggest-item">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <span style="font-size:18px">📊</span>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">完成 3 个开源项目</div>
+          <div style="font-size:12px;color:var(--text2);margin:4px 0">类型: 数值 · 目标: 3 · 起始: 0</div>
+          <div style="font-size:12px;color:var(--text3)">建立技术品牌影响力的关键路径，建议选择 AI/NLP 方向</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-sm btn-success">✓ 接受</button>
+        <button class="btn btn-sm btn-outline">✏️ 修改</button>
+        <button class="btn btn-sm btn-danger">✕ 拒绝</button>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-primary" style="flex:1" onclick="alert('已确认写入 ✓\n目标状态: PENDING，可在目标链页查看并激活')">全部接受</button>
+      <button class="btn btn-outline" onclick="closeAISuggest()">稍后再说</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ——— Page navigation ———
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchPage(tab.dataset.page));
+  });
+
+  function switchPage(page) {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.nav-tab[data-page="${page}"]`).classList.add('active');
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.getElementById(`page-${page}`).classList.add('active');
+  }
+
+  // ——— Archive sub-tabs ———
+  document.querySelectorAll('.sub-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.sub-pane').forEach(p => p.classList.remove('active'));
+      document.getElementById(`sub-${tab.dataset.sub}`).classList.add('active');
+    });
+  });
+
+  // ——— MBTI selector ———
+  function selectMBTI(btn) {
+    const parent = btn.closest('.mbti-btn-group');
+    parent.querySelectorAll('.mbti-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  // ——— Gallup tags ———
+  function addGallup() {
+    const input = document.getElementById('gallup-input');
+    const val = input.value.trim();
+    if (!val) return;
+    const tags = document.getElementById('gallup-tags');
+    if (tags.children.length >= 5) { alert('最多 5 项优势'); return; }
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = `${val} <span class="tag-x" onclick="this.parentElement.remove()">×</span>`;
+    tags.appendChild(tag);
+    input.value = '';
+  }
+
+  // ——— AI Suggestion Modal ———
+  function showAISuggest() {
+    document.getElementById('ai-modal').classList.add('active');
+  }
+  function closeAISuggest() {
+    document.getElementById('ai-modal').classList.remove('active');
+  }
+  document.getElementById('ai-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeAISuggest();
+  });
+
+  // ——— Slider label sync ———
+  document.querySelectorAll('input[type="range"]').forEach(slider => {
+    const label = slider.previousElementSibling;
+    const valSpan = label.querySelector(':scope > span:last-child');
+    slider.addEventListener('input', () => {
+      const span = slider.parentElement.querySelector('span:last-child');
+      if (span) span.textContent = slider.value;
+      // Update the left label too
+      const labelRow = slider.closest('div').querySelector('div[style*="justify-content"]');
+      if (labelRow) labelRow.children[1].textContent = slider.value;
+    });
+  });
+</script>
+
+</body>
+</html>
