@@ -237,6 +237,55 @@ ls -l backend/prisma/dev.db   # 应该存在
 
 ---
 
+## 如何升级（不丢数据）
+
+> 这是**已有用户**的更新流程。你的数据库文件（`backend/prisma/dev.db`）包含了所有个人数据，升级代码不会影响它。
+
+### 标准升级步骤
+
+```bash
+# 1. 拉取最新代码
+git pull
+
+# 2. 更新依赖（如果有新依赖）
+cd backend && npm install
+cd ../frontend && npm install
+
+# 3. 同步数据库结构（不会丢失数据！）
+cd ../backend
+npx prisma db push
+# → 如果 schema 有变更，Prisma 会自动做 ALTER TABLE 迁移
+# → 如果没变更，直接提示 "already in sync"
+
+# 4. 重启服务
+npm run dev   # 后端 → 3001
+# 新开终端
+cd ../frontend && npm run dev  # 前端 → 3002
+```
+
+### 原理
+
+| 机制 | 说明 |
+|------|------|
+| `.gitignore` 排除 `*.db` | 数据库文件不会被 `git pull` 覆盖或冲突 |
+| Prisma `db push` | 只增不改——添加新表/列，不会删除已有数据 |
+| `.env` 排除 | 每人的配置（端口、路径）独立，不冲突 |
+| `*.db` 全局忽略 | 即使有人在 `backend/` 下 `git add .` 也不会误提交 |
+
+### 当 Schema 有重大变更时
+
+极少数情况下，如果更新改动了 Prisma 模型的字段名或类型，需要额外操作。我会在每次更新时，在 `docs/wiki/` 中记录升级说明：
+
+```bash
+# 先备份
+bash scripts/db-backup.sh "pre-upgrade-xxxx"
+
+# 再按 wiki 指引操作
+# 一般就是 npx prisma db push，无需其他步骤
+```
+
+---
+
 ## 日常使用流程
 
 ### 首次使用
