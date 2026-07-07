@@ -8,11 +8,13 @@
 - [功能特性](#功能特性)
 - [系统架构](#系统架构)
 - [技术栈](#技术栈)
-- [快速开始](#快速开始)
+- [快速开始（3 分钟上手）](#快速开始3-分钟上手)
+- [日常使用流程](#日常使用流程)
 - [使用方式](#使用方式)
 - [项目结构](#项目结构)
 - [配置说明](#配置说明)
 - [API 概览](#api-概览)
+- [数据迁移与备份](#数据迁移与备份)
 - [文档](#文档)
 - [贡献指南](#贡献指南)
 - [许可证](#许可证)
@@ -102,13 +104,13 @@ growth-miniprogram 是一个**个人目标管理与自我分析系统**。它帮
    │                           │                                   │
    │              ┌────────────┼────────────┐                      │
    │     ┌────────▼──────┐  ┌──▼─────────┐  │                      │
-   │     │  PostgreSQL   │  │  Claude CLI │  │                      │
-   │     │  (端口 5434)  │  │  (AI 分析)  │  │                      │
+   │     │    SQLite     │  │  Claude CLI │  │                      │
+   │     │  (dev.db)     │  │  (AI 分析)  │  │                      │
    │     └───────────────┘  └─────────────┘  │                      │
    │                                          │                      │
    │  ┌─────────────────┐  ┌──────────────┐   │                      │
    │  │  React Web 端   │  │  终端 CLI    │   │                      │
-   │  │  (端口 3002)    │  │  (tsx)       │   │                      │
+   │  │  (Vite 默认端口) │  │  (tsx)       │   │                      │
    │  └─────────────────┘  └──────────────┘   │                      │
    └──────────────────────────────────────────────┘
 ```
@@ -128,75 +130,141 @@ growth-miniprogram 是一个**个人目标管理与自我分析系统**。它帮
 | **前端** | React + TypeScript + Vite | 19 / 6.0 / 8.0 |
 | **后端** | Node.js + Express + TypeScript | 5.x |
 | **ORM** | Prisma | 6.5 |
-| **数据库** | PostgreSQL 15 (Docker) | 15-alpine |
+| **数据库** | SQLite | - |
 | **AI 引擎** | Claude CLI (Anthropic) | latest |
 | **IM 机器人** | 飞书 / lark-cli | latest |
 | **进程管理** | PM2 | latest |
-| **容器化** | Docker Compose | - |
 | **测试** | Jest + Supertest | 29.x |
-| **代码检查** | ESLint | 10.x |
 
 ---
 
-## 快速开始
+## 快速开始（3 分钟上手）
 
 ### 前置条件
 
-- Docker Desktop 4.x+
-- Node.js 18+
-- Git Bash (Windows) 或 bash (Linux/Mac)
-- Claude Code CLI（AI 分析功能需要）
-- lark-cli（飞书机器人功能需要，可选）
+- **Node.js 18+**（推荐 20+）
+- **npm**（随 Node.js 安装）
+- **Git**
 
-### 1. 启动数据库
+> Claude CLI 和 lark-cli 是可选依赖，AI 分析和飞书机器人功能需要它们，但 Web 端和 CLI 的基本功能不需要。
+
+### 第 1 步：克隆并安装依赖
 
 ```bash
-# 在项目根目录执行
-docker compose up -d
-# 启动 PostgreSQL 15，端口 5434
+# 克隆项目（如果是从 monorepo 根目录克隆，需要 init submodule）
+git clone <your-repo-url>
+cd <project>/domains/growth-miniprogram
+
+# 安装后端依赖
+cd backend && npm install
+
+# 安装前端依赖
+cd ../frontend && npm install
 ```
 
-### 2. 初始化数据库
+### 第 2 步：初始化数据库
 
 ```bash
 cd backend
-npm install
 npx prisma db push
+# 成功后会创建 backend/prisma/dev.db（SQLite 数据库文件）
+# 输出类似：Your database is now in sync with your schema.
 ```
 
-### 3. 配置环境变量
+> **数据库文件位置**：`backend/prisma/dev.db`（和 `package.json` 在同一层目录下）
+> `.env` 中的 `DATABASE_URL="file:./dev.db"` 是相对于 `prisma/schema.prisma` 的路径，所以实际文件在 `prisma/dev.db`。
+
+### 第 3 步：启动服务
+
+**启动后端 API（必需）**：
 
 ```bash
-# 后端配置
-cp backend/.env.example backend/.env
-# 编辑 backend/.env，确认 DATABASE_URL
-
-# 飞书 Bridge 配置（可选）
-cp bridge/.env.example bridge/.env
-# 编辑 bridge/.env，配置 lark-cli 和 Claude CLI 路径
+cd backend
+npm run dev
+# 输出：Server running on port 3001
+# ✅ API 服务就绪
 ```
 
-### 4. 启动服务
+**启动前端 Web 端（可选）**：
 
 ```bash
-# 方式一：一键启动
-bash scripts/startup.sh
-
-# 方式二：分别启动
-cd backend && npm run dev    # API 服务 → 端口 3001
-cd frontend && npm run dev   # Web 端   → 端口 3002（可选）
+# 新开一个终端窗口
+cd frontend
+npm run dev
+# 输出：VITE ready → http://localhost:3002/
+# ✅ Web 仪表盘就绪
 ```
 
-### 5. 验证
+### 第 4 步：验证
 
 ```bash
+# 检查后端是否正常运行
 curl http://localhost:3001/api/health
-# 返回 {"status":"ok"}
+# → {"status":"ok"}
 ```
 
-### 更多部署细节
+### 第 5 步：打开浏览器
 
-参见 [deployment.md](docs/wiki/deployment.md) — 包含多实例部署、生产环境配置、PM2 管理等。
+访问 **http://localhost:3002/**（或 Vite 分配给你的端口），即可看到 Web 仪表盘。
+
+---
+
+### 如果遇到问题
+
+**端口被占用？**
+```bash
+# 查看端口占用
+lsof -i :3001
+lsof -i :3002
+
+# 释放端口
+lsof -ti:3001 | xargs kill -9
+lsof -ti:3002 | xargs kill -9
+```
+
+**"MissingPrismaDependency" 错误？**
+```bash
+cd backend
+npm install
+npx prisma generate
+```
+
+**数据库报错？** 先检查文件是否存在：
+```bash
+ls -l backend/prisma/dev.db   # 应该存在
+# 如果不存在：cd backend && npx prisma db push
+```
+
+---
+
+## 日常使用流程
+
+### 首次使用
+
+```
+1. 启动后端 → cd backend && npm run dev
+2. 打开 Web 端 → http://localhost:3002
+3. 创建个人目标（人生目标 → 年度目标 → 月度计划）
+4. 开始每日复盘
+```
+
+### 每日工作流
+
+```
+早晨：查看今日计划 → 确认今日待办
+晚上：提交每日复盘 → 查看 AI 分析报告 → 评分反馈
+每周日：创建周复盘
+每月初：创建月复盘
+```
+
+### 使用终端 CLI
+
+```bash
+cd cli
+npx tsx growth-cli.ts
+```
+
+交互菜单支持：用户管理、目标管理、计划管理、提交复盘、查看进度。
 
 ---
 
@@ -204,7 +272,7 @@ curl http://localhost:3001/api/health
 
 ### 🌐 Web 仪表盘
 
-访问 `http://localhost:3002`，提供三个核心页面：
+访问 `http://localhost:3002`（或 Vite 分配的端口），提供三个核心页面：
 
 - **总览** — 进度概览、最新复盘摘要、活跃模式
 - **目标链** — 人生→年度→月度→每日的目标分解树
@@ -239,6 +307,7 @@ domains/growth-miniprogram/
 ├── backend/                     # Express API 服务
 │   ├── prisma/
 │   │   ├── schema.prisma       # 数据库模型（13 个表）
+│   │   ├── dev.db              # SQLite 数据库文件（.gitignore 忽略）
 │   │   └── seed.ts             # 种子数据
 │   ├── src/
 │   │   ├── index.ts            # 服务入口
@@ -274,8 +343,10 @@ domains/growth-miniprogram/
 │   ├── api-design.md           # API 设计说明
 │   ├── prompt-system.md        # 提示词系统架构
 │   └── deployment.md           # 部署指南
-├── docker-compose.yml          # PostgreSQL 容器
-└── domain.yaml                  # 项目元数据
+├── docker-compose.yml          # PostgreSQL 容器（已弃用，改用 SQLite）
+├── CLAUDE.md                   # AI 协作开发规范
+├── domain.yaml                  # 项目元数据
+└── README.md                   # 本文件
 ```
 
 ---
@@ -284,12 +355,16 @@ domains/growth-miniprogram/
 
 | 文件 | 用途 | 关键项 |
 |------|------|--------|
-| `backend/.env` | 后端环境变量 | `DATABASE_URL`, `PORT` |
+| `backend/.env` | 后端环境变量 | `DATABASE_URL`, `PORT`（默认 3001） |
 | `bridge/.env` | 飞书机器人配置 | `BACKEND_URL`, `LARK_CLI_PATH`, `CLAUDECLI_PATH` |
-| `docker-compose.yml` | 数据库容器 | 端口 5434, 用户 `growthuser` |
 | `scripts/pm2-ecosystem.config.cjs` | 生产进程管理 | 服务路径、环境变量 |
 
-数据库默认连接：`postgresql://growthuser:growthpass@localhost:5434/growth-miniprogram`
+数据库文件：`backend/prisma/dev.db`（SQLite 单文件）
+
+> **前置配置**：`backend/.env` 默认无需修改即可使用 SQLite。如果你有 `.env.example`，第一次安装时复制即可：
+> ```bash
+> cp backend/.env.example backend/.env
+> ```
 
 ---
 
@@ -334,6 +409,52 @@ domains/growth-miniprogram/
 | GET | `/api/progress/calendar` | 月度日历数据 |
 
 完整 API 文档参见 [docs/wiki/api-design.md](docs/wiki/api-design.md)。
+
+---
+
+## 数据迁移与备份
+
+### 换电脑 / 分享给他人
+
+本系统使用 SQLite 数据库（`backend/prisma/dev.db`），换电脑时只需拷贝这个文件：
+
+```bash
+# 旧电脑：备份数据库文件
+cp backend/prisma/dev.db ~/Desktop/growth-backup.db
+
+# 新电脑 — 首次安装后，用旧数据覆盖
+cd backend
+npx prisma db push                # 先创建空的 dev.db（建表）
+cp ~/Desktop/growth-backup.db backend/prisma/dev.db   # 用旧数据覆盖
+npm run dev                        # 启动，数据全在
+```
+
+> **原理**：SQLite 是单文件数据库，所有用户数据（目标、复盘、分析报告）都存在 `dev.db` 里。拷贝它 = 全量数据迁移。不需要任何数据库工具。
+
+### 日常备份
+
+```bash
+cd backend
+bash ../scripts/db-backup.sh "备份备注"
+# 备份文件保存在 backend/backups/，保留最近 30 个
+```
+
+### 恢复备份
+
+```bash
+# 查看可用备份
+ls backend/backups/
+
+# 恢复（替换当前数据库）
+cp backend/backups/growth-2026-01-01.db backend/prisma/dev.db
+```
+
+### 停止服务
+
+```bash
+bash scripts/shutdown.sh
+# 会先备份数据库，再停止所有服务进程
+```
 
 ---
 
