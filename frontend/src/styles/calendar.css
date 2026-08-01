@@ -148,10 +148,15 @@
 .week-day-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid #f3f4f6;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border-bottom: 1px solid var(--sep-soft);
+  transition: background 0.15s;
 }
+.week-day-row:hover { background: var(--bg-hover); }
+.week-day-row.today { border: 1px solid var(--accent); }
+.week-day-row.selected { background: var(--accent-bg); }
 
 .week-day-row:last-child {
   border-bottom: none;

@@ -35,7 +35,6 @@ function getDotColor(value?: string, target?: string): string {
   if (!tgt || isNaN(cur)) return 'gray';
   const pct = cur / tgt;
   if (pct >= 1) return 'green';
-  if (pct >= 0.5) return 'yellow';
   return 'yellow';
 }
 
@@ -55,11 +54,20 @@ function getWeekDateRangeForMonth(year: number, month: number) {
   return { start, end, weekNum };
 }
 
+function fmtDate(iso: string): string {
+  const [, m, d] = iso.split('-').map(Number);
+  return `${m}月${d}日`;
+}
+
+function pad2(n: number): string { return String(n).padStart(2, '0'); }
+
 export function PlansPage() {
   const [year, setYear] = useState(defaultYear);
   const [month, setMonth] = useState(defaultMonth);
   const [dimension, setDimension] = useState<Dimension>('month');
   const [initialized, setInitialized] = useState(false);
+  // pin 联动：月/周视图点某天下钻，不切视图
+  const [pinnedDay, setPinnedDay] = useState<string | undefined>(undefined);
 
   // First load: navigate to most recent month with review data
   useEffect(() => {
@@ -67,7 +75,7 @@ export function PlansPage() {
     api.getProgressOverview().then(overview => {
       const reviews = overview.recentReviews;
       if (reviews && reviews.length > 0) {
-        const latest = reviews[0]; // most recent first
+        const latest = reviews[0];
         const d = new Date(latest.date);
         const reviewYear = d.getFullYear();
         const reviewMonth = d.getMonth() + 1;
@@ -93,6 +101,27 @@ export function PlansPage() {
   // 月视图降级：当月最新日复盘的分析报告
   const [latestMonthAnalysis, setLatestMonthAnalysis] = useState<StructuredReport | null | undefined>(undefined);
 
+  // 当前聚焦的"日"（day 视图的 selectedDay 或 pin 的日期）
+  const dayDateStr = (() => {
+    if (dimension === 'day') {
+      return selectedDay ? `${year}-${pad2(month)}-${pad2(selectedDay)}` : undefined;
+    }
+    return pinnedDay || undefined;
+  })();
+
+  // 右侧面板粒度：day（下钻）/ 周期（month/week/year）
+  function rightMode(): Dimension {
+    if (dimension === 'day') return 'day';
+    if (dimension === 'year') return 'year';
+    return dayDateStr ? 'day' : dimension;
+  }
+
+  const periodLabel = rightMode() === 'day'
+    ? (dayDateStr ? fmtDate(dayDateStr) : '')
+    : dimension === 'year' ? `${year}年`
+    : dimension === 'week' ? `第${getWeekDateRangeForMonth(year, month).weekNum}周`
+    : `${year}年${month}月`;
+
   // Load yearly goals for AI monthly suggestion
   useEffect(() => {
     api.getYearlyGoals(defaultYear).then(setYearlyGoals).catch(() => setYearlyGoals([]));
@@ -108,9 +137,9 @@ export function PlansPage() {
       .catch(() => setMonthlyReview(null));
   }, [year, month]);
 
-  // 月视图降级：获取当月最新日复盘分析（setState 在 await 后）
+  // 月视图降级：获取当月最新日复盘分析
   useEffect(() => {
-    if (dimension !== 'month') return;
+    if (dimension !== 'month' || pinnedDay) return;
     let cancelled = false;
     (async () => {
       try {
@@ -127,18 +156,17 @@ export function PlansPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [year, month, dimension]);
+  }, [year, month, dimension, pinnedDay]);
 
-  // Fetch daily plans and daily review (for day/week modes)
+  // Fetch daily plans and daily review（day 粒度 = 下钻目标天；week = 整周）
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      await Promise.resolve(); // 确保所有 setState 在微任务后，规避 set-state-in-effect
-      if (dimension === 'day' && selectedDay) {
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+      await Promise.resolve();
+      if (dayDateStr) {
         const [p, r] = await Promise.all([
-          api.getDailyPlans(dateStr).catch(() => [] as DailyPlan[]),
-          api.getDailyReview(dateStr).catch(() => null),
+          api.getDailyPlans(dayDateStr).catch(() => [] as DailyPlan[]),
+          api.getDailyReview(dayDateStr).catch(() => null),
         ]);
         if (cancelled) return;
         setDailyPlans(p);
@@ -157,7 +185,7 @@ export function PlansPage() {
       for (let i = 0; i < 7; i++) {
         const d = new Date(start);
         d.setDate(start.getDate() + i);
-        days.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+        days.push(`${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`);
       }
       const results = await Promise.all(days.map(dateStr =>
         api.getDailyPlans(dateStr).catch(() => [] as DailyPlan[])
@@ -165,14 +193,14 @@ export function PlansPage() {
       if (cancelled) return;
       setWeeklyReview(weekly);
       setDailyPlans(results.flat());
-      const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+      const today = `${new Date().getFullYear()}-${pad2(new Date().getMonth() + 1)}-${pad2(new Date().getDate())}`;
       if (days.includes(today)) {
         const r = await api.getDailyReview(today).catch(() => null);
         if (!cancelled) setDailyReview(r);
       }
     })();
     return () => { cancelled = true; };
-  }, [year, month, dimension, selectedDay]);
+  }, [year, month, dimension, selectedDay, pinnedDay]);
 
   const monthlyPlanItems = (monthlyPlans || []).map(mp => ({
     title: mp.title,
@@ -187,19 +215,21 @@ export function PlansPage() {
   }));
 
   const getPlanPanelTitle = () => {
-    switch (dimension) {
+    const mode = rightMode();
+    switch (mode) {
       case 'year': return `${year}年计划`;
       case 'month': return `${month}月计划`;
       case 'week': {
         const { start, end, weekNum } = getWeekDateRangeForMonth(year, month);
         return `第${weekNum}周 (${start.getMonth()+1}.${start.getDate()} - ${end.getMonth()+1}.${end.getDate()})`;
       }
-      case 'day': return `${month}月${selectedDay || ''}日计划`;
+      case 'day': return dayDateStr ? `${fmtDate(dayDateStr)} 日计划` : '日计划';
     }
   };
 
   const getPlanPanelItems = () => {
-    switch (dimension) {
+    const mode = rightMode();
+    switch (mode) {
       case 'year':
       case 'month':
         return monthlyPlanItems;
@@ -210,33 +240,39 @@ export function PlansPage() {
   };
 
   const getPlanPanelEmptyHint = () => {
-    if (dimension === 'day' && dailyPlanItems.length === 0 && monthlyPlanItems.length > 0) {
+    if (rightMode() === 'day' && dailyPlanItems.length === 0 && monthlyPlanItems.length > 0) {
       return '该日暂无日计划，下方展示当月月计划';
     }
     return undefined;
   };
 
+  // pin 交互
+  function handlePin(dateStr: string) {
+    setPinnedDay(dateStr);
+  }
+  function unpin() {
+    setPinnedDay(undefined);
+  }
+
   const renderLeftView = () => {
     switch (dimension) {
       case 'year':
-        return <YearGrid year={year} onMonthSelect={(m) => { setMonth(m); setDimension('month'); setSelectedDay(undefined); }} />;
+        return <YearGrid year={year} onMonthSelect={(m) => { setMonth(m); setDimension('month'); setSelectedDay(undefined); setPinnedDay(undefined); }} />;
       case 'month':
         return <CalendarGrid
           year={year}
           month={month}
-          selectedDay={selectedDay ? `${year}-${String(month).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}` : undefined}
-          onDaySelect={(dateStr) => {
-            const [y, m, d] = dateStr.split('-').map(Number);
-            setYear(y); setMonth(m); setSelectedDay(d); setDimension('day');
-          }} />;
+          selectedDay={pinnedDay}
+          onDaySelect={(dateStr) => { handlePin(dateStr); }} />;
       case 'week':
-        return <WeekTimeline year={year} month={month} />;
+        return <WeekTimeline year={year} month={month} selectedDay={pinnedDay} onDaySelect={handlePin} />;
       case 'day':
         return <DayTimeline year={year} month={month} day={selectedDay} />;
     }
   };
 
   const renderRightPanel = () => {
+    const mode = rightMode();
     switch (activePanel) {
       case 'plan':
         return (
@@ -247,8 +283,7 @@ export function PlansPage() {
           />
         );
       case 'eval': {
-        // 日视图：用日复盘数据
-        if (dimension === 'day' || dimension === 'week') {
+        if (mode === 'day') {
           const da = dailyReview?.aiAnalyses?.[0]?.structuredReport;
           const aiScore = avgCapabilityScore(da) ?? monthlyReview?.analysisScore;
           return (
@@ -259,11 +294,10 @@ export function PlansPage() {
             />
           );
         }
-        // 月视图降级：没月度复盘时用日复盘数据
         const evalRating = monthlyReview?.rating;
         const evalScore = monthlyReview?.analysisScore;
         const evalRate = monthlyReview?.completionRate;
-        const hasFallback = dimension === 'month' && !monthlyReview && latestMonthAnalysis != null;
+        const hasFallback = mode === 'month' && !monthlyReview && latestMonthAnalysis != null;
         return (
           <EvalPanel
             rating={evalRating}
@@ -276,8 +310,8 @@ export function PlansPage() {
       }
       case 'report': {
         const dailyAnalysis = dailyReview?.aiAnalyses?.[0]?.structuredReport;
-        const weekAnalysis = dimension === 'week' ? weeklyReview?.aiAnalyses?.[0]?.structuredReport : null;
-        const monthAnalysis = dimension === 'month' ? latestMonthAnalysis : null;
+        const weekAnalysis = mode === 'week' ? weeklyReview?.aiAnalyses?.[0]?.structuredReport : null;
+        const monthAnalysis = mode === 'month' ? latestMonthAnalysis : null;
         const monthlyRevAnalysis = monthlyReview?.aiAnalyses?.[0]?.structuredReport;
         const report = dailyAnalysis || weekAnalysis || monthAnalysis || monthlyRevAnalysis;
         const reportAnalysisId = dailyReview?.aiAnalyses?.[0]?.id ?? weeklyReview?.aiAnalyses?.[0]?.id ?? monthlyReview?.aiAnalyses?.[0]?.id;
@@ -297,14 +331,20 @@ export function PlansPage() {
   return (
     <div>
       <Card>
-        <PeriodSelector
-          year={year}
-          month={month}
-          dimension={dimension}
-          onYearChange={(y) => { setYear(y); setSelectedDay(undefined); }}
-          onMonthChange={(m) => { setMonth(m); setSelectedDay(undefined); }}
-          onDimensionChange={(d) => { if (d !== 'day') setSelectedDay(undefined); setDimension(d); }}
-        />
+        {/* 周期状态 + 选择器 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+          <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, background: 'var(--accent-bg)', color: 'var(--accent)', fontWeight: 600 }}>
+            {periodLabel}
+          </span>
+          <PeriodSelector
+            year={year}
+            month={month}
+            dimension={dimension}
+            onYearChange={(y) => { setYear(y); setSelectedDay(undefined); setPinnedDay(undefined); }}
+            onMonthChange={(m) => { setMonth(m); setSelectedDay(undefined); setPinnedDay(undefined); }}
+            onDimensionChange={(d) => { if (d !== 'day') setSelectedDay(undefined); setDimension(d); setPinnedDay(undefined); }}
+          />
+        </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
           <button
@@ -334,6 +374,18 @@ export function PlansPage() {
           </div>
 
           <div className="plans-right">
+            {/* Panel 状态栏（pin 指示） */}
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 8, minHeight: 18 }}>
+              {dimension !== 'day' && pinnedDay ? (
+                <span>
+                  📌 已定位 {fmtDate(pinnedDay)}
+                  <a href="javascript:void(0)" onClick={unpin} style={{ color: 'var(--accent)', marginLeft: 8 }}>查看{dimension === 'week' ? '周' : '月'}汇总 →</a>
+                </span>
+              ) : (
+                <span>{periodLabel}{dimension === 'month' || dimension === 'week' ? ' · 点击左侧日期可下钻到当天' : ''}</span>
+              )}
+            </div>
+
             <div className="panel-tabs">
               {(['plan', 'eval', 'report'] as Panel[]).map(p => (
                 <button
@@ -351,7 +403,7 @@ export function PlansPage() {
             </div>
 
             <div className="plans-right-tip">
-              点击年份卡片中的月份可查看月计划，点击日历中的日期可查看日数据
+              点击年份卡片中的月份可查看月计划，点击日历中的日期可下钻到当天
             </div>
           </div>
         </div>
