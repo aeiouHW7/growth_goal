@@ -14,6 +14,7 @@
 
 - [core-goal-review-system](retros/core-goal-review-system.md) — 首版实现复盘
 - [growth-miniprogram-v0.1-phase1](retros/growth-miniprogram-v0.1-phase1.md) — Phase 1 完整复盘（含飞书 CLI、Bridge、分析引擎）
+- [ai-analysis-enhancement](retros/ai-analysis-enhancement.md) — AI 分析增强 + 原型对齐复盘（W.W.L.D）
 
 ## 项目进度
 

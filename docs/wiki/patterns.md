@@ -74,3 +74,34 @@ const userProfileText = buildProfile(user, archive);
 - `spawn('claude', ['-p', '-'])` 不加 `shell: true` —— 确保 `proc.kill()` 能正确终止子进程
 - JSON 解析优先用标记 `__JSON_START__ / __JSON_END__`，fallback 到最外层大括号提取
 - 失败后回滚复盘状态（ANALYZING → INPUTTING），避免记录永久卡死
+
+## 前端模式：React 19 set-state-in-effect 规避
+
+`useEffect(load)` + load 内同步 setState 触发 `react-hooks/set-state-in-effect`（硬错误）。
+
+**解法**：effect 用 async IIFE，所有 setState 移到 `await` 之后；有分支需同步 setState 时开头加 `await Promise.resolve()`。
+
+```tsx
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    await Promise.resolve();
+    const data = await fetchData();
+    if (cancelled) return;
+    setData(data);
+  })();
+  return () => { cancelled = true; };
+}, [deps]);
+```
+
+## 安全模式：单用户系统也要按 userId 过滤
+
+即使无多用户认证，跨表查询（尤其通过关系链）默认要带用户过滤，防"未来多用户化"时的数据泄露。
+
+```ts
+// AIReflection 通过关系链过滤
+prisma.aIReflection.findMany({
+  where: { feedback: { aiAnalysis: { OR: [{ dailyReview: { userId } }, ...] } } },
+  take: 5,
+});
+```
