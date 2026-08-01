@@ -12,10 +12,10 @@ interface Props {
 const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 
 function getRatingEmoji(rate?: number): string {
-  if (rate == null) return '⬜';
-  if (rate >= 80) return '🟢';
-  if (rate >= 50) return '🟡';
-  return '🔴';
+  if (rate == null || rate === 0) return '—';
+  if (rate >= 70) return '😄';
+  if (rate >= 50) return '🙂';
+  return '😕';
 }
 
 export function YearGrid({ year, onMonthSelect }: Props) {
