@@ -1,19 +1,5 @@
 import { FeedbackPanel } from './FeedbackPanel';
-
-interface StructuredReport {
-  completionSummary?: { completed?: string[]; notCompleted?: string[]; completionRate?: string };
-  deviationAnalysis?: { onTrack?: string[]; behind?: string[]; riskLevel?: string };
-  executionDiagnosis?: { issues?: string[]; rootCause?: string; pattern?: string };
-  foggDiagnosis?: { missing?: string; detail?: string };
-  externalPerspective?: { trendInsights?: string[]; directionCheck?: string; newOpportunities?: string[]; risks?: string[] };
-  detectedBiases?: Array<{ type: string; triggerPhrase: string; evidence: string }>;
-  detectedPatterns?: Array<{ pattern: string; dimension?: string; frequency: number }>;
-  capabilityDeltas?: Array<{ dimension: string; score: number; evidence: string }>;
-  insight?: { unaware?: string; pattern?: string; missing?: string };
-  suggestions?: Array<{ type: string; message: string }>;
-  postureTraining?: { completed: boolean; note?: string };
-  signalScore?: number;
-}
+import type { StructuredReport } from '../api';
 
 interface Props {
   report: StructuredReport;

@@ -120,7 +120,7 @@ export class GoalService {
       },
       energy: resources?.energy as GoalDecomposeContext["energy"],
       behaviorPatterns: {
-        failurePatterns: (behavior?.failurePatterns as GoalDecomposeContext["behaviorPatterns"]["failurePatterns"]) || [],
+        failurePatterns: (behavior?.failurePatterns ?? []) as Array<{ goalDescription: string; frequency: number }>,
       },
       summary: archive.summary || undefined,
     };

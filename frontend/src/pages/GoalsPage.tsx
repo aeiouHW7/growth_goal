@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Card } from '../components/Card';
 import { GoalTree } from '../components/GoalTree';
-import { EmptyState } from '../components/EmptyState';
 
 type Filter = 'all' | 'active' | 'done';
 type ViewMode = 'hierarchy' | 'time';

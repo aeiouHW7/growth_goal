@@ -205,7 +205,7 @@ function TimeView({ yearlyList, monthlyMap, filter }: { yearlyList: YearlyGoal[]
 }
 
 export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
-  const [lifeGoals, setLifeGoals] = useState<LifeGoal[] | null>(undefined);
+  const [lifeGoals, setLifeGoals] = useState<LifeGoal[] | null | undefined>(undefined);
   const [yearlyMap, setYearlyMap] = useState<Record<string, YearlyGoal[]>>({});
   const [monthlyMap, setMonthlyMap] = useState<Record<string, MonthlyPlan[]>>({});
 

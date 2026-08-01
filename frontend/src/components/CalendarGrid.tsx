@@ -24,7 +24,7 @@ function getDaysInMonth(year: number, month: number): number {
 }
 
 export function CalendarGrid({ year, month, onDaySelect }: Props) {
-  const [data, setData] = useState<CalendarDay[] | null>(undefined);
+  const [data, setData] = useState<CalendarDay[] | null | undefined>(undefined);
   const [error, setError] = useState(false);
 
   const load = () => {
@@ -34,7 +34,18 @@ export function CalendarGrid({ year, month, onDaySelect }: Props) {
       .catch(() => setError(true));
   };
 
-  useEffect(load, [year, month]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cal = await api.getCalendar(year, month);
+        if (!cancelled) setData(cal.days);
+      } catch {
+        if (!cancelled) setError(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [year, month]);
 
   if (data === undefined) return <LoadingState />;
   if (error) return <ErrorState onRetry={load} />;

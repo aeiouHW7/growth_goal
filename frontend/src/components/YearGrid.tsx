@@ -19,8 +19,8 @@ function getRatingEmoji(rate?: number): string {
 }
 
 export function YearGrid({ year, onMonthSelect }: Props) {
-  const [yearlyGoals, setYearlyGoals] = useState<YearlyGoal[] | null>(undefined);
-  const [monthlyPlans, setMonthlyPlans] = useState<MonthlyPlan[] | null>(undefined);
+  const [yearlyGoals, setYearlyGoals] = useState<YearlyGoal[] | null | undefined>(undefined);
+  const [monthlyPlans, setMonthlyPlans] = useState<MonthlyPlan[] | null | undefined>(undefined);
 
   useEffect(() => {
     api.getYearlyGoals(year).then(setYearlyGoals).catch(() => setYearlyGoals(null));

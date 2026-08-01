@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
 import type { DailyPlan } from '../api';
-import { LoadingState, ErrorState } from './EmptyState';
+import { LoadingState } from './EmptyState';
 import '../styles/calendar.css';
 
 interface Props {
@@ -31,7 +31,6 @@ const weekdayLabels = ['周一', '周二', '周三', '周四', '周五', '周六
 export function WeekTimeline({ year, month }: Props) {
   const [plansMap, setPlansMap] = useState<Record<string, DailyPlan[]>>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
   // Use today's week when it falls in the selected month, otherwise use mid-month
   const today = new Date();
@@ -41,36 +40,29 @@ export function WeekTimeline({ year, month }: Props) {
   const weekNum = getWeekNumber(refDate);
   const { start, end } = getWeekDateRange(year, weekNum);
 
-  const load = () => {
-    setError(false);
-    setLoading(true);
-
-    const days: string[] = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      days.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-    }
-
-    Promise.all(days.map(dateStr =>
-      api.getDailyPlans(dateStr).then(plans => ({ dateStr, plans })).catch(() => ({ dateStr, plans: [] as DailyPlan[] }))
-    )).then(results => {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await Promise.resolve();
+      const days: string[] = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        days.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+      }
+      const results = await Promise.all(days.map(dateStr =>
+        api.getDailyPlans(dateStr).then(plans => ({ dateStr, plans })).catch(() => ({ dateStr, plans: [] as DailyPlan[] }))
+      ));
+      if (cancelled) return;
       const map: Record<string, DailyPlan[]> = {};
       results.forEach(r => { map[r.dateStr] = r.plans; });
       setPlansMap(map);
       setLoading(false);
-    });
-  };
-
-  useEffect(load, [year, month, weekNum]);
+    })();
+    return () => { cancelled = true; };
+  }, [year, month, weekNum]);
 
   if (loading) return <LoadingState />;
-
-  const getStatusDot = (status: string) => {
-    if (status === 'COMPLETED') return 'green';
-    if (status === 'IN_PROGRESS') return 'yellow';
-    return 'gray';
-  };
 
   return (
     <div>

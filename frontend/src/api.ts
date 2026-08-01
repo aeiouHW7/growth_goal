@@ -7,7 +7,7 @@ async function get<T>(path: string): Promise<T> {
   return json.data as T;
 }
 
-async function post<T>(path: string, body: any): Promise<T> {
+async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -18,7 +18,7 @@ async function post<T>(path: string, body: any): Promise<T> {
   return json.data as T;
 }
 
-async function patch<T>(path: string, body: any): Promise<T> {
+async function patch<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -64,8 +64,23 @@ export interface Review {
   status: string; aiAnalyses?: AIAnalysis[];
 }
 
+export interface StructuredReport {
+  completionSummary?: { completed?: string[]; notCompleted?: string[]; completionRate?: string };
+  deviationAnalysis?: { onTrack?: string[]; behind?: string[]; riskLevel?: string };
+  executionDiagnosis?: { issues?: string[]; rootCause?: string; pattern?: string };
+  foggDiagnosis?: { missing?: string; detail?: string };
+  externalPerspective?: { trendInsights?: string[]; directionCheck?: string; newOpportunities?: string[]; risks?: string[] };
+  detectedBiases?: Array<{ type: string; triggerPhrase: string; evidence: string }>;
+  detectedPatterns?: Array<{ pattern: string; dimension?: string; frequency: number }>;
+  capabilityDeltas?: Array<{ dimension: string; score: number; evidence: string }>;
+  insight?: { unaware?: string; pattern?: string; missing?: string };
+  suggestions?: Array<{ type: string; message: string }>;
+  postureTraining?: { completed: boolean; note?: string };
+  signalScore?: number;
+}
+
 export interface AIAnalysis {
-  id: string; analysisType: string; structuredReport: any;
+  id: string; analysisType: string; structuredReport: StructuredReport;
   narrativeReport?: string; createdAt: string;
   feedbacks?: AIAnalysisFeedback[];
 }
@@ -89,7 +104,7 @@ export interface ProgressOverview {
 }
 
 export interface GoalChain {
-  goal: any; children: { monthlyPlans?: MonthlyPlan[]; yearlyGoals?: any[] };
+  goal: LifeGoal | YearlyGoal; children: { monthlyPlans?: MonthlyPlan[]; yearlyGoals?: YearlyGoal[] };
 }
 
 export interface CalendarData {
@@ -140,7 +155,7 @@ export interface LifeArchive {
       addictiveHabits?: string;
     };
   };
-  layerBehavior?: Record<string, any>;
+  layerBehavior?: Record<string, unknown>;
   layerFuture?: {
     vision?: { years10?: string; years3?: string; year1?: string };
     goalSource?: { motivation?: string; whyNow?: string };

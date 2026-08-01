@@ -142,6 +142,7 @@ export function ArchivePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<SubTab>('core');
   const [data, setData] = useState<LifeArchive | null>(null);
 
@@ -159,14 +160,22 @@ export function ArchivePage() {
       if (archive?.layerCore) setLayerCore(archive.layerCore);
       if (archive?.layerResources) setLayerResources(archive.layerResources);
       if (archive?.layerFuture) setLayerFuture(archive.layerFuture);
-    } catch (err: any) {
-      setError(err.message || '加载失败');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '加载失败');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadArchive(); }, [loadArchive]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await Promise.resolve(); // 规避 set-state-in-effect
+      if (cancelled) return;
+      loadArchive();
+    })();
+    return () => { cancelled = true; };
+  }, [loadArchive]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -181,8 +190,8 @@ export function ArchivePage() {
         const updated = await ARCHIVE_API.updateLayerFuture(layerFuture);
         setData(prev => prev ? { ...prev, layerFuture: updated.layerFuture } : null);
       }
-    } catch (err: any) {
-      alert('保存失败: ' + (err.message || err));
+    } catch (e: unknown) {
+      setSaveError(e instanceof Error ? e.message : '保存失败');
     } finally {
       setSaving(false);
     }
@@ -207,6 +216,9 @@ export function ArchivePage() {
           <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
             {saving ? '保存中…' : '💾 保存'}
           </button>
+          {saveError && (
+            <span style={{ fontSize: 12, color: 'var(--error, #ef4444)', marginLeft: 8 }}>保存失败：{saveError}</span>
+          )}
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import { type Prisma } from "@prisma/client";
+import { type Prisma, type BehaviorPattern } from "@prisma/client";
 import { prisma } from "../prisma";
 import { bigramJaccard } from "../utils/string-sim";
 
@@ -72,7 +72,7 @@ export class PatternService {
       // 用 bigram Jaccard 匹配已有模式
       let matched = existingPatterns.find(p => bigramJaccard(issue, p.pattern) >= SIMILARITY_THRESHOLD);
 
-      let updated: typeof matched;
+      let updated: BehaviorPattern | undefined;
       if (matched) {
         updated = await db.behaviorPattern.update({
           where: { id: matched.id },

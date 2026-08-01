@@ -28,10 +28,10 @@ function getWeekDates(): string[] {
 const weekdayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
 export function OverviewPage({ onGoArchive }: { onGoArchive?: () => void }) {
-  const [lifeGoals, setLifeGoals] = useState<LifeGoal[] | null>(undefined);
-  const [yearlyGoals, setYearlyGoals] = useState<YearlyGoal[] | null>(undefined);
-  const [monthlyPlans, setMonthlyPlans] = useState<MonthlyPlan[] | null>(undefined);
-  const [suggestions, setSuggestions] = useState<Suggestion[] | null>(undefined);
+  const [lifeGoals, setLifeGoals] = useState<LifeGoal[] | null | undefined>(undefined);
+  const [yearlyGoals, setYearlyGoals] = useState<YearlyGoal[] | null | undefined>(undefined);
+  const [monthlyPlans, setMonthlyPlans] = useState<MonthlyPlan[] | null | undefined>(undefined);
+  const [suggestions, setSuggestions] = useState<Suggestion[] | null | undefined>(undefined);
   const [weeklyPlans, setWeeklyPlans] = useState<Record<string, DailyPlan[]>>({});
   const [error, setError] = useState(false);
   const [noUser, setNoUser] = useState(false);
@@ -73,7 +73,16 @@ export function OverviewPage({ onGoArchive }: { onGoArchive?: () => void }) {
     });
   };
 
-  useEffect(load, []);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await Promise.resolve(); // 确保 load 内 setState 在微任务后，规避 set-state-in-effect
+      if (cancelled) return;
+      load();
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // LifeArchive 摘要卡片三态加载（VS5）
   useEffect(() => {

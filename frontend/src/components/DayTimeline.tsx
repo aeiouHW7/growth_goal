@@ -27,8 +27,8 @@ const METRIC_META: Record<string, { label: string; unit: string }> = {
 };
 
 export function DayTimeline({ year, month, day: propDay }: Props) {
-  const [plans, setPlans] = useState<DailyPlan[] | null>(undefined);
-  const [review, setReview] = useState<Review | null>(undefined);
+  const [plans, setPlans] = useState<DailyPlan[] | null | undefined>(undefined);
+  const [review, setReview] = useState<Review | null | undefined>(undefined);
   const [error, setError] = useState(false);
   // 输入区
   const [title, setTitle] = useState('');
@@ -120,7 +120,7 @@ export function DayTimeline({ year, month, day: propDay }: Props) {
   if (plans === undefined) return <LoadingState />;
   if (error) return <ErrorState onRetry={load} />;
 
-  const activePlans = plans.filter(p => p.status !== 'CANCELLED');
+  const activePlans = (plans ?? []).filter(p => p.status !== 'CANCELLED');
   const doneCount = activePlans.filter(p => p.status === 'COMPLETED').length;
   const pct = activePlans.length ? Math.round(doneCount / activePlans.length * 100) : 0;
   const meta = METRIC_META[metricType] || METRIC_META.NUMERIC;

@@ -9,7 +9,7 @@ import { PlanPanel } from '../components/PlanPanel';
 import { EvalPanel } from '../components/EvalPanel';
 import { StructuredReportPanel } from '../components/StructuredReportPanel';
 import { api } from '../api';
-import type { MonthlyPlan, MonthlyReviewData, DailyPlan, YearlyGoal } from '../api';
+import type { MonthlyPlan, MonthlyReviewData, DailyPlan, YearlyGoal, Review, StructuredReport } from '../api';
 import { AISuggestModal } from '../components/AISuggestModal';
 import '../styles/panels.css';
 
@@ -20,10 +20,12 @@ const now = new Date();
 const defaultYear = now.getFullYear();
 const defaultMonth = now.getMonth() + 1;
 
-function avgCapabilityScore(report?: any): number | undefined {
+interface CapabilityDelta { score?: number }
+
+function avgCapabilityScore(report?: { capabilityDeltas?: CapabilityDelta[] } | null): number | undefined {
   const deltas = report?.capabilityDeltas;
-  if (!deltas || !Array.isArray(deltas) || deltas.length === 0) return undefined;
-  const sum = deltas.reduce((acc: number, d: any) => acc + (d.score ?? 0), 0);
+  if (!deltas || deltas.length === 0) return undefined;
+  const sum = deltas.reduce((acc: number, d) => acc + (d.score ?? 0), 0);
   return Math.round((sum / deltas.length) * 10) / 10;
 }
 
@@ -83,13 +85,13 @@ export function PlansPage() {
   const [yearlyGoals, setYearlyGoals] = useState<YearlyGoal[]>([]);
   const [suggestHint, setSuggestHint] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | undefined>(undefined);
-  const [monthlyPlans, setMonthlyPlans] = useState<MonthlyPlan[] | null>(undefined);
-  const [monthlyReview, setMonthlyReview] = useState<MonthlyReviewData | null>(undefined);
+  const [monthlyPlans, setMonthlyPlans] = useState<MonthlyPlan[] | null | undefined>(undefined);
+  const [monthlyReview, setMonthlyReview] = useState<MonthlyReviewData | null | undefined>(undefined);
   const [dailyPlans, setDailyPlans] = useState<DailyPlan[]>([]);
-  const [dailyReview, setDailyReview] = useState<any>(null);
-  const [weeklyReview, setWeeklyReview] = useState<any>(null);
+  const [dailyReview, setDailyReview] = useState<Review | null>(null);
+  const [weeklyReview, setWeeklyReview] = useState<Review | null>(null);
   // 月视图降级：当月最新日复盘的分析报告
-  const [latestMonthAnalysis, setLatestMonthAnalysis] = useState<any>(undefined);
+  const [latestMonthAnalysis, setLatestMonthAnalysis] = useState<StructuredReport | null | undefined>(undefined);
 
   // Load yearly goals for AI monthly suggestion
   useEffect(() => {
@@ -106,55 +108,70 @@ export function PlansPage() {
       .catch(() => setMonthlyReview(null));
   }, [year, month]);
 
-  // 月视图降级：获取当月最新日复盘分析
+  // 月视图降级：获取当月最新日复盘分析（setState 在 await 后）
   useEffect(() => {
-    if (dimension !== 'month') {
-      setLatestMonthAnalysis(undefined);
-      return;
-    }
-    api.getCalendar(year, month).then(cal => {
-      const reviewDays = cal.days.filter(d => d.hasReview).sort((a, b) => b.date.localeCompare(a.date));
-      if (reviewDays.length === 0) { setLatestMonthAnalysis(null); return; }
-      const latest = reviewDays[0];
-      api.getDailyReview(latest.date).then(r => {
+    if (dimension !== 'month') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const cal = await api.getCalendar(year, month);
+        if (cancelled) return;
+        const reviewDays = cal.days.filter(d => d.hasReview).sort((a, b) => b.date.localeCompare(a.date));
+        if (reviewDays.length === 0) { setLatestMonthAnalysis(null); return; }
+        const r = await api.getDailyReview(reviewDays[0].date).catch(() => null);
+        if (cancelled) return;
         const analysis = r?.aiAnalyses?.[0]?.structuredReport;
         setLatestMonthAnalysis(analysis || null);
-      }).catch(() => setLatestMonthAnalysis(null));
-    }).catch(() => setLatestMonthAnalysis(null));
+      } catch {
+        if (!cancelled) setLatestMonthAnalysis(null);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [year, month, dimension]);
 
   // Fetch daily plans and daily review (for day/week modes)
   useEffect(() => {
-    if (dimension === 'day' && selectedDay) {
-      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
-      api.getDailyPlans(dateStr).then(setDailyPlans).catch(() => setDailyPlans([]));
-      api.getDailyReview(dateStr).then(setDailyReview).catch(() => setDailyReview(null));
-      return;
-    }
-    if (dimension !== 'week') {
-      setDailyPlans([]);
-      setDailyReview(null);
-      return;
-    }
-    const { start, end, weekNum } = getWeekDateRangeForMonth(year, month);
-    // 周视图：加载周复盘分析（VS2：B1 生成的周期分析）
-    api.getWeeklyReview(year, weekNum).then(setWeeklyReview).catch(() => setWeeklyReview(null));
-    const days: string[] = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      days.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-    }
-    Promise.all(days.map(dateStr =>
-      api.getDailyPlans(dateStr).then(plans => plans).catch(() => [] as DailyPlan[])
-    )).then(results => {
+    let cancelled = false;
+    (async () => {
+      await Promise.resolve(); // 确保所有 setState 在微任务后，规避 set-state-in-effect
+      if (dimension === 'day' && selectedDay) {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+        const [p, r] = await Promise.all([
+          api.getDailyPlans(dateStr).catch(() => [] as DailyPlan[]),
+          api.getDailyReview(dateStr).catch(() => null),
+        ]);
+        if (cancelled) return;
+        setDailyPlans(p);
+        setDailyReview(r);
+        return;
+      }
+      if (dimension !== 'week') {
+        if (cancelled) return;
+        setDailyPlans([]);
+        setDailyReview(null);
+        return;
+      }
+      const { start, weekNum } = getWeekDateRangeForMonth(year, month);
+      const weekly = await api.getWeeklyReview(year, weekNum).catch(() => null);
+      const days: string[] = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        days.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+      }
+      const results = await Promise.all(days.map(dateStr =>
+        api.getDailyPlans(dateStr).catch(() => [] as DailyPlan[])
+      ));
+      if (cancelled) return;
+      setWeeklyReview(weekly);
       setDailyPlans(results.flat());
-    });
-    // Fetch today's daily review for analysis
-    const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
-    if (days.includes(today)) {
-      api.getDailyReview(today).then(setDailyReview).catch(() => setDailyReview(null));
-    }
+      const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+      if (days.includes(today)) {
+        const r = await api.getDailyReview(today).catch(() => null);
+        if (!cancelled) setDailyReview(r);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [year, month, dimension, selectedDay]);
 
   const monthlyPlanItems = (monthlyPlans || []).map(mp => ({
@@ -225,7 +242,7 @@ export function PlansPage() {
             emptyHint={getPlanPanelEmptyHint()}
           />
         );
-      case 'eval':
+      case 'eval': {
         // 日视图：用日复盘数据
         if (dimension === 'day' || dimension === 'week') {
           const da = dailyReview?.aiAnalyses?.[0]?.structuredReport;
@@ -252,6 +269,7 @@ export function PlansPage() {
             fallbackScore={avgCapabilityScore(latestMonthAnalysis)}
           />
         );
+      }
       case 'report': {
         const dailyAnalysis = dailyReview?.aiAnalyses?.[0]?.structuredReport;
         const weekAnalysis = dimension === 'week' ? weeklyReview?.aiAnalyses?.[0]?.structuredReport : null;

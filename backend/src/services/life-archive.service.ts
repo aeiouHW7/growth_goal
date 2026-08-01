@@ -1,4 +1,10 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
+
+/** 将 JSON 字段转为 Prisma 接受的 InputJsonValue */
+function toJson(v: unknown): Prisma.InputJsonValue {
+  return v as unknown as Prisma.InputJsonValue;
+}
 
 export class LifeArchiveService {
   /** 获取完整人生档案 */
@@ -25,10 +31,16 @@ export class LifeArchiveService {
       await this.migrateFromUser(userId);
     }
 
+    const jsonData = {
+      layerCore: data.layerCore && toJson(data.layerCore),
+      layerResources: data.layerResources && toJson(data.layerResources),
+      layerBehavior: data.layerBehavior && toJson(data.layerBehavior),
+      layerFuture: data.layerFuture && toJson(data.layerFuture),
+    };
     return prisma.lifeArchive.upsert({
       where: { userId },
-      create: { userId, ...data },
-      update: data,
+      create: { userId, ...jsonData },
+      update: jsonData,
     });
   }
 
@@ -38,8 +50,8 @@ export class LifeArchiveService {
   async updateLayerCore(userId: string, layerCore: Record<string, unknown>) {
     return prisma.lifeArchive.upsert({
       where: { userId },
-      create: { userId, layerCore },
-      update: { layerCore },
+      create: { userId, layerCore: toJson(layerCore) },
+      update: { layerCore: toJson(layerCore) },
     });
   }
 
@@ -158,8 +170,8 @@ export class LifeArchiveService {
 
       return tx.lifeArchive.upsert({
         where: { userId },
-        create: { userId, layerBehavior: merged },
-        update: { layerBehavior: merged },
+        create: { userId, layerBehavior: toJson(merged) },
+        update: { layerBehavior: toJson(merged) },
       });
     });
   }
