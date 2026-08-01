@@ -70,9 +70,9 @@
 **目标**：日视图输入区 + 任务管理。
 
 **前端**（后端 `POST/PATCH /api/plans/daily` 已就绪）：
-- [ ] `api.ts`：`createDailyPlan()` / `updateDailyPlanStatus()`
-- [ ] `DayTimeline.tsx`：输入区（标题+度量类型+目标值+添加）、任务行勾选/软删、进度条、空态
-- [ ] 校验：标题非空、目标值>0、COMPLETED 不可删
+- [x] `api.ts`：`createDailyPlan()` / `updateDailyPlanStatus()`
+- [x] `DayTimeline.tsx`：输入区（标题+度量类型+目标值+添加）、任务行勾选/软删、进度条、空态
+- [x] 校验：标题非空、目标值>0、COMPLETED 不可删
 - [ ] 视觉回归：有任务/空态两态
 
 **验证**：日视图添加任务 → 列表出现 → 勾选完成进度更新 → 软删置灰；空态引导正确。

@@ -237,4 +237,9 @@ export const api = {
   // AI 分析反馈（反馈闭环）
   submitFeedback: (analysisId: string, data: { userScore: number; excellentReason?: string; failReason?: string }) =>
     post<AIAnalysisFeedback>(`/analysis/${analysisId}/feedback`, data),
+  // 日计划 Web 输入
+  createDailyPlan: (data: { title: string; date: string; metricType: string; targetValue: string; monthlyPlanId?: string }) =>
+    post<DailyPlan>('/plans/daily', data),
+  updateDailyPlanStatus: (id: string, status: string) =>
+    patch<DailyPlan>(`/plans/daily/${id}/status`, { status }),
 };
