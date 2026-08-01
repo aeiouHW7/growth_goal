@@ -1,15 +1,21 @@
 /**
  * AI 分析运行器 — 调用 Claude CLI 完成完整分析流程
  *
+ * 支持三种复盘类型：
+ * - DAILY：单日复盘分析（原有逻辑）
+ * - WEEKLY / MONTHLY：聚合周期内日复盘 → 周期级分析（注入 LifeArchive summary + 周期指引）
+ *
  * 流程（同 Bridge auto-processor.cjs）：
- * 1. 获取复盘 → 2. 获取上下文(pattern/bias/capability) → 3. 构建 prompt
+ * 1. 获取复盘 → 2. 获取上下文(pattern/bias/capability/summary) → 3. 构建 prompt
  * 4. 调 claude CLI → 5. 解析 JSON → 6. 保存 → 7. 追踪 pattern/bias/capability
  */
 import { spawn } from "child_process";
 import { prisma } from "../prisma";
+import type { DailyReview, WeeklyReview, MonthlyReview } from "@prisma/client";
 import { PatternService } from "./pattern.service";
 import { BiasDetectionService } from "./bias-detection.service";
 import { CapabilityService } from "./capability.service";
+import { buildCycleReviewPrompt, CycleReviewContext } from "../prompts/weekly-review.prompt";
 
 const ANALYSIS_REQUIREMENTS = `
 1. **偏误分析** — 回顾用户输入中的表达方式，判断是否存在以下偏误：计划谬误（过度乐观）、自我美化（模糊表述）、基本归因错误（外归因）、确认偏误（只找支持自己的论据）、损失厌恶（怕损失>想获得）、事后合理化（为过去找理由）、现状偏差（懒得改）、聚类错觉（以偏概全）。每条偏误必须引用用户原文作为 triggerPhrase，输出到 detectedBiases
@@ -41,6 +47,8 @@ const JSON_SCHEMA = `{
   "suggestions": [{ "type": "positive|warning|critical", "message": "" }]
 }`;
 
+type ReviewRef = { dailyReviewId?: string; weeklyReviewId?: string; monthlyReviewId?: string };
+
 export class AnalysisRunner {
   /**
    * 对指定复盘运行完整 AI 分析
@@ -53,10 +61,17 @@ export class AnalysisRunner {
       console.error(`[AnalysisRunner] Failed for review ${reviewId}:`, err);
       // 回退复盘状态为 INPUTTING，允许用户重新提交
       try {
-        await prisma.dailyReview.update({
-          where: { id: reviewId },
-          data: { status: "INPUTTING" },
-        });
+        const daily = await prisma.dailyReview.findUnique({ where: { id: reviewId } });
+        if (daily) {
+          await prisma.dailyReview.update({ where: { id: reviewId }, data: { status: "INPUTTING" } });
+        } else {
+          const weekly = await prisma.weeklyReview.findUnique({ where: { id: reviewId } });
+          if (weekly) {
+            await prisma.weeklyReview.update({ where: { id: reviewId }, data: { status: "INPUTTING" } });
+          } else {
+            await prisma.monthlyReview.update({ where: { id: reviewId }, data: { status: "INPUTTING" } });
+          }
+        }
       } catch (dbErr) {
         console.error(`[AnalysisRunner] Failed to revert review status for ${reviewId}:`, dbErr);
       }
@@ -64,15 +79,19 @@ export class AnalysisRunner {
   }
 
   private async runInternal(reviewId: string): Promise<void> {
-    // 1. 获取复盘
-    const review = await prisma.dailyReview.findUnique({ where: { id: reviewId } });
+    // 1. 判断复盘类型（日 / 周 / 月）
+    const [daily, weekly, monthly] = await Promise.all([
+      prisma.dailyReview.findUnique({ where: { id: reviewId } }),
+      prisma.weeklyReview.findUnique({ where: { id: reviewId } }),
+      prisma.monthlyReview.findUnique({ where: { id: reviewId } }),
+    ]);
+    const review = daily || weekly || monthly;
     if (!review) throw new Error(`Review ${reviewId} not found`);
     const userId = review.userId;
+    const reviewType = daily ? "DAILY" : weekly ? "WEEKLY" : "MONTHLY";
+    const rv = review as DailyReview & WeeklyReview & MonthlyReview;
 
-    // 2. 获取上下文（用户画像 + 复盘上下文）
-    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-
-    // 动态加载用户画像（替代硬编码 USER_PROFILE）
+    // 2. 用户画像 + LifeArchive summary
     const [user, archive] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId } }),
       prisma.lifeArchive.findUnique({ where: { userId } }),
@@ -102,31 +121,37 @@ export class AnalysisRunner {
       ? profileParts.join('\n')
       : '暂无用户画像数据';
 
-    const [plansRes, patternsRes, biasesRes, capsRes] = await Promise.all([
-      prisma.dailyPlan.findMany({ where: { userId, date: review.date } }).catch(() => []),
+    // 3. 通用上下文（行为模式 / 认知偏误 / 能力基线）
+    const [patternsRes, biasesRes, capsRes] = await Promise.all([
       prisma.behaviorPattern.findMany({ where: { userId, active: true } }).catch(() => []),
       prisma.cognitiveBiasLog.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 }).catch(() => []),
       prisma.capabilityScore.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 5 }).catch(() => []),
     ]);
-
-    const recentReviews = await prisma.dailyReview.findMany({
-      where: { userId, date: { gte: new Date(weekAgo) } },
-      orderBy: { date: "desc" },
-      take: 5,
-    }).catch(() => []);
-
-    const plansText = plansRes.map(p => `• ${p.title} (${p.status})`).join('\n') || '暂无';
     const patternsText = patternsRes.map(p => `• ${p.pattern} (${p.frequency}次)`).join('\n') || '暂无';
     const biasesText = biasesRes.map(b => `• ${b.biasType}: ${b.triggerPhrase}`).join('\n') || '暂无';
     const capsText = capsRes.map(c => `• ${c.dimension}: ${c.score}`).join('\n') || '暂无';
-    const recentText = recentReviews.slice(0, 5).map(r =>
-      `${r.date.toISOString().slice(5, 10)}: ${(r.rawInput || '').slice(0, 60)}`
-    ).join('\n') || '暂无';
 
-    // 3. 构建 prompt
-    const userPrompt = `你是一个复盘分析师。根据用户的今日复盘输入，生成结构化分析报告。
+    let prompt: string;
+    let analysisRef: ReviewRef;
 
-用户输入: ${review.rawInput}
+    if (reviewType === "DAILY") {
+      const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+      const [plansRes, recentReviews] = await Promise.all([
+        prisma.dailyPlan.findMany({ where: { userId, date: rv.date } }).catch(() => []),
+        prisma.dailyReview.findMany({
+          where: { userId, date: { gte: new Date(weekAgo) } },
+          orderBy: { date: "desc" },
+          take: 5,
+        }).catch(() => []),
+      ]);
+      const plansText = plansRes.map(p => `• ${p.title} (${p.status})`).join('\n') || '暂无';
+      const recentText = recentReviews.slice(0, 5).map(r =>
+        `${r.date.toISOString().slice(5, 10)}: ${(r.rawInput || '').slice(0, 60)}`
+      ).join('\n') || '暂无';
+
+      prompt = `你是一个复盘分析师。根据用户的今日复盘输入，生成结构化分析报告。
+
+用户输入: ${rv.rawInput}
 
 上下文:
 - 今日计划:
@@ -149,9 +174,84 @@ ${JSON_SCHEMA}
 
 只输出JSON，不要其他内容。
 输出以 __JSON_START__ 开头，__JSON_END__ 结尾。`;
+      analysisRef = { dailyReviewId: reviewId };
+    } else {
+      // ——— WEEKLY / MONTHLY：聚合周期数据 ———
+      const isWeekly = reviewType === "WEEKLY";
+      const start = isWeekly ? rv.weekStart : new Date(rv.year, rv.month - 1, 1);
+      const end = isWeekly ? rv.weekEnd : new Date(rv.year, rv.month, 0);
+
+      const periodReviews = await prisma.dailyReview.findMany({
+        where: { userId, date: { gte: start, lte: end } },
+        orderBy: { date: "asc" },
+      }).catch(() => []);
+      // Guard：周期内无日复盘 → 拒绝生成，明确错误
+      if (periodReviews.length === 0) {
+        throw new Error("该周期内无日复盘数据，无法生成分析");
+      }
+
+      const plans = isWeekly
+        ? await prisma.dailyPlan.findMany({ where: { userId, date: { gte: start, lte: end } } }).catch(() => [])
+        : await prisma.monthlyPlan.findMany({ where: { userId, year: rv.year, month: rv.month } }).catch(() => []);
+
+      const dailyReviewsText = periodReviews.map(r =>
+        `${r.date.toISOString().slice(5, 10)}: ${(r.rawInput || '').slice(0, 80)}`
+      ).join('\n') || '暂无';
+
+      const goalProgressText = plans.map(p => `• ${p.title} (${(p as any).status ?? ''})`).join('\n') || '暂无';
+
+      const periodDescription = isWeekly
+        ? `${rv.year}年第${rv.week}周`
+        : `${rv.year}年${rv.month}月`;
+
+      const cycleCtx: CycleReviewContext = {
+        cycleType: reviewType,
+        periodDescription,
+        dailyReviews: dailyReviewsText,
+        missingDays: '暂无',
+        userProfile: userProfileText,
+        goalProgress: goalProgressText,
+      };
+      const cycleGuidance = buildCycleReviewPrompt(cycleCtx);
+
+      prompt = `你是一个周期复盘分析师。根据周期内的每日复盘数据，生成结构化分析报告（与日复盘分析一致的 12 维度 JSON）。
+
+周期: ${periodDescription}
+
+周期内每日复盘:
+${dailyReviewsText}
+
+目标进度:
+${goalProgressText}
+
+行为模式:
+${patternsText}
+
+认知偏误:
+${biasesText}
+
+能力评分:
+${capsText}
+
+用户画像: ${userProfileText}
+
+周期分析指引:
+${cycleGuidance}
+
+要求输出JSON，schema如下:
+
+${ANALYSIS_REQUIREMENTS.trim()}
+
+${JSON_SCHEMA}
+
+只输出JSON，不要其他内容。
+输出以 __JSON_START__ 开头，__JSON_END__ 结尾。`;
+
+      analysisRef = isWeekly ? { weeklyReviewId: reviewId } : { monthlyReviewId: reviewId };
+    }
 
     // 4. 调 claude CLI
-    const analysisText = await this.callClaude(userPrompt);
+    const analysisText = await this.callClaude(prompt);
 
     // 5. 解析 JSON（优先通过 __JSON__ 标记提取，fallback 到最外层大括号）
     let jsonStr: string;
@@ -159,7 +259,6 @@ ${JSON_SCHEMA}
     if (markerMatch) {
       jsonStr = markerMatch[1].trim();
     } else {
-      // Fallback: 取最外层大括号内容
       const firstBrace = analysisText.indexOf('{');
       const lastBrace = analysisText.lastIndexOf('}');
       if (firstBrace === -1 || lastBrace <= firstBrace) {
@@ -174,11 +273,11 @@ ${JSON_SCHEMA}
     const biasDetection = new BiasDetectionService();
     const capabilityService = new CapabilityService();
 
-    const analysis = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       return tx.aIAnalysis.create({
         data: {
-          dailyReviewId: review.id,
-          analysisType: "DAILY",
+          ...analysisRef,
+          analysisType: reviewType,
           structuredReport: report,
           narrativeReport: null,
         },
@@ -190,7 +289,7 @@ ${JSON_SCHEMA}
       patternService.trackIssuesFromAnalysis(userId, report).catch((e) => {
         console.error(`[AnalysisRunner] Pattern tracking failed:`, e);
       }),
-      biasDetection.logFromAnalysis(userId, review.id, report).catch((e) => {
+      biasDetection.logFromAnalysis(userId, reviewId, report).catch((e) => {
         console.error(`[AnalysisRunner] Bias logging failed:`, e);
       }),
       capabilityService.logFromAnalysis(userId, report.capabilityDeltas || []).catch((e) => {

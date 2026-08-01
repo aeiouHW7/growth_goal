@@ -32,15 +32,15 @@
 **目标**：周/月复盘可生成 AI 分析（聚合周期日复盘 + 计划进度 + summary），前端报告面板不再降级。
 
 **后端**：
-- [ ] `analysis-runner.service.ts`：`run(reviewId)` 按复盘类型分流 DAILY/WEEKLY/MONTHLY
-- [ ] 新增 WEEKLY/MONTHLY 聚合逻辑：周期内 `DailyReview` + `DailyPlan` 进度 + `LifeArchive.summary`
-- [ ] `weekly-review.prompt.ts` 转活：接 `buildWeeklyReviewPrompt(cycleType)` 到 runner
-- [ ] Guard：周期内日复盘 <1 返回明确错误
-- [ ] 单测：正常聚合 / 无日复盘拒绝 / 输出 12 维度结构
+- [x] `analysis-runner.service.ts`：`run(reviewId)` 按复盘类型分流 DAILY/WEEKLY/MONTHLY
+- [x] 新增 WEEKLY/MONTHLY 聚合逻辑：周期内 `DailyReview` + `DailyPlan` 进度 + `LifeArchive.summary`
+- [x] `weekly-review.prompt.ts` 转活：接 `buildWeeklyReviewPrompt(cycleType)` 到 runner
+- [x] Guard：周期内日复盘 <1 返回明确错误
+- [x] 单测：正常聚合 / 无日复盘拒绝 / 输出 12 维度结构
 
 **前端**：
-- [ ] `PlansPage` 周/月视图报告面板读取 `aiAnalyses[0].structuredReport`（已有读取逻辑，验证不再降级）
-- [ ] 无分析时显示"暂无可分析数据"空态（替换硬降级）
+- [x] `PlansPage` 周/月视图报告面板读取 `aiAnalyses[0].structuredReport`（已有读取逻辑，验证不再降级）
+- [x] 无分析时显示"暂无可分析数据"空态（替换硬降级）
 
 **验证**：创建周复盘 → 触发分析 → 周视图报告面板显示聚合分析；空周期显示空态。
 

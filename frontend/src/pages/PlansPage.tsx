@@ -7,7 +7,6 @@ import { WeekTimeline } from '../components/WeekTimeline';
 import { DayTimeline } from '../components/DayTimeline';
 import { PlanPanel } from '../components/PlanPanel';
 import { EvalPanel } from '../components/EvalPanel';
-import { ReportPanel } from '../components/ReportPanel';
 import { StructuredReportPanel } from '../components/StructuredReportPanel';
 import { api } from '../api';
 import type { MonthlyPlan, MonthlyReviewData, DailyPlan, YearlyGoal } from '../api';
@@ -88,6 +87,7 @@ export function PlansPage() {
   const [monthlyReview, setMonthlyReview] = useState<MonthlyReviewData | null>(undefined);
   const [dailyPlans, setDailyPlans] = useState<DailyPlan[]>([]);
   const [dailyReview, setDailyReview] = useState<any>(null);
+  const [weeklyReview, setWeeklyReview] = useState<any>(null);
   // 月视图降级：当月最新日复盘的分析报告
   const [latestMonthAnalysis, setLatestMonthAnalysis] = useState<any>(undefined);
 
@@ -136,7 +136,9 @@ export function PlansPage() {
       setDailyReview(null);
       return;
     }
-    const { start, end } = getWeekDateRangeForMonth(year, month);
+    const { start, end, weekNum } = getWeekDateRangeForMonth(year, month);
+    // 周视图：加载周复盘分析（VS2：B1 生成的周期分析）
+    api.getWeeklyReview(year, weekNum).then(setWeeklyReview).catch(() => setWeeklyReview(null));
     const days: string[] = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(start);
@@ -252,10 +254,19 @@ export function PlansPage() {
         );
       case 'report': {
         const dailyAnalysis = dailyReview?.aiAnalyses?.[0]?.structuredReport;
+        const weekAnalysis = dimension === 'week' ? weeklyReview?.aiAnalyses?.[0]?.structuredReport : null;
         const monthAnalysis = dimension === 'month' ? latestMonthAnalysis : null;
         const monthlyRevAnalysis = monthlyReview?.aiAnalyses?.[0]?.structuredReport;
-        const report = dailyAnalysis || monthAnalysis || monthlyRevAnalysis;
-        return report ? <StructuredReportPanel report={report} /> : <ReportPanel sections={[]} />;
+        const report = dailyAnalysis || weekAnalysis || monthAnalysis || monthlyRevAnalysis;
+        return report ? (
+          <StructuredReportPanel report={report} />
+        ) : (
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-dim)' }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>📊</div>
+            <div style={{ fontSize: 14 }}>暂无可分析数据</div>
+            <div style={{ fontSize: 12, marginTop: 4 }}>完成复盘并生成分析后可在这里查看</div>
+          </div>
+        );
       }
     }
   };
