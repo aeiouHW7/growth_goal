@@ -8,6 +8,7 @@
 - [Prompt System](prompt-system.md) — Prompts 架构、分析框架、偏误检测
 - [Deployment](deployment.md) — 独立实例部署指南（多用户支持）
 - [File Structure](file-structure.md) — 完整项目文件树与说明
+- [AI 分析增强](ai-analysis-enhancement.md) — 周/月分析、summary 注入、反馈闭环、反思注入、前端原型对齐
 
 ## 复盘记录
 
