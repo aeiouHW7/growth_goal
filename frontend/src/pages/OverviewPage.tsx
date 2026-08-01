@@ -70,7 +70,7 @@ export function OverviewPage({ onGoArchive }: { onGoArchive?: () => void }) {
       const map: Record<string, DailyPlan[]> = {};
       results.forEach(r => { map[r.dateStr] = r.plans; });
       setWeeklyPlans(map);
-    });
+    }).catch(() => setWeeklyPlans({}));
   };
 
   useEffect(() => {

@@ -126,8 +126,22 @@ export class AnalysisRunner {
       prisma.behaviorPattern.findMany({ where: { userId, active: true } }).catch(() => []),
       prisma.cognitiveBiasLog.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 }).catch(() => []),
       prisma.capabilityScore.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 5 }).catch(() => []),
-      // 用户低分反馈反思（仅复盘分析注入，空集不注入）
-      prisma.aIReflection.findMany({ orderBy: { createdAt: "desc" }, take: 5 }).catch(() => []),
+      // 用户低分反馈反思（仅本用户，跨复盘类型；空集不注入）
+      prisma.aIReflection.findMany({
+        where: {
+          feedback: {
+            aiAnalysis: {
+              OR: [
+                { dailyReview: { userId } },
+                { weeklyReview: { userId } },
+                { monthlyReview: { userId } },
+              ],
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }).catch(() => []),
     ]);
     const patternsText = patternsRes.map(p => `• ${p.pattern} (${p.frequency}次)`).join('\n') || '暂无';
     const biasesText = biasesRes.map(b => `• ${b.biasType}: ${b.triggerPhrase}`).join('\n') || '暂无';
@@ -203,7 +217,7 @@ ${JSON_SCHEMA}
         `${r.date.toISOString().slice(5, 10)}: ${(r.rawInput || '').slice(0, 80)}`
       ).join('\n') || '暂无';
 
-      const goalProgressText = plans.map(p => `• ${p.title} (${(p as any).status ?? ''})`).join('\n') || '暂无';
+      const goalProgressText = plans.map(p => `• ${p.title} (${p.status ?? ''})`).join('\n') || '暂无';
 
       const periodDescription = isWeekly
         ? `${rv.year}年第${rv.week}周`
