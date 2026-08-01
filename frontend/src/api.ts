@@ -234,4 +234,7 @@ export const api = {
   confirmYearly: (goals: SuggestedGoal[]) => post<YearlyGoal[]>('/goals/ai-suggest/yearly/confirm', { goals }),
   suggestMonthly: (yearlyGoalId: string) => post<MonthlySuggestResult>('/plans/ai-suggest/monthly', { yearlyGoalId }),
   confirmMonthly: (plans: SuggestedPlan[]) => post<MonthlyPlan[]>('/plans/ai-suggest/monthly/confirm', { plans }),
+  // AI 分析反馈（反馈闭环）
+  submitFeedback: (analysisId: string, data: { userScore: number; excellentReason?: string; failReason?: string }) =>
+    post<AIAnalysisFeedback>(`/analysis/${analysisId}/feedback`, data),
 };

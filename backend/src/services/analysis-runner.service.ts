@@ -122,14 +122,19 @@ export class AnalysisRunner {
       : '暂无用户画像数据';
 
     // 3. 通用上下文（行为模式 / 认知偏误 / 能力基线）
-    const [patternsRes, biasesRes, capsRes] = await Promise.all([
+    const [patternsRes, biasesRes, capsRes, reflectionsRes] = await Promise.all([
       prisma.behaviorPattern.findMany({ where: { userId, active: true } }).catch(() => []),
       prisma.cognitiveBiasLog.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 }).catch(() => []),
       prisma.capabilityScore.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 5 }).catch(() => []),
+      // 用户低分反馈反思（仅复盘分析注入，空集不注入）
+      prisma.aIReflection.findMany({ orderBy: { createdAt: "desc" }, take: 5 }).catch(() => []),
     ]);
     const patternsText = patternsRes.map(p => `• ${p.pattern} (${p.frequency}次)`).join('\n') || '暂无';
     const biasesText = biasesRes.map(b => `• ${b.biasType}: ${b.triggerPhrase}`).join('\n') || '暂无';
     const capsText = capsRes.map(c => `• ${c.dimension}: ${c.score}`).join('\n') || '暂无';
+    const reflectionBlock = reflectionsRes.length > 0
+      ? `\n用户近期反馈（低分反思，分析时参考并避免）：\n${reflectionsRes.map(r => `- ${r.issueDescription}`).join('\n')}`
+      : '';
 
     let prompt: string;
     let analysisRef: ReviewRef;
@@ -164,7 +169,7 @@ ${patternsText}
 ${biasesText}
 - 能力评分:
 ${capsText}
-- 用户画像: ${userProfileText}
+- 用户画像: ${userProfileText}${reflectionBlock}
 
 要求输出JSON，schema如下:
 
@@ -233,7 +238,7 @@ ${biasesText}
 能力评分:
 ${capsText}
 
-用户画像: ${userProfileText}
+用户画像: ${userProfileText}${reflectionBlock}
 
 周期分析指引:
 ${cycleGuidance}

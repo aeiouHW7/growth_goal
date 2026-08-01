@@ -258,8 +258,9 @@ export function PlansPage() {
         const monthAnalysis = dimension === 'month' ? latestMonthAnalysis : null;
         const monthlyRevAnalysis = monthlyReview?.aiAnalyses?.[0]?.structuredReport;
         const report = dailyAnalysis || weekAnalysis || monthAnalysis || monthlyRevAnalysis;
+        const reportAnalysisId = dailyReview?.aiAnalyses?.[0]?.id ?? weeklyReview?.aiAnalyses?.[0]?.id ?? monthlyReview?.aiAnalyses?.[0]?.id;
         return report ? (
-          <StructuredReportPanel report={report} />
+          <StructuredReportPanel report={report} analysisId={reportAnalysisId} />
         ) : (
           <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-dim)' }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>📊</div>

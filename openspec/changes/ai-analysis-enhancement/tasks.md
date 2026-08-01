@@ -51,14 +51,14 @@
 **目标**：报告面板底部评分 UI + 低分反思注入复盘分析。
 
 **后端**：
-- [ ] `analysis-runner.service.ts`：上下文组装处加载最近 5 条 `AIReflection`（仅复盘分析）
-- [ ] Prompt 追加「用户近期反馈」段（空集不注入）
-- [ ] 单测：有/无反思两态
+- [x] `analysis-runner.service.ts`：上下文组装处加载最近 5 条 `AIReflection`（仅复盘分析）
+- [x] Prompt 追加「用户近期反馈」段（空集不注入）
+- [x] 单测：有/无反思两态
 
 **前端**：
-- [ ] `api.ts`：`submitFeedback(analysisId, ...)`
-- [ ] `components/FeedbackPanel.tsx`：滑条+数字、亮点/不足、提交后已评分禁用态、分数语义
-- [ ] 挂到 `StructuredReportPanel` 底部
+- [x] `api.ts`：`submitFeedback(analysisId, ...)`
+- [x] `components/FeedbackPanel.tsx`：滑条+数字、亮点/不足、提交后已评分禁用态、分数语义
+- [x] 挂到 `StructuredReportPanel` 底部
 - [ ] 视觉回归：提交前/已评分两态
 
 **验证**：看分析报告 → 评分 + 填不足 → 提交 → 按钮禁用；下次日复盘分析触发，Prompt 含反思（后端日志）。

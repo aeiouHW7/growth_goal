@@ -29,6 +29,7 @@ jest.mock("../prisma", () => ({
     dailyPlan: { findMany: jest.fn() },
     monthlyPlan: { findMany: jest.fn() },
     aIAnalysis: { create: jest.fn() },
+    aIReflection: { findMany: jest.fn() },
     $transaction: jest.fn(),
   },
 }));
@@ -62,6 +63,7 @@ beforeEach(() => {
   (prisma.behaviorPattern.findMany as jest.Mock).mockResolvedValue([]);
   (prisma.cognitiveBiasLog.findMany as jest.Mock).mockResolvedValue([]);
   (prisma.capabilityScore.findMany as jest.Mock).mockResolvedValue([]);
+  (prisma.aIReflection.findMany as jest.Mock).mockResolvedValue([]);
 });
 
 describe("AnalysisRunner — 周复盘分析", () => {
@@ -132,5 +134,44 @@ describe("AnalysisRunner — 月复盘分析", () => {
     const data = createCalls[0].data;
     expect(data.analysisType).toBe("MONTHLY");
     expect(data.monthlyReviewId).toBe("m1");
+  });
+});
+
+describe("AnalysisRunner — 反思注入（VS3）", () => {
+  beforeEach(() => {
+    (prisma.dailyReview.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.weeklyReview.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.monthlyReview.findUnique as jest.Mock).mockResolvedValue({
+      id: "m1", userId: "u1", month: 6, year: 2026, status: "ANALYZING", rawInput: null, summary: null,
+    });
+    (prisma.dailyReview.findMany as jest.Mock).mockResolvedValue([
+      { id: "d1", userId: "u1", date: new Date("2026-06-01"), rawInput: "月初复盘" },
+    ]);
+    (prisma.monthlyPlan.findMany as jest.Mock).mockResolvedValue([]);
+  });
+
+  function getPrompt(): string {
+    const { spawn } = jest.requireMock("child_process") as { spawn: jest.Mock };
+    return spawn.mock.results[0].value.stdin.write.mock.calls[0][0];
+  }
+
+  it("有低分反思时注入「用户近期反馈」段", async () => {
+    (prisma.aIReflection.findMany as jest.Mock).mockResolvedValue([
+      { issueDescription: "复盘模板太死板，希望更具体" },
+    ]);
+    const runner = new AnalysisRunner();
+    await runner.run("m1");
+
+    const prompt = getPrompt();
+    expect(prompt).toContain("用户近期反馈");
+    expect(prompt).toContain("复盘模板太死板，希望更具体");
+  });
+
+  it("无反思时不注入反馈段（不报错）", async () => {
+    (prisma.aIReflection.findMany as jest.Mock).mockResolvedValue([]);
+    const runner = new AnalysisRunner();
+    await runner.run("m1");
+
+    expect(getPrompt()).not.toContain("用户近期反馈");
   });
 });

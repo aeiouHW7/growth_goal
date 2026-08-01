@@ -1,3 +1,5 @@
+import { FeedbackPanel } from './FeedbackPanel';
+
 interface StructuredReport {
   completionSummary?: { completed?: string[]; notCompleted?: string[]; completionRate?: string };
   deviationAnalysis?: { onTrack?: string[]; behind?: string[]; riskLevel?: string };
@@ -15,6 +17,7 @@ interface StructuredReport {
 
 interface Props {
   report: StructuredReport;
+  analysisId?: string;
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -50,7 +53,7 @@ function Badge({ text, color }: { text: string; color: string }) {
   );
 }
 
-export function StructuredReportPanel({ report }: Props) {
+export function StructuredReportPanel({ report, analysisId }: Props) {
   const sections: React.ReactNode[] = [];
 
   // === Insights ===
@@ -284,5 +287,10 @@ export function StructuredReportPanel({ report }: Props) {
     );
   }
 
-  return <div>{sections}</div>;
+  return (
+    <div>
+      {sections}
+      {analysisId && <FeedbackPanel analysisId={analysisId} />}
+    </div>
+  );
 }
