@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
+import { api, ARCHIVE_API } from '../api';
 import type { LifeGoal, YearlyGoal, MonthlyPlan, Suggestion, DailyPlan } from '../api';
 import { Card } from '../components/Card';
 import { UserPopover } from '../components/UserPopover';
@@ -27,7 +27,7 @@ function getWeekDates(): string[] {
 
 const weekdayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
-export function OverviewPage() {
+export function OverviewPage({ onGoArchive }: { onGoArchive?: () => void }) {
   const [lifeGoals, setLifeGoals] = useState<LifeGoal[] | null>(undefined);
   const [yearlyGoals, setYearlyGoals] = useState<YearlyGoal[] | null>(undefined);
   const [monthlyPlans, setMonthlyPlans] = useState<MonthlyPlan[] | null>(undefined);
@@ -36,6 +36,8 @@ export function OverviewPage() {
   const [error, setError] = useState(false);
   const [noUser, setNoUser] = useState(false);
   const [showSuggest, setShowSuggest] = useState(false);
+  const [summaryState, setSummaryState] = useState<'loading' | 'empty' | 'generating' | 'ready'>('loading');
+  const [summaryText, setSummaryText] = useState('');
 
   const load = () => {
     setError(false);
@@ -72,6 +74,33 @@ export function OverviewPage() {
   };
 
   useEffect(load, []);
+
+  // LifeArchive 摘要卡片三态加载（VS5）
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const arc = await ARCHIVE_API.get();
+        if (cancelled) return;
+        if (!arc) setSummaryState('empty');
+        else if (arc.summary) { setSummaryText(arc.summary); setSummaryState('ready'); }
+        else setSummaryState('generating');
+      } catch {
+        if (!cancelled) setSummaryState('empty');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  async function refreshSummary() {
+    try {
+      const s = await ARCHIVE_API.refreshSummary();
+      setSummaryText(s?.summary || '');
+      setSummaryState(s?.summary ? 'ready' : 'generating');
+    } catch {
+      setSummaryState('generating');
+    }
+  }
 
   if (lifeGoals === undefined) return <LoadingState />;
 
@@ -123,6 +152,39 @@ export function OverviewPage() {
           <UserPopover />
         </div>
       </div>
+
+      {/* LifeArchive 摘要卡片（VS5） */}
+      <Card title="🤖 AI 对你了解" action={summaryState === 'ready' && (
+        <span onClick={onGoArchive} style={{ fontSize: 12, color: 'var(--accent)', cursor: onGoArchive ? 'pointer' : 'default' }}>编辑档案 →</span>
+      )}>
+        {summaryState === 'loading' && (
+          <div>
+            <div style={{ height: 12, borderRadius: 4, background: 'var(--bg)', marginBottom: 6 }} />
+            <div style={{ height: 12, borderRadius: 4, background: 'var(--bg)', width: '70%' }} />
+          </div>
+        )}
+        {summaryState === 'ready' && (
+          <div style={{ fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{summaryText}</div>
+        )}
+        {summaryState === 'generating' && (
+          <div style={{ fontSize: 13, color: 'var(--text-dim)' }}>
+            <div style={{ height: 12, borderRadius: 4, background: 'var(--bg)', marginBottom: 6 }} />
+            <div style={{ height: 12, borderRadius: 4, background: 'var(--bg)', width: '60%' }} />
+            <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span>摘要生成中…</span>
+              <button onClick={refreshSummary} style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}>刷新</button>
+            </div>
+          </div>
+        )}
+        {summaryState === 'empty' && (
+          <div style={{ textAlign: 'center', padding: '12px 0' }}>
+            <div style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 8 }}>AI 还无法了解你，填写人生档案后生成专属画像</div>
+            <button onClick={onGoArchive} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#fff', cursor: onGoArchive ? 'pointer' : 'default' }}>
+              填写档案 →
+            </button>
+          </div>
+        )}
+      </Card>
 
       {/* Life Goal */}
       <Card title="人生总目标" action={<span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 400 }}>10-20年</span>}>

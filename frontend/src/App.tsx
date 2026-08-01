@@ -37,7 +37,7 @@ function App() {
       </nav>
 
       <main className="main-content">
-        {page === 'overview' && <OverviewPage />}
+        {page === 'overview' && <OverviewPage onGoArchive={() => setPage('archive')} />}
         {page === 'goals' && <GoalsPage />}
         {page === 'plans' && <PlansPage />}
         {page === 'archive' && <ArchivePage />}

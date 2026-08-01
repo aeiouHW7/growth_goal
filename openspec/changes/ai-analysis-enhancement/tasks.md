@@ -84,9 +84,9 @@
 **目标**：总览页顶部摘要卡片三态。
 
 **前端**（后端 `GET/POST /life-archive/summary*` 已就绪）：
-- [ ] `OverviewPage` 顶部 `SummaryCard`：有摘要展示 +「编辑档案 →」
-- [ ] 档案空 CTA 跳档案 Tab
-- [ ] summary 缺失：骨架 + 刷新按钮（调 refreshSummary）
+- [x] `OverviewPage` 顶部 `SummaryCard`：有摘要展示 +「编辑档案 →」
+- [x] 档案空 CTA 跳档案 Tab
+- [x] summary 缺失：骨架 + 刷新按钮（调 refreshSummary）
 - [ ] 视觉回归：三态
 
 **验证**：总览页显示摘要卡片；档案空显示 CTA；摘要缺失显示生成中+可刷新。
