@@ -3,6 +3,7 @@ import { OverviewPage } from './pages/OverviewPage';
 import { GoalsPage } from './pages/GoalsPage';
 import { PlansPage } from './pages/PlansPage';
 import { ArchivePage } from './pages/ArchivePage';
+import { ToastContainer } from './components/Toast';
 import './styles/theme.css';
 import './styles/app.css';
 import './styles/archive.css';
@@ -42,6 +43,7 @@ function App() {
         {page === 'plans' && <PlansPage />}
         {page === 'archive' && <ArchivePage />}
       </main>
+      <ToastContainer />
     </div>
   );
 }

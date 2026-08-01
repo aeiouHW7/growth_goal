@@ -33,8 +33,12 @@ export function EmptyState({ title = '还没有设定目标', message, action }:
 
 export function LoadingState({ message = '加载中...' }: { message?: string }) {
   return (
-    <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-dim)', fontSize: 14 }}>
-      {message}
+    <div style={{ padding: '20px 0' }}>
+      <div className="skeleton" style={{ height: 16, borderRadius: 6, marginBottom: 12, width: '60%' }} />
+      <div className="skeleton" style={{ height: 12, borderRadius: 6, marginBottom: 8 }} />
+      <div className="skeleton" style={{ height: 12, borderRadius: 6, marginBottom: 8, width: '80%' }} />
+      <div className="skeleton" style={{ height: 12, borderRadius: 6, width: '70%' }} />
+      <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, marginTop: 12 }}>{message}</div>
     </div>
   );
 }

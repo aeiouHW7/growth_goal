@@ -1,30 +1,60 @@
 :root {
-  /* Colors - Apple Design System */
+  /* 基础背景（indigo 主题，对齐原型） */
   --bg: #f5f5f7;
   --bg-card: #ffffff;
   --bg-hover: #f9fafb;
-  --bg-accent: #e8f0fe;
+  --bg-accent: #eef2ff;
+  --accent-bg: #eef2ff;
 
+  /* 文字 */
   --text: #1d1d1f;
   --text-dim: #6e6e73;
   --text-muted: #aeaeb2;
+  --text2: #6e6e73;
+  --text3: #aeaeb2;
 
+  /* 边框 */
   --border: #d2d2d7;
+  --sep: #d2d2d7;
+  --sep-soft: #e8e8ed;
 
-  --accent: #0071e3;
-  --accent-hover: #0060c9;
+  /* 强调色（indigo） */
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
 
-  --success: #30d158;
-  --warning: #ffd60a;
-  --orange: #ff9f0a;
-  --error: #ff453a;
+  /* 语义色（带配套 bg/text，对齐原型） */
+  --success: #22c55e;
+  --success-bg: #dcfce7;
+  --success-text: #166534;
+  --green: #22c55e;
+  --green-bg: #dcfce7;
+  --green-text: #166534;
+  --warning: #eab308;
+  --warning-bg: #fef9c3;
+  --warning-text: #854d0e;
+  --yellow: #eab308;
+  --yellow-bg: #fef9c3;
+  --yellow-text: #854d0e;
+  --error: #ef4444;
+  --error-bg: #fee2e2;
+  --error-text: #b91c1c;
+  --red: #ef4444;
+  --red-bg: #fee2e2;
+  --red-text: #b91c1c;
+  --orange: #f59e0b;
   --grayed: #aeaeb2;
 
-  --radius: 12px;
-  --radius-lg: 16px;
-  --radius-sm: 8px;
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.2);
 
-  /* Font */
+  /* 圆角 */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+
+  /* 字体 */
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
   --font-mono: "SF Mono", "Menlo", monospace;
 }
