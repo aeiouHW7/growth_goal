@@ -48,59 +48,58 @@
   color: var(--accent);
 }
 
-/* ─── Calendar Grid ─── */
+/* ─── Calendar Grid（对齐原型） ─── */
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 4px;
 }
 
 .cal-header {
-  text-align: center;
   font-size: 11px;
-  color: var(--text-dim);
-  padding: 4px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 4px 0;
 }
 
 .cal-cell {
-  border: 1px solid var(--border);
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   border-radius: 6px;
-  padding: 6px;
-  min-height: 50px;
   font-size: 12px;
-  transition: all 0.15s;
-}
-.cal-cell.clickable {
   cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: background 0.15s;
+  padding: 0;
 }
-.cal-cell.clickable:hover {
-  border-color: var(--accent);
-  background: #f0f7ff;
-}
+.cal-cell:hover { background: var(--bg-hover); }
+.cal-cell.today { border: 2px solid var(--accent); }
+.cal-cell.selected { background: var(--accent-bg); font-weight: 600; color: var(--accent); }
+.cal-cell.other-month { opacity: 0.35; }
 
-.cal-cell .day-num {
-  font-weight: 500;
-  margin-bottom: 2px;
-}
+.cal-cell .day-num { font-weight: 500; }
+.cal-cell.other-month .day-num { color: var(--text-muted); }
 
-.cal-cell.other-month .day-num {
-  color: var(--text-muted);
+.cal-cell .cal-dot {
+  width: 4px; height: 4px; border-radius: 50%; margin-top: 2px;
 }
-
-.cal-cell.has-data {
-  background: #f0fdf4;
-}
-
-.cal-cell.today {
-  border-color: var(--accent);
-  border-width: 2px;
-}
+.cal-dot.green { background: var(--green); }
+.cal-dot.yellow { background: var(--yellow); }
+.cal-dot.red { background: var(--red); }
+.cal-dot.gray { background: var(--grayed); }
 
 .cal-legend {
+  display: flex;
+  gap: 12px;
   font-size: 11px;
   color: var(--text-dim);
-  margin-top: 6px;
+  margin-top: 8px;
 }
+.cal-legend-item { display: flex; align-items: center; gap: 4px; }
 
 .cal-month-title {
   font-size: 14px;

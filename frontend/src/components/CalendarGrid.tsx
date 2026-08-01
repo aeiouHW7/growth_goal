@@ -8,6 +8,7 @@ interface Props {
   year: number;
   month: number;
   onDaySelect?: (dateStr: string) => void;
+  selectedDay?: string;
 }
 
 const weekdayLabels = ['一', '二', '三', '四', '五', '六', '日'];
@@ -23,7 +24,7 @@ function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
-export function CalendarGrid({ year, month, onDaySelect }: Props) {
+export function CalendarGrid({ year, month, onDaySelect, selectedDay }: Props) {
   const [data, setData] = useState<CalendarDay[] | null | undefined>(undefined);
   const [error, setError] = useState(false);
 
@@ -117,25 +118,23 @@ export function CalendarGrid({ year, month, onDaySelect }: Props) {
         ))}
         {cells.map((cell, i) => {
           const dotColor = getDotColor(cell.data);
-          const hasData = !!dotColor;
           return (
             <div
               key={i}
-              className={`cal-cell ${cell.isOther ? 'other-month' : ''} ${hasData ? 'has-data' : ''} ${cell.isToday ? 'today' : ''} ${!cell.isOther ? 'clickable' : ''}`}
+              className={`cal-cell ${cell.isOther ? 'other-month' : ''} ${cell.isToday ? 'today' : ''} ${!cell.isOther && selectedDay === `${year}-${String(month).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}` ? 'selected' : ''} ${!cell.isOther ? 'clickable' : ''}`}
               onClick={() => handleDayClick(cell)}
             >
               <div className="day-num">{cell.day}</div>
-              {dotColor && <span className={`goal-dot ${dotColor}`} />}
+              {dotColor && <span className={`cal-dot ${dotColor}`} />}
             </div>
           );
         })}
       </div>
 
       <div className="cal-legend">
-        <span className="goal-dot green" /> 优秀
-        <span className="goal-dot yellow" style={{ marginLeft: 8 }} /> 良好
-        <span className="goal-dot red" style={{ marginLeft: 8 }} /> 差
-        <span className="goal-dot gray" style={{ marginLeft: 8 }} /> 缺卡
+        <span className="cal-legend-item"><i className="cal-dot green" /> ≥80</span>
+        <span className="cal-legend-item"><i className="cal-dot yellow" /> 60-79</span>
+        <span className="cal-legend-item"><i className="cal-dot red" /> &lt;60</span>
       </div>
     </div>
   );

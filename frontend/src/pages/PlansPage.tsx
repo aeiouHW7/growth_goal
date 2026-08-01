@@ -221,10 +221,14 @@ export function PlansPage() {
       case 'year':
         return <YearGrid year={year} onMonthSelect={(m) => { setMonth(m); setDimension('month'); setSelectedDay(undefined); }} />;
       case 'month':
-        return <CalendarGrid year={year} month={month} onDaySelect={(dateStr) => {
-          const [y, m, d] = dateStr.split('-').map(Number);
-          setYear(y); setMonth(m); setSelectedDay(d); setDimension('day');
-        }} />;
+        return <CalendarGrid
+          year={year}
+          month={month}
+          selectedDay={selectedDay ? `${year}-${String(month).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}` : undefined}
+          onDaySelect={(dateStr) => {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            setYear(y); setMonth(m); setSelectedDay(d); setDimension('day');
+          }} />;
       case 'week':
         return <WeekTimeline year={year} month={month} />;
       case 'day':
