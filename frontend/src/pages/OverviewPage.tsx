@@ -4,6 +4,7 @@ import type { LifeGoal, YearlyGoal, MonthlyPlan, Suggestion, DailyPlan } from '.
 import { Card } from '../components/Card';
 import { UserPopover } from '../components/UserPopover';
 import { EmptyState, LoadingState, ErrorState } from '../components/EmptyState';
+import { AISuggestModal } from '../components/AISuggestModal';
 import '../styles/overview.css';
 
 const now = new Date();
@@ -34,6 +35,7 @@ export function OverviewPage() {
   const [weeklyPlans, setWeeklyPlans] = useState<Record<string, DailyPlan[]>>({});
   const [error, setError] = useState(false);
   const [noUser, setNoUser] = useState(false);
+  const [showSuggest, setShowSuggest] = useState(false);
 
   const load = () => {
     setError(false);
@@ -107,7 +109,19 @@ export function OverviewPage() {
   return (
     <div className="overview-page">
       <div className="overview-header">
-        <UserPopover />
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            onClick={() => setShowSuggest(true)}
+            style={{
+              padding: '6px 14px', borderRadius: 8, border: '1px solid var(--accent, #6366f1)',
+              background: 'var(--accent, #6366f1)', color: '#fff', cursor: 'pointer',
+              fontSize: 13, fontWeight: 600,
+            }}
+          >
+            🤖 AI 建议年度目标
+          </button>
+          <UserPopover />
+        </div>
       </div>
 
       {/* Life Goal */}
@@ -203,6 +217,14 @@ export function OverviewPage() {
           <div style={{ fontSize: 13, color: 'var(--text-dim)', padding: '8px 0' }}>暂无当月计划数据</div>
         )}
       </Card>
+
+      {showSuggest && (
+        <AISuggestModal
+          mode="yearly"
+          onClose={() => setShowSuggest(false)}
+          onConfirm={load}
+        />
+      )}
     </div>
   );
 }

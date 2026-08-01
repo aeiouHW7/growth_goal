@@ -121,6 +121,7 @@ export class PlanService {
         weekendHours: (resources?.weekendAvailableHours as number) ?? null,
       },
       energy: resources?.energy as MonthlyDecomposeContext["energy"],
+      summary: archive?.summary || undefined,
     };
 
     const prompt = buildMonthlyDecomposePrompt(ctx);

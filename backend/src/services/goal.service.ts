@@ -122,6 +122,7 @@ export class GoalService {
       behaviorPatterns: {
         failurePatterns: (behavior?.failurePatterns as GoalDecomposeContext["behaviorPatterns"]["failurePatterns"]) || [],
       },
+      summary: archive.summary || undefined,
     };
 
     const prompt = buildGoalDecomposePrompt(ctx);

@@ -182,6 +182,22 @@ export interface MonthlyReviewData {
   monthlyPlans?: MonthlyPlan[];
 }
 
+// ——— AI 目标/计划建议 ———
+export interface SuggestedGoal {
+  title: string; description?: string; year: number;
+  metricType: string; targetValue: string; startValue?: string;
+}
+export interface YearlySuggestResult {
+  goals: SuggestedGoal[]; reasoning?: string;
+}
+export interface SuggestedPlan {
+  month: number; title: string; description?: string; targetValue: string;
+  yearlyGoalId?: string; metricType?: string;
+}
+export interface MonthlySuggestResult {
+  plans: SuggestedPlan[];
+}
+
 export const ARCHIVE_API = {
   get: () => get<LifeArchive | null>('/life-archive'),
   updateLayerCore: (data: LayerCoreInput) => patch<LifeArchive>('/life-archive/layer-core', data),
@@ -213,4 +229,9 @@ export const api = {
   getWeeklyReviewCheck: (year: number, week: number) => get<WeeklyCheck>(`/reviews/weekly/check?year=${year}&week=${week}`),
   getWeeklyReview: (year: number, week: number) => get<Review>(`/reviews/weekly/${year}/${week}`),
   getMonthlyReview: (year: number, month: number) => get<MonthlyReviewData>(`/reviews/monthly/${year}/${month}`),
+  // AI 建议（生成 + 确认）
+  suggestYearly: () => post<YearlySuggestResult>('/goals/ai-suggest/yearly', {}),
+  confirmYearly: (goals: SuggestedGoal[]) => post<YearlyGoal[]>('/goals/ai-suggest/yearly/confirm', { goals }),
+  suggestMonthly: (yearlyGoalId: string) => post<MonthlySuggestResult>('/plans/ai-suggest/monthly', { yearlyGoalId }),
+  confirmMonthly: (plans: SuggestedPlan[]) => post<MonthlyPlan[]>('/plans/ai-suggest/monthly/confirm', { plans }),
 };

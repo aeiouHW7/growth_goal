@@ -32,10 +32,15 @@ export interface GoalDecomposeContext {
   behaviorPatterns: {
     failurePatterns?: Array<{ goalDescription: string; frequency: number }>;
   } | null;
+  /** LifeArchive 生成的浓缩画像摘要（可选） */
+  summary?: string;
 }
 
 export function buildGoalDecomposePrompt(ctx: GoalDecomposeContext): string {
   return `你是一个目标拆解教练。根据用户的人生档案，将愿景转化为可执行的年度目标。
+
+## 人生档案摘要
+${ctx.summary || "（无摘要）"}
 
 ## 用户愿景
 ${ctx.vision ? `
@@ -106,10 +111,15 @@ export interface MonthlyDecomposeContext {
     weekendHours: number | null;
   };
   energy: { energyDescription: string } | null;
+  /** LifeArchive 生成的浓缩画像摘要（可选） */
+  summary?: string;
 }
 
 export function buildMonthlyDecomposePrompt(ctx: MonthlyDecomposeContext): string {
   return `你是一个计划拆解教练。将年度目标拆解为月度计划。
+
+## 人生档案摘要
+${ctx.summary || "（无摘要）"}
 
 ## 年度目标
 标题: ${ctx.yearlyGoalTitle}

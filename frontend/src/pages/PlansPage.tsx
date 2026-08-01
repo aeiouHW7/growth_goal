@@ -10,7 +10,8 @@ import { EvalPanel } from '../components/EvalPanel';
 import { ReportPanel } from '../components/ReportPanel';
 import { StructuredReportPanel } from '../components/StructuredReportPanel';
 import { api } from '../api';
-import type { MonthlyPlan, MonthlyReviewData, DailyPlan } from '../api';
+import type { MonthlyPlan, MonthlyReviewData, DailyPlan, YearlyGoal } from '../api';
+import { AISuggestModal } from '../components/AISuggestModal';
 import '../styles/panels.css';
 
 type Dimension = 'year' | 'month' | 'week' | 'day';
@@ -78,6 +79,10 @@ export function PlansPage() {
     }).catch(() => setInitialized(true));
   }, [initialized]);
   const [activePanel, setActivePanel] = useState<Panel>('plan');
+  const [showSuggest, setShowSuggest] = useState(false);
+  const [suggestYearlyGoalId, setSuggestYearlyGoalId] = useState<string | undefined>(undefined);
+  const [yearlyGoals, setYearlyGoals] = useState<YearlyGoal[]>([]);
+  const [suggestHint, setSuggestHint] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | undefined>(undefined);
   const [monthlyPlans, setMonthlyPlans] = useState<MonthlyPlan[] | null>(undefined);
   const [monthlyReview, setMonthlyReview] = useState<MonthlyReviewData | null>(undefined);
@@ -85,6 +90,11 @@ export function PlansPage() {
   const [dailyReview, setDailyReview] = useState<any>(null);
   // 月视图降级：当月最新日复盘的分析报告
   const [latestMonthAnalysis, setLatestMonthAnalysis] = useState<any>(undefined);
+
+  // Load yearly goals for AI monthly suggestion
+  useEffect(() => {
+    api.getYearlyGoals(defaultYear).then(setYearlyGoals).catch(() => setYearlyGoals([]));
+  }, []);
 
   // Fetch monthly data
   useEffect(() => {
@@ -262,6 +272,28 @@ export function PlansPage() {
           onDimensionChange={(d) => { if (d !== 'day') setSelectedDay(undefined); setDimension(d); }}
         />
 
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+          <button
+            onClick={() => {
+              const active = yearlyGoals.filter(g => g.status === 'ACTIVE');
+              if (active.length === 0) { setSuggestHint('请先创建进行中的年度目标，再使用 AI 建议月度计划'); return; }
+              setSuggestHint(null);
+              setSuggestYearlyGoalId(active[0].id);
+              setShowSuggest(true);
+            }}
+            style={{
+              padding: '6px 14px', borderRadius: 8, border: '1px solid var(--accent, #6366f1)',
+              background: '#fff', color: 'var(--accent, #6366f1)', cursor: 'pointer',
+              fontSize: 13, fontWeight: 600,
+            }}
+          >
+            🤖 AI 建议月度计划
+          </button>
+        </div>
+        {suggestHint && (
+          <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--text-dim)', marginBottom: 12 }}>{suggestHint}</div>
+        )}
+
         <div className="plans-layout">
           <div className="plans-left">
             {renderLeftView()}
@@ -290,6 +322,17 @@ export function PlansPage() {
           </div>
         </div>
       </Card>
+
+      {showSuggest && (
+        <AISuggestModal
+          mode="monthly"
+          yearlyGoalId={suggestYearlyGoalId}
+          onClose={() => setShowSuggest(false)}
+          onConfirm={() => {
+            api.getMonthlyPlans(year, month).then(setMonthlyPlans).catch(() => setMonthlyPlans(null));
+          }}
+        />
+      )}
     </div>
   );
 }
