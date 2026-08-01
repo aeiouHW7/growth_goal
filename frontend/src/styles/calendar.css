@@ -107,10 +107,10 @@
   margin-bottom: 8px;
 }
 
-/* ─── Year Grid ─── */
+/* ─── Year Grid（对齐原型：3 列） ─── */
 .year-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 
@@ -126,6 +126,18 @@
 .year-month-card:hover {
   border-color: var(--accent);
   background: var(--bg-accent);
+}
+.year-month-card.current {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+.year-month-card.muted {
+  opacity: 0.45;
+  cursor: default;
+}
+.year-month-card.muted:hover {
+  border-color: var(--border);
+  background: var(--bg-card);
 }
 
 .year-month-name {
@@ -220,3 +232,14 @@
   color: var(--text-dim);
   margin-top: 2px;
 }
+
+/* ─── Day nav + Timeline（对齐原型） ─── */
+.day-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.day-nav-title { font-size: 14px; font-weight: 600; }
+
+.timeline { display: flex; flex-direction: column; }
+.tl-row { display: flex; align-items: stretch; gap: 10px; border-bottom: 1px solid var(--sep-soft); padding: 6px 0; }
+.tl-row:last-child { border-bottom: none; }
+.tl-time { width: 48px; font-size: 12px; color: var(--text-muted); padding-top: 8px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.tl-block { flex: 1; background: var(--accent-bg); border-radius: 6px; padding: 8px 10px; font-size: 12px; color: var(--text); }
+.tl-block.empty { background: var(--bg); color: var(--text-muted); }

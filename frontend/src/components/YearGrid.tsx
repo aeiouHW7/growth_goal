@@ -49,19 +49,29 @@ export function YearGrid({ year, onMonthSelect }: Props) {
     monthCounts[i] > 0 ? Math.round((sum / monthCounts[i]) * 100) : 0
   );
 
+  const today = new Date();
+  const currentMonth = (today.getFullYear() === year) ? today.getMonth() + 1 : 0;
+
   return (
     <div>
       <div className="cal-month-title">{year}年 年度概览</div>
       <div className="year-grid">
-        {monthNames.map((name, i) => (
-          <div className="year-month-card" key={i} onClick={() => onMonthSelect?.(i + 1)}>
-            <div className="year-month-name">{name}</div>
-            <div className="year-month-rating">{getRatingEmoji(monthAvgRate[i])}</div>
-            <div className="year-month-pct">
-              {monthCounts[i] > 0 ? `${monthAvgRate[i]}%` : '暂无数据'}
+        {monthNames.map((name, i) => {
+          const month = i + 1;
+          const hasData = monthCounts[i] > 0;
+          const isCurrent = month === currentMonth;
+          return (
+            <div
+              className={`year-month-card ${isCurrent ? 'current' : ''} ${hasData ? '' : 'muted'}`}
+              key={i}
+              onClick={() => { if (hasData) onMonthSelect?.(month); }}
+            >
+              <div className="year-month-name">{name}</div>
+              <div className="year-month-pct">{hasData ? `${monthAvgRate[i]}%` : '—'}</div>
+              <div className="year-month-rating">{getRatingEmoji(monthAvgRate[i])}</div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
