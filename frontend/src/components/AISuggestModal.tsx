@@ -18,8 +18,20 @@ type Item = YearlyItem | MonthlyItem;
 
 const overlay: React.CSSProperties = {
   position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
+  backdropFilter: 'blur(10px)',
   display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24,
 };
+
+function emojiFor(metricType?: string): string {
+  switch (metricType) {
+    case 'NUMERIC': return '📊';
+    case 'DURATION': return '🕒';
+    case 'FREQUENCY': return '🧩';
+    case 'PERCENTAGE': return '📈';
+    case 'STAGE': return '✍️';
+    default: return '📌';
+  }
+}
 const modal: React.CSSProperties = {
   background: '#fff', borderRadius: 16, maxWidth: 620, width: '100%',
   maxHeight: '85vh', display: 'flex', flexDirection: 'column',
@@ -192,7 +204,7 @@ export function AISuggestModal({ mode, yearlyGoalId, onClose, onConfirm, onGoArc
                     borderRadius: 12, padding: 14, marginBottom: 10, opacity: isRejected ? 0.55 : 1,
                   }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                      <span style={{ fontSize: 18 }}>{it.kind === 'yearly' ? '📊' : '📅'}</span>
+                      <span style={{ fontSize: 18 }}>{emojiFor(it.kind === 'yearly' ? it.goal.metricType : it.plan.metricType)}</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600, fontSize: 14 }}>
                           {name}

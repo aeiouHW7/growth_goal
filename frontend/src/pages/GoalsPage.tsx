@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card } from '../components/Card';
 import { GoalTree } from '../components/GoalTree';
+import { AISuggestModal } from '../components/AISuggestModal';
 
 type Filter = 'all' | 'active' | 'done';
 type ViewMode = 'hierarchy' | 'time';
@@ -19,6 +20,7 @@ const viewModes: Array<{ key: ViewMode; label: string }> = [
 export function GoalsPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('hierarchy');
+  const [showSuggest, setShowSuggest] = useState(false);
 
   return (
     <div>
@@ -49,11 +51,25 @@ export function GoalsPage() {
                 </button>
               ))}
             </div>
+            <button
+              onClick={() => setShowSuggest(true)}
+              style={{
+                padding: '5px 12px', borderRadius: 8, border: 'none',
+                background: 'var(--accent, #6366f1)', color: '#fff', cursor: 'pointer',
+                fontSize: 12, fontWeight: 600,
+              }}
+            >
+              🤖 AI 建议目标
+            </button>
           </div>
         }
       >
         <GoalTree filter={filter} viewMode={viewMode} />
       </Card>
+
+      {showSuggest && (
+        <AISuggestModal mode="yearly" onClose={() => setShowSuggest(false)} />
+      )}
     </div>
   );
 }

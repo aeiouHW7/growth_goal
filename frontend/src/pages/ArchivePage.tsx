@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ARCHIVE_API } from '../api';
 import type { LifeArchive, LayerCoreInput, LayerResourcesInput, LayerFutureInput } from '../api';
 import { LoadingState, ErrorState } from '../components/EmptyState';
+import { showToast } from '../utils/toast';
 import '../styles/archive.css';
 
 type SubTab = 'core' | 'resources' | 'future';
@@ -190,6 +191,7 @@ export function ArchivePage() {
         const updated = await ARCHIVE_API.updateLayerFuture(layerFuture);
         setData(prev => prev ? { ...prev, layerFuture: updated.layerFuture } : null);
       }
+      showToast('已保存 ✓');
     } catch (e: unknown) {
       setSaveError(e instanceof Error ? e.message : '保存失败');
     } finally {
