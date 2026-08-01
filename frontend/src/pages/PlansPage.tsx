@@ -202,17 +202,29 @@ export function PlansPage() {
     return () => { cancelled = true; };
   }, [year, month, dimension, selectedDay, pinnedDay]);
 
-  const monthlyPlanItems = (monthlyPlans || []).map(mp => ({
-    title: mp.title,
-    dotColor: getDotColor(mp.currentValue, mp.targetValue),
-    meta: `目标: ${mp.targetValue}`,
-  }));
+  const monthlyPlanItems = (monthlyPlans || []).map(mp => {
+    const cur = parseFloat(mp.currentValue || '0');
+    const tgt = parseFloat(mp.targetValue || '0');
+    return {
+      title: mp.title,
+      dotColor: getDotColor(mp.currentValue, mp.targetValue),
+      meta: `目标: ${mp.targetValue}`,
+      progress: tgt > 0 ? Math.min(Math.round(cur / tgt * 100), 100) : 0,
+      status: mp.status,
+    };
+  });
 
-  const dailyPlanItems = dailyPlans.map(dp => ({
-    title: dp.title,
-    dotColor: getDotColor(dp.currentValue, dp.targetValue),
-    meta: dp.date ? new Date(dp.date).getDate() + '日' : '',
-  }));
+  const dailyPlanItems = dailyPlans.map(dp => {
+    const cur = parseFloat(dp.currentValue || '0');
+    const tgt = parseFloat(dp.targetValue || '0');
+    return {
+      title: dp.title,
+      dotColor: getDotColor(dp.currentValue, dp.targetValue),
+      meta: dp.date ? new Date(dp.date).getDate() + '日' : '',
+      progress: tgt > 0 ? Math.min(Math.round(cur / tgt * 100), 100) : 0,
+      status: dp.status,
+    };
+  });
 
   const getPlanPanelTitle = () => {
     const mode = rightMode();
@@ -280,6 +292,7 @@ export function PlansPage() {
             title={getPlanPanelTitle()}
             items={getPlanPanelItems()}
             emptyHint={getPlanPanelEmptyHint()}
+            mode={rightMode()}
           />
         );
       case 'eval': {

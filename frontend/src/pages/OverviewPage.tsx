@@ -206,7 +206,8 @@ export function OverviewPage({ onGoArchive }: { onGoArchive?: () => void }) {
         {lifeGoal?.description && <div className="life-goal-sub">{lifeGoal.description}</div>}
       </Card>
 
-      {/* Active Yearly Goals */}
+      {/* 两列布局：年度目标 + AI 建议（对齐原型） */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start' }}>
       <Card title="进行中的年度目标" action={<span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 400 }}>{currentYear}</span>}>
         {activeYearlyGoals.length === 0 ? (
           <div style={{ fontSize: 13, color: 'var(--text-dim)', padding: '8px 0' }}>暂无进行中的年度目标</div>
@@ -227,8 +228,24 @@ export function OverviewPage({ onGoArchive }: { onGoArchive?: () => void }) {
         })}
       </Card>
 
-      {/* Weekly Plan (5.18-5.24) */}
-      <Card title="本周计划" action={<span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 400 }}>5.18 - 5.24</span>}>
+      {/* AI Suggestions */}
+      <Card title="AI 建议改进点">
+        {suggestions && suggestions.length > 0 ? (
+          suggestions.map((s, i) => (
+            <div className={`ai-msg ${s.type === 'positive' ? 'green' : s.type === 'warning' ? 'yellow' : 'red'}`} key={i}>
+              {s.message}
+            </div>
+          ))
+        ) : (
+          <div style={{ fontSize: 13, color: 'var(--text-dim)', padding: '8px 0' }}>
+            暂无 AI 建议，完成一些每日复盘后将会生成
+          </div>
+        )}
+      </Card>
+      </div>
+
+      {/* 本周计划 */}
+      <Card title="本周计划" action={<span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 400 }}>本周</span>}>
         {weekDates.map((dateStr, i) => {
           const plans = weeklyPlans[dateStr] || [];
           if (plans.length === 0) return null;
@@ -252,21 +269,6 @@ export function OverviewPage({ onGoArchive }: { onGoArchive?: () => void }) {
         })}
         {Object.values(weeklyPlans).every(p => p.length === 0) && (
           <div style={{ fontSize: 13, color: 'var(--text-dim)', padding: '8px 0' }}>暂无本周计划</div>
-        )}
-      </Card>
-
-      {/* AI Suggestions */}
-      <Card title="AI 建议改进点">
-        {suggestions && suggestions.length > 0 ? (
-          suggestions.map((s, i) => (
-            <div className={`ai-msg ${s.type === 'positive' ? 'green' : s.type === 'warning' ? 'yellow' : 'red'}`} key={i}>
-              {s.message}
-            </div>
-          ))
-        ) : (
-          <div style={{ fontSize: 13, color: 'var(--text-dim)', padding: '8px 0' }}>
-            暂无 AI 建议，完成一些每日复盘后将会生成
-          </div>
         )}
       </Card>
 
