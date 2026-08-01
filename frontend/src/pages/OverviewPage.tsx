@@ -146,13 +146,14 @@ export function OverviewPage({ onGoArchive }: { onGoArchive?: () => void }) {
 
   return (
     <div className="overview-page">
-      <div className="overview-header">
+      <div className="overview-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{currentYear}年{currentMonth}月{now.getDate()}日</div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             onClick={() => setShowSuggest(true)}
             style={{
               padding: '6px 14px', borderRadius: 8, border: '1px solid var(--accent, #6366f1)',
-              background: 'var(--accent, #6366f1)', color: '#fff', cursor: 'pointer',
+              background: '#fff', color: 'var(--accent, #6366f1)', cursor: 'pointer',
               fontSize: 13, fontWeight: 600,
             }}
           >
@@ -162,10 +163,14 @@ export function OverviewPage({ onGoArchive }: { onGoArchive?: () => void }) {
         </div>
       </div>
 
-      {/* LifeArchive 摘要卡片（VS5） */}
-      <Card title="🤖 AI 对你了解" action={summaryState === 'ready' && (
-        <span onClick={onGoArchive} style={{ fontSize: 12, color: 'var(--accent)', cursor: onGoArchive ? 'pointer' : 'default' }}>编辑档案 →</span>
-      )}>
+      {/* LifeArchive 摘要卡片（VS5，渐变背景对齐原型） */}
+      <div style={{ background: 'linear-gradient(150deg, #eef2ff 0%, #f5f8ff 60%, #fff 100%)', border: '1px solid #c7d2fe', borderRadius: 12, padding: 16, marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>🤖 AI 对你了解</h3>
+          {summaryState === 'ready' && (
+            <span onClick={onGoArchive} style={{ fontSize: 12, color: 'var(--accent)', cursor: onGoArchive ? 'pointer' : 'default' }}>编辑档案 →</span>
+          )}
+        </div>
         {summaryState === 'loading' && (
           <div>
             <div style={{ height: 12, borderRadius: 4, background: 'var(--bg)', marginBottom: 6 }} />
@@ -193,7 +198,7 @@ export function OverviewPage({ onGoArchive }: { onGoArchive?: () => void }) {
             </button>
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Life Goal */}
       <Card title="人生总目标" action={<span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 400 }}>10-20年</span>}>

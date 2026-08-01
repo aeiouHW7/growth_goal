@@ -42,11 +42,12 @@ export function FeedbackPanel({ analysisId }: Props) {
 
   if (submitted) {
     return (
-      <div style={{ marginTop: 16, padding: 16, borderRadius: 12, border: '1px solid var(--success, #22c55e)', background: 'rgba(34,197,94,0.06)' }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--success, #22c55e)' }}>✓ 已评分 {score} 分</div>
-        <div style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 6 }}>{consequence}</div>
+      <div style={{ marginTop: 16, padding: 20, borderRadius: 12, border: '1px solid var(--success, #22c55e)', background: 'var(--success-bg, #dcfce7)', textAlign: 'center' }}>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontSize: 24, color: 'var(--success, #22c55e)', boxShadow: 'var(--shadow-sm)' }}>✓</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent, #6366f1)' }}>{score}</div>
+        <div style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 4 }}>{consequence}</div>
         {(good || bad) && (
-          <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-dim)', borderTop: '1px solid #e5e7eb', paddingTop: 10 }}>
+          <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-dim)', borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 10, textAlign: 'left' }}>
             {good && <div style={{ marginBottom: 4 }}>👍 {good}</div>}
             {bad && <div>👎 {bad}</div>}
           </div>
@@ -70,7 +71,7 @@ export function FeedbackPanel({ analysisId }: Props) {
         <input
           type="range" min={0} max={100} value={score}
           onChange={e => { setScore(parseInt(e.target.value, 10)); setError(null); }}
-          style={{ flex: 1, accentColor: 'var(--accent, #6366f1)' }}
+          style={{ flex: 1, height: 6, borderRadius: 3, appearance: 'none', background: 'linear-gradient(90deg, #ef4444 0%, #eab308 50%, #22c55e 100%)', cursor: 'pointer' }}
           aria-label="评分滑条"
         />
         <input
