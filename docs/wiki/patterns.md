@@ -105,3 +105,7 @@ prisma.aIReflection.findMany({
   take: 5,
 });
 ```
+
+## 工程化：无 package-lock 的项目 CI 用 npm install
+
+GitHub Actions 的 `npm ci` 要求存在 `package-lock.json`；无 lock 的项目（lock 未提交）会直接失败。改用 `npm install`。
