@@ -22,8 +22,8 @@
 **目标**：push/PR 自动跑前端 tsc/lint/build + 后端测试。
 
 **新增**：
-- [ ] `.github/workflows/ci.yml`：checkout → node20 → 前端 npm ci/tsc/eslint/build → 后端 npm ci/prisma generate/npm test
-- [ ] 本地验证：按 workflow 步骤顺序手工跑通（确认无环境问题）
+- [x] `.github/workflows/ci.yml`：checkout → node20 → 前端 npm ci/tsc/eslint/build → 后端 npm ci/prisma generate/npm test
+- [x] 本地验证：按 workflow 步骤顺序手工跑通（确认无环境问题）
 
 **验证**：workflow 语法校验（`actionlint` 或手动检查）；本地逐步跑通。
 
