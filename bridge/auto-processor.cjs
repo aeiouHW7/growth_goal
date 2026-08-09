@@ -3,7 +3,7 @@
 // Spawns lark-cli event consume and processes each event in real-time
 
 const { spawn, exec } = require('child_process');
-const { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, unlinkSync } = require('fs');
+const { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync, readdirSync, statSync, unlinkSync } = require('fs');
 const { join } = require('path');
 
 // Load .env file (no dotenv dependency needed)
@@ -23,6 +23,22 @@ try {
 
 const LARK_CLI = process.env.LARK_CLI_PATH || 'lark-cli';
 const LARK_CLI_RUN_JS = process.env.LARK_CLI_RUN_JS || join(process.env.APPDATA || '', 'npm', 'node_modules', '@larksuite', 'cli', 'scripts', 'run.js');
+
+// 碎碎念写入 Obsidian（个人知识库）
+const OBSIDIAN_DIR = process.env.OBSIDIAN_NOTES_DIR || '';
+function writeObsidianNote(dateStr, rawInput) {
+  if (!OBSIDIAN_DIR || !rawInput) return;
+  try {
+    const file = join(OBSIDIAN_DIR, dateStr + '.md');
+    const weekday = ['日', '一', '二', '三', '四', '五', '六'][new Date(dateStr).getDay()];
+    const content = rawInput.trim();
+    if (existsSync(file)) {
+      appendFileSync(file, '\n' + content + '\n');
+    } else {
+      writeFileSync(file, `# ${dateStr}（周${weekday}）\n\n## 碎碎念\n\n${content}\n`);
+    }
+  } catch (e) { /* Obsidian 写入失败不阻塞复盘 */ }
+}
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3001';
 const USER_FEISHU_ID = process.env.USER_FEISHU_ID || 'ou_962fd9da211f5b8583097ca7e34b8867';
 const SESSION_DIR = join(__dirname, 'sessions');
@@ -841,6 +857,9 @@ async function handleNewReview(userId, rawInput) {
     await sendFeishu('创建复盘失败。');
     return;
   }
+
+  // 碎碎念同步写入 Obsidian
+  writeObsidianNote(reviewDate, rawInput);
 
   // Signal score
   let signal;
