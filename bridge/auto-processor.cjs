@@ -22,7 +22,7 @@ try {
 } catch { /* .env is optional */ }
 
 const LARK_CLI = process.env.LARK_CLI_PATH || 'lark-cli';
-const LARK_CLI_RUN_JS = join(process.env.APPDATA, 'npm', 'node_modules', '@larksuite', 'cli', 'scripts', 'run.js');
+const LARK_CLI_RUN_JS = process.env.LARK_CLI_RUN_JS || join(process.env.APPDATA || '', 'npm', 'node_modules', '@larksuite', 'cli', 'scripts', 'run.js');
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3001';
 const USER_FEISHU_ID = process.env.USER_FEISHU_ID || 'ou_962fd9da211f5b8583097ca7e34b8867';
 const SESSION_DIR = join(__dirname, 'sessions');
