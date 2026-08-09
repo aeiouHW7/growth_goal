@@ -49,6 +49,22 @@ const JSON_SCHEMA = `{
 
 type ReviewRef = { dailyReviewId?: string; weeklyReviewId?: string; monthlyReviewId?: string };
 
+/** 校验 Claude 生成的 structuredReport 关键字段，返回错误列表（空=通过） */
+export function validateStructuredReport(report: unknown): string[] {
+  const errors: string[] = [];
+  if (!report || typeof report !== 'object') return ['报告不是对象'];
+  const r = report as Record<string, unknown>;
+  if (!r.completionSummary || typeof r.completionSummary !== 'object') {
+    errors.push('缺 completionSummary');
+  } else {
+    const cs = r.completionSummary as Record<string, unknown>;
+    if (typeof cs.completionRate !== 'string') errors.push('completionSummary.completionRate 非字符串');
+  }
+  if (r.capabilityDeltas != null && !Array.isArray(r.capabilityDeltas)) errors.push('capabilityDeltas 非数组');
+  if (r.suggestions != null && !Array.isArray(r.suggestions)) errors.push('suggestions 非数组');
+  return errors;
+}
+
 export class AnalysisRunner {
   /**
    * 对指定复盘运行完整 AI 分析
@@ -286,6 +302,10 @@ ${JSON_SCHEMA}
       jsonStr = analysisText.slice(firstBrace, lastBrace + 1);
     }
     const report = JSON.parse(jsonStr);
+    const reportErrors = validateStructuredReport(report);
+    if (reportErrors.length > 0) {
+      throw new Error(`分析报告校验失败: ${reportErrors.join('; ')}`);
+    }
 
     // 6. 保存分析报告（事务保护，只保证 AIAnalysis 写入原子性）
     const patternService = new PatternService();

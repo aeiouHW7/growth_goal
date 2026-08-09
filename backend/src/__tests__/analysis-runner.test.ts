@@ -1,4 +1,4 @@
-import { AnalysisRunner } from "../services/analysis-runner.service";
+import { AnalysisRunner, validateStructuredReport } from "../services/analysis-runner.service";
 import { prisma } from "../prisma";
 
 const MOCK_JSON = `__JSON_START__{"completionSummary":{"completed":[],"notCompleted":[],"completionRate":"50%"},"deviationAnalysis":{"onTrack":[],"behind":[],"riskLevel":"中"},"executionDiagnosis":{"issues":[]},"foggDiagnosis":{"missing":"M"},"externalPerspective":{},"detectedBiases":[],"detectedPatterns":[],"capabilityDeltas":[{"dimension":"执行","score":6,"evidence":"维持"}],"postureTraining":{},"energyRate":70,"signalScore":8,"insight":{},"suggestions":[]}__JSON_END__`;
@@ -173,5 +173,25 @@ describe("AnalysisRunner — 反思注入（VS3）", () => {
     await runner.run("m1");
 
     expect(getPrompt()).not.toContain("用户近期反馈");
+  });
+});
+
+describe("validateStructuredReport（VS1）", () => {
+  it("合法报告通过", () => {
+    const ok = { completionSummary: { completionRate: "50%" }, capabilityDeltas: [], suggestions: [] };
+    expect(validateStructuredReport(ok)).toEqual([]);
+  });
+
+  it("缺 completionSummary 拒绝", () => {
+    expect(validateStructuredReport({ suggestions: [] })).not.toEqual([]);
+  });
+
+  it("completionRate 非字符串拒绝", () => {
+    expect(validateStructuredReport({ completionSummary: { completionRate: 50 } })).not.toEqual([]);
+  });
+
+  it("非对象拒绝", () => {
+    expect(validateStructuredReport(null)).not.toEqual([]);
+    expect(validateStructuredReport("text")).not.toEqual([]);
   });
 });
