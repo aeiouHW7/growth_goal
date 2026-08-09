@@ -36,6 +36,12 @@ const FRONTEND_DIR = join(PROJECT_ROOT, 'frontend');
 // 分析指令（启动时从后端获取，来源: backend/src/prompts/daily-review.prompt.ts）
 let analysisRequirements = '';
 
+// 最近一次分析 ID（供「详情」指令重发卡片）
+let lastAnalysisId = null;
+// 周期总结提醒去重（ISO 周 / 月份变化时重置）
+let lastWeeklyReminderKey = '';
+let lastMonthlyReminderKey = '';
+
 if (!existsSync(SESSION_DIR)) mkdirSync(SESSION_DIR, { recursive: true });
 
 let processedIds = new Set();
@@ -150,6 +156,251 @@ function buildAnalysisCard(report) {
     header: { title: { tag: 'plain_text', content: '📊 今日复盘分析' }, template: 'blue' },
     elements: parts,
   };
+}
+
+// ——— VS1: 复盘后详细多卡片 ———
+function buildSimpleCard(title, markdownContent, template, withFeedbackNote) {
+  const elements = [{ tag: 'markdown', content: markdownContent }];
+  if (withFeedbackNote) {
+    elements.push({ tag: 'note', elements: [{ tag: 'plain_text', content: '请从 0-100 给本次分析评分：' }] });
+  }
+  return {
+    config: { wide_screen_mode: true },
+    header: { title: { tag: 'plain_text', content: title }, template: template || 'blue' },
+    elements,
+  };
+}
+
+function buildDeviationFoggContent(da, diag, fogg, foggLabel) {
+  const parts = [];
+  const riskBadge = { '高': '🔴 高', '中': '🟡 中', '低': '🟢 低' }[da.riskLevel] || da.riskLevel || '';
+  const behind = (da.behind || []).join('、');
+  const issues = diag.issues || [];
+  if (riskBadge || behind) {
+    parts.push(`**偏差分析**${riskBadge ? `\n风险: ${riskBadge}` : ''}${behind ? `\n滞后: ${behind}` : ''}`);
+  }
+  if (issues.length || diag.rootCause) {
+    parts.push(`**执行诊断**${issues.length ? '\n' + issues.join('\n') : ''}${diag.rootCause ? '\n原因: ' + diag.rootCause : ''}`);
+  }
+  if (foggLabel) {
+    parts.push(`**Fogg**: ${foggLabel}${fogg.detail ? ' — ' + fogg.detail : ''}`);
+  }
+  return parts.length ? parts.join('\n\n') : '暂无';
+}
+
+/** 分 6 张卡片发送完整分析报告（空维度显示"暂无"，保持 6 张结构稳定） */
+async function sendAnalysisCards(report) {
+  const r = report || {};
+  const insight = r.insight || {};
+  const cs = r.completionSummary || {};
+  const da = r.deviationAnalysis || {};
+  const diag = r.executionDiagnosis || {};
+  const fogg = r.foggDiagnosis || {};
+  const foggLabel = { 'M': '动机不足', 'A': '能力不足', 'P': '提示不足' }[fogg.missing] || fogg.missing || '';
+
+  const cards = [
+    {
+      title: '💡 洞察',
+      content: `**未意识到**\n${insight.unaware || '暂无'}\n\n**模式**\n${insight.pattern || '暂无'}\n\n**缺失**\n${insight.missing || '暂无'}`,
+    },
+    {
+      title: '✅ 完成',
+      content: `**完成**\n${(cs.completed || []).join('、') || '暂无'}\n\n**未完成**\n${(cs.notCompleted || []).join('、') || '暂无'}\n\n**完成率**: ${cs.completionRate || '暂无'}`,
+    },
+    {
+      title: '📊 偏差+Fogg',
+      content: buildDeviationFoggContent(da, diag, fogg, foggLabel),
+    },
+    {
+      title: '🧠 认知偏误',
+      content: (r.detectedBiases || []).map(b => `• ${b.type}: "${b.triggerPhrase}"`).join('\n') || '暂无',
+    },
+    {
+      title: '📈 能力评分',
+      content: (r.capabilityDeltas || []).map(c => `• ${c.dimension}: ${c.score}/10${c.evidence ? ' — ' + c.evidence : ''}`).join('\n') || '暂无',
+    },
+    {
+      title: '💪 建议',
+      content: (r.suggestions || []).map(s => `• [${s.type}] ${s.message}`).join('\n') || '暂无',
+    },
+  ];
+
+  for (let i = 0; i < cards.length; i++) {
+    await sendFeishuCard(buildSimpleCard(cards[i].title, cards[i].content, 'blue', i === cards.length - 1));
+  }
+}
+
+// ——— VS2: 「进度」指令 ———
+async function handleProgress() {
+  const year = new Date().getFullYear();
+  let overview, goals;
+  try {
+    [overview, goals] = await Promise.all([
+      fetch('GET', '/api/progress/overview'),
+      fetch('GET', `/api/goals/yearly?year=${year}`),
+    ]);
+  } catch {
+    await sendFeishu('服务未启动，请稍后再试。');
+    return;
+  }
+
+  const activeGoals = (goals.data || []).filter(g => g.status === 'ACTIVE');
+  if (activeGoals.length === 0) {
+    await sendFeishu('暂无进行中的年度目标。');
+    return;
+  }
+
+  const stats = (overview.data || {}).stats || {};
+  const goalLines = activeGoals.map(g => {
+    const cur = parseFloat(g.currentValue);
+    const tgt = parseFloat(g.targetValue);
+    let pct = '';
+    if (!isNaN(cur) && !isNaN(tgt) && tgt > 0) pct = ` (${Math.round(cur / tgt * 100)}%)`;
+    return `• ${g.title}: ${g.currentValue ?? '?'} / ${g.targetValue}${pct}`;
+  });
+
+  const content = [
+    stats.completionRate != null ? `**汇总**: 共 ${stats.total} 个目标 · 已完成 ${stats.completed} · 完成率 ${stats.completionRate}%` : null,
+    '**进行中**:',
+    ...goalLines,
+  ].filter(Boolean).join('\n');
+
+  await sendFeishuCard(buildSimpleCard('📈 年度目标进度', content, 'blue', false));
+}
+
+// ——— VS3: 周期总结提醒 + 启动 ———
+function isLastDayOfMonth(now) {
+  const d = new Date(now);
+  return d.getDate() === new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+}
+
+/** 周日 21:00 触发周总结提醒（纯函数，便于测试） */
+function shouldRemindWeekly(now) {
+  const d = new Date(now);
+  return d.getDay() === 0 && d.getHours() === 21;
+}
+
+/** 每月最后一天 21:00 触发月总结提醒（纯函数，便于测试） */
+function shouldRemindMonthly(now) {
+  const d = new Date(now);
+  return isLastDayOfMonth(d) && d.getHours() === 21;
+}
+
+/** ISO 8601 周号（返回 { year, week }，week 1-53） */
+function getISOWeekInfo(now) {
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const isoYear = d.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+  const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return { year: isoYear, week };
+}
+
+/** 本周范围：weekStart(周一) / weekEnd(周日) / ISO 年周 */
+function getWeekRange(now) {
+  const d = new Date(now);
+  const diffToMonday = (d.getDay() + 6) % 7;
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - diffToMonday);
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6, 23, 59, 59, 999);
+  const iso = getISOWeekInfo(d);
+  return {
+    weekStart: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`,
+    weekEnd: `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`,
+    year: iso.year,
+    week: iso.week,
+  };
+}
+
+function checkPeriodicReminder() {
+  const now = new Date();
+  if (shouldRemindWeekly(now)) {
+    const iso = getISOWeekInfo(now);
+    const key = `${iso.year}-W${String(iso.week).padStart(2, '0')}`;
+    if (key !== lastWeeklyReminderKey) {
+      lastWeeklyReminderKey = key;
+      sendFeishu('⏰ 该做周总结了！回复「开始」启动').catch(() => {});
+    }
+  }
+  if (shouldRemindMonthly(now)) {
+    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (key !== lastMonthlyReminderKey) {
+      lastMonthlyReminderKey = key;
+      sendFeishu('⏰ 该做月总结了！回复「开始」启动').catch(() => {});
+    }
+  }
+}
+
+function startPeriodicReminder() {
+  checkPeriodicReminder();
+  setInterval(checkPeriodicReminder, 60 * 1000);
+}
+
+async function handleStartSummary() {
+  const now = new Date();
+  try {
+    // 月末判定：最后一天 → 月总结，否则 → 周总结
+    if (isLastDayOfMonth(now)) {
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const from = `${year}-${String(month).padStart(2, '0')}-01`;
+      const to = `${year}-${String(month).padStart(2, '0')}-${String(new Date(year, month, 0).getDate()).padStart(2, '0')}`;
+      const reviewsRes = await fetch('GET', `/api/reviews/daily?from=${from}&to=${to}`);
+      if (!(reviewsRes.data || []).length) {
+        await sendFeishu('本月复盘数据不足，无法生成月总结。');
+        return;
+      }
+      const createRes = await fetch('POST', '/api/reviews/monthly', { year, month });
+      if (createRes.error || !createRes.data?.id) {
+        await sendFeishu('创建月总结失败，请稍后重试。');
+        return;
+      }
+      await fetch('POST', `/api/analysis/run/${createRes.data.id}`);
+      await sendFeishu('✅ 月总结生成中，完成后推送分析卡片');
+      return;
+    }
+
+    // 周总结
+    const range = getWeekRange(now);
+    const reviewsRes = await fetch('GET', `/api/reviews/daily?from=${range.weekStart}&to=${range.weekEnd}`);
+    if (!(reviewsRes.data || []).length) {
+      await sendFeishu('本周复盘数据不足，无法生成周总结。');
+      return;
+    }
+    const createRes = await fetch('POST', '/api/reviews/weekly', {
+      weekStart: range.weekStart,
+      weekEnd: range.weekEnd,
+      year: range.year,
+      week: range.week,
+    });
+    if (createRes.error || !createRes.data?.id) {
+      await sendFeishu('本周复盘数据不足，无法生成周总结。');
+      return;
+    }
+    await fetch('POST', `/api/analysis/run/${createRes.data.id}`);
+    await sendFeishu('✅ 周总结生成中，完成后推送分析卡片');
+  } catch {
+    await sendFeishu('总结服务暂不可用，请稍后再试。');
+  }
+}
+
+// ——— VS4: 「详情」指令 ———
+async function handleDetail() {
+  if (!lastAnalysisId) {
+    await sendFeishu('暂无分析记录。');
+    return;
+  }
+  try {
+    const res = await fetch('GET', `/api/analysis/${lastAnalysisId}`);
+    const analysis = res.data;
+    if (!analysis || !analysis.structuredReport) {
+      await sendFeishu('暂无分析记录。');
+      return;
+    }
+    await sendAnalysisCards(analysis.structuredReport);
+  } catch {
+    await sendFeishu('获取分析记录失败，请稍后再试。');
+  }
 }
 
 function getSession(userId) {
@@ -389,9 +640,9 @@ async function processEvent(event) {
   if (!text) return;
 
   // Commands (also support bare text alongside / prefixed)
-  if (text.startsWith('/') || text === '取消' || text === '帮助' || text === '状态') {
+  if (text.startsWith('/') || text === '取消' || text === '帮助' || text === '状态' || text === '进度' || text === '开始' || text === '详情') {
     if (text === '/help' || text === '帮助') {
-      await sendFeishu('复盘助手使用指南：\n• 直接发今日复盘内容\n• 回复「取消」中止当前\n• 回复「状态」查看进度\n• /services — 查看服务状态\n• /start — 启动全部服务\n• /stop — 停止后端+前端\n• /restart — 重启服务');
+      await sendFeishu('复盘助手使用指南：\n• 直接发今日复盘内容\n• 回复「取消」中止当前\n• 回复「状态」查看进度\n• 回复「进度」查看年度目标进度\n• 回复「开始」启动周/月总结\n• 回复「详情」重看最近分析卡片\n• /services — 查看服务状态\n• /start — 启动全部服务\n• /stop — 停止后端+前端\n• /restart — 重启服务');
     } else if (text === '/cancel' || text === '取消') {
       resetSession(sender_id);
       await sendFeishu('已取消本次复盘。');
@@ -414,6 +665,12 @@ async function processEvent(event) {
         const startMsg = await startManagedServices();
         sendFeishu(stopMsg + '\n---\n' + startMsg);
       })().catch(err => sendFeishu('重启失败: ' + err.message));
+    } else if (text === '进度' || text === '/progress') {
+      await handleProgress();
+    } else if (text === '开始') {
+      await handleStartSummary();
+    } else if (text === '详情' || text === '/detail') {
+      await handleDetail();
     }
     saveProcessedId(event_id);
     return;
@@ -733,6 +990,7 @@ ${analysisRequirements || '分析要求（请按以下顺序执行）：\n\n1. *
     });
 
     session.analysisId = analysisRes.data?.id;
+    if (session.analysisId) lastAnalysisId = session.analysisId;
 
     // Save energyRate back to DailyReview for direct queryability
     if (report.energyRate != null && session.reviewId) {
@@ -748,9 +1006,8 @@ ${analysisRequirements || '分析要求（请按以下顺序执行）：\n\n1. *
     session.step = 'awaiting_feedback';
     saveSession(userId, session);
 
-    // Send report as card
-    const card = buildAnalysisCard(report);
-    await sendFeishuCard(card);
+    // Send report as detailed multi-cards
+    await sendAnalysisCards(report);
   } catch (err) {
     console.error('[processor] Analysis failed:', err.message);
     session.step = 'idle';
@@ -799,6 +1056,9 @@ async function main() {
   // Graceful shutdown
   process.on('SIGINT', () => shutdownGracefully());
   process.on('SIGTERM', () => shutdownGracefully());
+
+  // Periodic reminders for weekly/monthly summaries (21:00 check)
+  startPeriodicReminder();
 
   startConsumer();
 }
