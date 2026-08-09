@@ -34,11 +34,11 @@
 **目标**：勾选完成单次调用。
 
 **后端**：
-- [ ] `plan.service.ts`：`PLAN_STATUS_TRANSITIONS.PENDING` 加 `COMPLETED`
-- [ ] 单测：PENDING→COMPLETED 允许；COMPLETED→PENDING 仍拒绝
+- [x] `plan.service.ts`：`PLAN_STATUS_TRANSITIONS.PENDING` 加 `COMPLETED`
+- [x] 单测：PENDING→COMPLETED 允许；COMPLETED→PENDING 仍拒绝
 
 **前端**：
-- [ ] `DayTimeline.toggleTask`：移除 IN_PROGRESS 预置分支，单次调 `updateDailyPlanStatus(id, 'COMPLETED')`
+- [x] `DayTimeline.toggleTask`：移除 IN_PROGRESS 预置分支，单次调 `updateDailyPlanStatus(id, 'COMPLETED')`
 
 **验证**：日视图对 PENDING 任务点完成 → 单次请求即变 COMPLETED；历史 IN_PROGRESS 任务仍可完成。
 

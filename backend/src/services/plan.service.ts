@@ -15,7 +15,7 @@ const GOAL_STATUS_TRANSITIONS: Record<GoalStatus, GoalStatus[]> = {
 };
 
 const PLAN_STATUS_TRANSITIONS: Record<PlanStatus, PlanStatus[]> = {
-  PENDING: [PlanStatus.IN_PROGRESS, PlanStatus.CANCELLED],
+  PENDING: [PlanStatus.IN_PROGRESS, PlanStatus.COMPLETED, PlanStatus.CANCELLED],
   IN_PROGRESS: [PlanStatus.COMPLETED, PlanStatus.PARTIAL, PlanStatus.FAILED],
   COMPLETED: [],
   PARTIAL: [],
@@ -33,7 +33,7 @@ function validateGoalTransition(current: GoalStatus, next: GoalStatus): void {
   }
 }
 
-function validatePlanTransition(current: PlanStatus, next: PlanStatus): void {
+export function validatePlanTransition(current: PlanStatus, next: PlanStatus): void {
   const allowed = PLAN_STATUS_TRANSITIONS[current];
   if (!allowed || !allowed.includes(next)) {
     throw Object.assign(

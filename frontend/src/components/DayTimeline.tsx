@@ -101,9 +101,7 @@ export function DayTimeline({ year, month, day: propDay }: Props) {
   async function toggleTask(plan: DailyPlan) {
     setBusy(true);
     try {
-      if (plan.status === 'PENDING') {
-        await api.updateDailyPlanStatus(plan.id, 'IN_PROGRESS');
-      }
+      // VS3: 后端允许 PENDING→COMPLETED 直通，单次调用
       await api.updateDailyPlanStatus(plan.id, 'COMPLETED');
       const p = await api.getDailyPlans(dateStr).catch(() => null);
       if (p) setPlans(p);
