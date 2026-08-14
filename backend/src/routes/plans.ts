@@ -10,12 +10,14 @@ router.post("/monthly", c.createMonthlyPlan.bind(c));
 router.put("/monthly/:id", c.updateMonthlyPlan.bind(c));
 router.patch("/monthly/:id/status", c.updateMonthlyPlanStatus.bind(c));
 router.patch("/monthly/:id/progress", c.updateMonthlyPlanProgress.bind(c));
+router.delete("/monthly/:id", c.deleteMonthlyPlan.bind(c));
 
 // DailyPlan
 router.get("/daily", c.listDailyPlans.bind(c));
 router.post("/daily", c.createDailyPlan.bind(c));
 router.put("/daily/:id", c.updateDailyPlan.bind(c));
 router.patch("/daily/:id/status", c.updateDailyPlanStatus.bind(c));
+router.delete("/daily/:id", c.deleteDailyPlan.bind(c));
 
 // AI 计划拆解
 router.post("/ai-suggest/monthly", c.aiSuggestMonthly.bind(c));

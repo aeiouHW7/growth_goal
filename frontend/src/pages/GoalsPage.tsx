@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card } from '../components/Card';
 import { GoalTree } from '../components/GoalTree';
 import { AISuggestModal } from '../components/AISuggestModal';
+import { api } from '../api';
 
 type Filter = 'all' | 'active' | 'done';
 type ViewMode = 'hierarchy' | 'time';
@@ -17,10 +18,57 @@ const viewModes: Array<{ key: ViewMode; label: string }> = [
   { key: 'time', label: '时间' },
 ];
 
+function LifeGoalAddForm({ onDone }: { onDone: () => void }) {
+  const [title, setTitle] = useState('');
+  const [timeHorizon, setTimeHorizon] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  async function submit() {
+    const t = title.trim();
+    if (!t) { setErr('标题不能为空'); return; }
+    setBusy(true); setErr('');
+    try {
+      await api.createLifeGoal({ title: t, timeHorizon: timeHorizon.trim() || undefined });
+      setTitle('');
+      setTimeHorizon('');
+      onDone();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '创建失败');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+      <input
+        value={title} onChange={e => { setTitle(e.target.value); setErr(''); }}
+        placeholder="人生目标标题（如：成为行业顶尖专家）"
+        onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+        style={{ flex: 1, minWidth: 180, padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border, #e5e7eb)', fontSize: 13 }}
+      />
+      <input
+        value={timeHorizon} onChange={e => setTimeHorizon(e.target.value)}
+        placeholder="时间跨度（如：10-20年）"
+        onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+        style={{ width: 140, padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border, #e5e7eb)', fontSize: 13 }}
+      />
+      <button onClick={submit} disabled={busy}
+        style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--accent, #6366f1)', color: '#fff', cursor: busy ? 'wait' : 'pointer', fontSize: 13, fontWeight: 600 }}>
+        {busy ? '…' : '保存'}
+      </button>
+      {err && <span style={{ fontSize: 12, color: '#ef4444' }}>{err}</span>}
+    </div>
+  );
+}
+
 export function GoalsPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('hierarchy');
   const [showSuggest, setShowSuggest] = useState(false);
+  const [showAddLife, setShowAddLife] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   return (
     <div>
@@ -52,6 +100,16 @@ export function GoalsPage() {
               ))}
             </div>
             <button
+              onClick={() => setShowAddLife(v => !v)}
+              style={{
+                padding: '5px 12px', borderRadius: 8, border: '1px solid var(--accent, #6366f1)',
+                background: '#fff', color: 'var(--accent, #6366f1)', cursor: 'pointer',
+                fontSize: 12, fontWeight: 600,
+              }}
+            >
+              ＋ 新增人生目标
+            </button>
+            <button
               onClick={() => setShowSuggest(true)}
               style={{
                 padding: '5px 12px', borderRadius: 8, border: 'none',
@@ -64,7 +122,10 @@ export function GoalsPage() {
           </div>
         }
       >
-        <GoalTree filter={filter} viewMode={viewMode} />
+        {showAddLife && (
+          <LifeGoalAddForm onDone={() => setReloadKey(k => k + 1)} />
+        )}
+        <GoalTree key={reloadKey} filter={filter} viewMode={viewMode} />
       </Card>
 
       {showSuggest && (

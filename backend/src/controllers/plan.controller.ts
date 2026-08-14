@@ -64,6 +64,13 @@ export class PlanController {
     } catch (err) { next(err); }
   }
 
+  async deleteMonthlyPlan(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await planService.deleteMonthlyPlan(id(req));
+      res.json({ data: result });
+    } catch (err) { next(err); }
+  }
+
   // DailyPlan
   async listDailyPlans(req: Request, res: Response, next: NextFunction) {
     try {
@@ -101,6 +108,13 @@ export class PlanController {
     try {
       const plan = await planService.updateDailyPlanStatus(id(req), req.body.status);
       res.json({ data: plan });
+    } catch (err) { next(err); }
+  }
+
+  async deleteDailyPlan(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await planService.deleteDailyPlan(id(req));
+      res.json({ data: result });
     } catch (err) { next(err); }
   }
 

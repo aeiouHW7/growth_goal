@@ -42,6 +42,10 @@ export function DayTimeline({ year, month, day: propDay }: Props) {
   const [errTitle, setErrTitle] = useState(false);
   const [errTarget, setErrTarget] = useState(false);
   const [busy, setBusy] = useState(false);
+  // 就地编辑
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editTarget, setEditTarget] = useState('');
 
   // propDay / year / month 变化时重置当前日期（setState 在微任务后）
   useEffect(() => {
@@ -125,6 +129,29 @@ export function DayTimeline({ year, month, day: propDay }: Props) {
     }
   }
 
+  function startEdit(plan: DailyPlan) {
+    setEditingId(plan.id);
+    setEditTitle(plan.title);
+    setEditTarget(plan.targetValue);
+  }
+
+  async function saveEdit(plan: DailyPlan) {
+    const t = editTitle.trim();
+    const v = editTarget.trim();
+    if (!t || !v) return;
+    setBusy(true);
+    try {
+      await api.updateDailyPlan(plan.id, { title: t, targetValue: v });
+      setEditingId(null);
+      const p = await api.getDailyPlans(dateStr).catch(() => null);
+      if (p) setPlans(p);
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (plans === undefined) return <LoadingState />;
   if (error) return <ErrorState onRetry={() => setPlans(null)} />;
 
@@ -143,6 +170,22 @@ export function DayTimeline({ year, month, day: propDay }: Props) {
     if (!task) return null;
     const isCompleted = task.status === 'COMPLETED';
     const isCancelled = task.status === 'CANCELLED';
+    if (task.id === editingId) {
+      return (
+        <div className="tl-block" style={{ opacity: isCancelled ? 0.5 : 1 }}>
+          <span style={{ display: 'flex', gap: 6, alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
+            <input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="标题"
+              style={{ flex: 1, minWidth: 100, padding: '3px 8px', borderRadius: 6, border: '1px solid var(--border, #e5e7eb)', fontSize: 12 }} />
+            <input value={editTarget} onChange={e => setEditTarget(e.target.value)} placeholder="目标值"
+              style={{ width: 80, padding: '3px 8px', borderRadius: 6, border: '1px solid var(--border, #e5e7eb)', fontSize: 12 }} />
+            <button onClick={() => saveEdit(task)} disabled={busy}
+              style={{ fontSize: 11, padding: '1px 10px', borderRadius: 5, border: 'none', background: 'var(--accent, #6366f1)', color: '#fff', cursor: busy ? 'wait' : 'pointer' }}>{busy ? '…' : '保存'}</button>
+            <button onClick={() => setEditingId(null)} disabled={busy}
+              style={{ fontSize: 11, padding: '1px 8px', borderRadius: 5, border: '1px solid var(--border, #e5e7eb)', background: '#fff', cursor: 'pointer' }}>取消</button>
+          </span>
+        </div>
+      );
+    }
     return (
       <div className="tl-block" style={{ opacity: isCancelled ? 0.5 : 1, textDecoration: isCompleted ? 'line-through' : 'none' }}>
         <span style={{ fontWeight: 500 }}>{task.title}</span>
@@ -151,6 +194,10 @@ export function DayTimeline({ year, month, day: propDay }: Props) {
           {!isCompleted && !isCancelled && (
             <button onClick={() => toggleTask(task)} disabled={busy}
               style={{ fontSize: 11, padding: '1px 8px', borderRadius: 5, border: '1px solid var(--success, #22c55e)', color: 'var(--success, #22c55e)', background: '#fff', cursor: busy ? 'wait' : 'pointer', marginRight: 6 }}>✓</button>
+          )}
+          {!isCancelled && (
+            <button onClick={() => startEdit(task)} disabled={busy}
+              style={{ fontSize: 11, padding: '1px 8px', borderRadius: 5, border: '1px solid var(--border, #e5e7eb)', color: 'var(--text-dim)', background: '#fff', cursor: busy ? 'wait' : 'pointer', marginRight: 6 }}>编辑</button>
           )}
           {task.status === 'PENDING' && (
             <button onClick={() => deleteTask(task)} disabled={busy}

@@ -206,9 +206,11 @@ export function PlansPage() {
     const cur = parseFloat(mp.currentValue || '0');
     const tgt = parseFloat(mp.targetValue || '0');
     return {
+      id: mp.id,
       title: mp.title,
       dotColor: getDotColor(mp.currentValue, mp.targetValue),
       meta: `目标: ${mp.targetValue}`,
+      targetValue: mp.targetValue,
       progress: tgt > 0 ? Math.min(Math.round(cur / tgt * 100), 100) : 0,
       status: mp.status,
     };
@@ -258,6 +260,9 @@ export function PlansPage() {
     return undefined;
   };
 
+  const reloadMonthly = () =>
+    api.getMonthlyPlans(year, month).then(setMonthlyPlans).catch(() => setMonthlyPlans(null));
+
   // pin 交互
   function handlePin(dateStr: string) {
     setPinnedDay(dateStr);
@@ -293,6 +298,19 @@ export function PlansPage() {
             items={getPlanPanelItems()}
             emptyHint={getPlanPanelEmptyHint()}
             mode={rightMode()}
+            editable={rightMode() === 'month'}
+            onEdit={async (id, data) => {
+              await api.updateMonthlyPlan(id, data);
+              reloadMonthly();
+            }}
+            onDelete={async (id) => {
+              await api.deleteMonthlyPlan(id);
+              reloadMonthly();
+            }}
+            onAdd={async (data) => {
+              await api.createMonthlyPlan({ ...data, year, month });
+              reloadMonthly();
+            }}
           />
         );
       case 'eval': {

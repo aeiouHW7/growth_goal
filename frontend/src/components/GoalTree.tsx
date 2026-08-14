@@ -18,10 +18,96 @@ interface GoalNodeData {
   children?: GoalNodeData[];
 }
 
-function GoalNode({ node, depth }: { node: GoalNodeData; depth: number }) {
+const GOAL_STATUS_TRANSITIONS: Record<string, string[]> = {
+  ACTIVE: ['COMPLETED', 'ABANDONED', 'ARCHIVED'],
+  COMPLETED: ['ACTIVE'],
+  ABANDONED: ['ACTIVE'],
+  ARCHIVED: [],
+  SUSPENDED: ['ACTIVE'],
+};
+const STATUS_LABELS: Record<string, string> = {
+  ACTIVE: '进行中', COMPLETED: '已完成', ABANDONED: '已放弃',
+  ARCHIVED: '已归档', SUSPENDED: '已暂停',
+};
+const METRIC_LABELS: Record<string, string> = {
+  NUMERIC: '数值', DURATION: '时长', FREQUENCY: '次数', PERCENTAGE: '百分比', STAGE: '里程碑',
+};
+
+function statusOptions(current: string): string[] {
+  return Array.from(new Set([current, ...(GOAL_STATUS_TRANSITIONS[current] || [])]));
+}
+
+const actionBtn: React.CSSProperties = {
+  fontSize: 11, padding: '1px 8px', borderRadius: 5,
+  border: '1px solid var(--border, #e5e7eb)', background: '#fff',
+  cursor: 'pointer', marginRight: 6, whiteSpace: 'nowrap',
+  color: 'var(--text-dim)',
+};
+const primaryBtn: React.CSSProperties = {
+  fontSize: 11, padding: '1px 10px', borderRadius: 5,
+  border: 'none', background: 'var(--accent, #6366f1)', color: '#fff',
+  cursor: 'pointer', marginRight: 6, whiteSpace: 'nowrap',
+};
+const dangerBtn: React.CSSProperties = {
+  fontSize: 11, padding: '1px 8px', borderRadius: 5,
+  border: '1px solid var(--error, #ef4444)', color: 'var(--error, #ef4444)',
+  background: '#fff', cursor: 'pointer', whiteSpace: 'nowrap',
+};
+const editInput: React.CSSProperties = {
+  padding: '3px 8px', borderRadius: 6, border: '1px solid var(--border, #e5e7eb)',
+  fontSize: 12, minWidth: 0,
+};
+
+function NodeEditForm({ node, draftTitle, setDraftTitle, draftTarget, setDraftTarget, draftTimeHorizon, setDraftTimeHorizon, draftStatus, setDraftStatus, busy, onSave, onCancel }: {
+  node: GoalNodeData;
+  draftTitle: string;
+  setDraftTitle: (v: string) => void;
+  draftTarget: string;
+  setDraftTarget: (v: string) => void;
+  draftTimeHorizon: string;
+  setDraftTimeHorizon: (v: string) => void;
+  draftStatus: string;
+  setDraftStatus: (v: string) => void;
+  busy: boolean;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const statuses = statusOptions(node.status);
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
+      <input value={draftTitle} onChange={e => setDraftTitle(e.target.value)}
+        placeholder="标题" style={{ ...editInput, flex: 1, minWidth: 120 }} />
+      {node.type === 'life' && (
+        <input value={draftTimeHorizon} onChange={e => setDraftTimeHorizon(e.target.value)}
+          placeholder="时间跨度" style={{ ...editInput, width: 90 }} />
+      )}
+      {node.type === 'yearly' && (
+        <input value={draftTarget} onChange={e => setDraftTarget(e.target.value)}
+          placeholder="目标值" style={{ ...editInput, width: 90 }} />
+      )}
+      <select value={draftStatus} onChange={e => setDraftStatus(e.target.value)}
+        style={{ ...editInput, width: 84 }}>
+        {statuses.map(s => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
+      </select>
+      <button onClick={onSave} disabled={busy} style={primaryBtn}>{busy ? '…' : '保存'}</button>
+      <button onClick={onCancel} disabled={busy} style={actionBtn}>取消</button>
+    </span>
+  );
+}
+
+function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: number; onChanged: () => void }) {
   const [expanded, setExpanded] = useState(depth < 2);
+  const [editing, setEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(node.title);
+  const [draftTarget, setDraftTarget] = useState(node.progress?.target || '');
+  const [draftTimeHorizon, setDraftTimeHorizon] = useState(node.timeLabel || '');
+  const [draftStatus, setDraftStatus] = useState(node.status);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
   const hasChildren = node.children && node.children.length > 0;
   const isDone = node.status === 'COMPLETED' || node.status === 'ABANDONED';
+  const editable = node.type === 'life' || node.type === 'yearly';
 
   const getPct = (current?: string, target?: string, start?: string): number => {
     const cur = parseFloat(current || '0');
@@ -30,10 +116,8 @@ function GoalNode({ node, depth }: { node: GoalNodeData; depth: number }) {
     if (!tgt || isNaN(cur)) return 0;
     let pct: number;
     if (st != null && !isNaN(st) && tgt !== st) {
-      // 有起始值: 按增量计算 (cur - st) / (tgt - st)
       pct = Math.min((cur - st) / (tgt - st) * 100, 100);
     } else {
-      // 无起始值: cur / tgt
       pct = (cur / tgt) * 100;
     }
     return Math.max(0, Math.round(pct));
@@ -47,34 +131,162 @@ function GoalNode({ node, depth }: { node: GoalNodeData; depth: number }) {
 
   const pct = node.progress ? getPct(node.progress.current, node.progress.target, node.progress.start) : 0;
 
+  function startEdit() {
+    setDraftTitle(node.title);
+    setDraftTarget(node.progress?.target || '');
+    setDraftTimeHorizon(node.timeLabel || '');
+    setDraftStatus(node.status);
+    setErr('');
+    setEditing(true);
+  }
+
+  async function save() {
+    const t = draftTitle.trim();
+    if (!t) { setErr('标题不能为空'); return; }
+    if (node.type === 'yearly' && !draftTarget.trim()) { setErr('目标值不能为空'); return; }
+    setBusy(true); setErr('');
+    try {
+      if (node.type === 'life') {
+        await api.updateLifeGoal(node.id, { title: t, timeHorizon: draftTimeHorizon.trim() || undefined });
+        if (draftStatus !== node.status) await api.updateLifeGoalStatus(node.id, draftStatus);
+      } else if (node.type === 'yearly') {
+        await api.updateYearlyGoal(node.id, { title: t, targetValue: draftTarget.trim() });
+        if (draftStatus !== node.status) await api.updateYearlyGoalStatus(node.id, draftStatus);
+      }
+      setEditing(false);
+      onChanged();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '保存失败');
+      onChanged();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    const kind = node.type === 'life' ? '人生目标' : '年度目标';
+    const hint = node.type === 'yearly' ? '其下月度计划与日计划将一并删除。' : '该目标下的年度目标不会删除。';
+    if (!window.confirm(`确定删除该${kind}「${node.title}」？${hint}`)) return;
+    setBusy(true); setErr('');
+    try {
+      if (node.type === 'life') await api.deleteLifeGoal(node.id);
+      else if (node.type === 'yearly') await api.deleteYearlyGoal(node.id);
+      onChanged();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '删除失败');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div>
       <div className={`goal-node ${isDone ? 'done' : ''}`} onClick={() => setExpanded(!expanded)}>
-        {hasChildren && <span className="goal-expand-icon">{expanded ? '▼' : '▶'}</span>}
-        {!hasChildren && <span className="goal-expand-icon" />}
-        <span className="goal-title-text">{node.title}</span>
-        <StatusBadge status={node.status} />
-        {node.timeLabel && <span className="goal-year-tag">{node.timeLabel}</span>}
-        {node.progress && (
+        {editing ? (
+          <NodeEditForm
+            node={node}
+            draftTitle={draftTitle}
+            setDraftTitle={setDraftTitle}
+            draftTarget={draftTarget}
+            setDraftTarget={setDraftTarget}
+            draftTimeHorizon={draftTimeHorizon}
+            setDraftTimeHorizon={setDraftTimeHorizon}
+            draftStatus={draftStatus}
+            setDraftStatus={setDraftStatus}
+            busy={busy}
+            onSave={save}
+            onCancel={() => { setEditing(false); setErr(''); }}
+          />
+        ) : (
           <>
-            <span className="goal-start-value">{node.progress.start}</span>
-            <div className="goal-tree-bar">
-              <div className="progress-bar">
-                <div className={`progress-fill ${isDone ? 'gray' : pctClass(pct)}`} style={{ width: `${pct}%` }} />
-              </div>
-            </div>
-            <span className="goal-target-value">{node.progress.target}</span>
-            <span className="goal-value-text">{pct}%</span>
+            <span className="goal-expand-icon">{hasChildren ? (expanded ? '▼' : '▶') : ''}</span>
+            <span className="goal-title-text">{node.title}</span>
+            <StatusBadge status={node.status} />
+            {node.timeLabel && <span className="goal-year-tag">{node.timeLabel}</span>}
+            {node.progress && (
+              <>
+                <span className="goal-start-value">{node.progress.start}</span>
+                <div className="goal-tree-bar">
+                  <div className="progress-bar">
+                    <div className={`progress-fill ${isDone ? 'gray' : pctClass(pct)}`} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+                <span className="goal-target-value">{node.progress.target}</span>
+                <span className="goal-value-text">{pct}%</span>
+              </>
+            )}
+            {editable && (
+              <span onClick={e => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                <button onClick={startEdit} disabled={busy} style={actionBtn}>编辑</button>
+                <button onClick={remove} disabled={busy} style={dangerBtn}>删除</button>
+              </span>
+            )}
           </>
         )}
       </div>
+      {err && <div style={{ fontSize: 12, color: '#ef4444', padding: '2px 8px' }}>{err}</div>}
       {expanded && hasChildren && (
         <div className="goal-children">
           {node.children!.map(child => (
-            <GoalNode key={child.id} node={child} depth={depth + 1} />
+            <GoalNode key={child.id} node={child} depth={depth + 1} onChanged={onChanged} />
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function YearlyAddForm({ lifeGoalId, onDone }: { lifeGoalId: string; onDone: () => void }) {
+  const [title, setTitle] = useState('');
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [metricType, setMetricType] = useState('DURATION');
+  const [targetValue, setTargetValue] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  async function submit() {
+    const t = title.trim();
+    const v = targetValue.trim();
+    if (!t || !v) { setErr('标题与目标值为必填'); return; }
+    setBusy(true); setErr('');
+    try {
+      await api.createYearlyGoal({ lifeGoalId, title: t, year, metricType, targetValue: v });
+      onDone();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '创建失败');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="goal-add-row" onClick={e => e.stopPropagation()}>
+      <span style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+        <input value={title} onChange={e => { setTitle(e.target.value); setErr(''); }} placeholder="年度目标标题"
+          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          style={{ ...editInput, flex: 1, minWidth: 160 }} />
+        <input value={year} onChange={e => setYear(parseInt(e.target.value || '0', 10))} type="number"
+          style={{ ...editInput, width: 70 }} />
+        <select value={metricType} onChange={e => setMetricType(e.target.value)} style={{ ...editInput, width: 84 }}>
+          {Object.entries(METRIC_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <input value={targetValue} onChange={e => { setTargetValue(e.target.value); setErr(''); }} placeholder="目标值"
+          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          style={{ ...editInput, width: 90 }} />
+        <button onClick={submit} disabled={busy} style={primaryBtn}>{busy ? '…' : '保存'}</button>
+        <button onClick={onDone} disabled={busy} style={actionBtn}>取消</button>
+        {err && <span style={{ fontSize: 12, color: '#ef4444' }}>{err}</span>}
+      </span>
+    </div>
+  );
+}
+
+function YearlyAddToggle({ lifeGoalId, onDone }: { lifeGoalId: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  if (open) return <YearlyAddForm lifeGoalId={lifeGoalId} onDone={() => { setOpen(false); onDone(); }} />;
+  return (
+    <div className="goal-add-row">
+      <button className="goal-add-btn" onClick={e => { e.stopPropagation(); setOpen(true); }}>＋ 新增年度目标</button>
     </div>
   );
 }
@@ -305,7 +517,12 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
           })),
         };
 
-        return <GoalNode key={lg.id} node={treeNode} depth={0} />;
+        return (
+          <div key={lg.id}>
+            <GoalNode node={treeNode} depth={0} onChanged={load} />
+            <YearlyAddToggle lifeGoalId={lg.id} onDone={load} />
+          </div>
+        );
       })}
     </div>
   );

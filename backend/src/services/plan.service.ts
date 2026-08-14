@@ -74,6 +74,18 @@ export class PlanService {
     return prisma.monthlyPlan.update({ where: { id }, data: { currentValue } });
   }
 
+  /**
+   * 硬删除月度计划（级联删其 DailyPlan，事务原子）。
+   * 不存在时 monthlyPlan.delete 抛 P2025，事务回滚 → 404。
+   */
+  async deleteMonthlyPlan(id: string) {
+    return prisma.$transaction(async (tx) => {
+      const daily = await tx.dailyPlan.deleteMany({ where: { monthlyPlanId: id } });
+      await tx.monthlyPlan.delete({ where: { id } });
+      return { deleted: daily.count + 1 };
+    });
+  }
+
   // DailyPlan
   async listDailyPlans(userId: string, filters?: { monthlyPlanId?: string; date?: string }) {
     const where: any = { userId };
@@ -98,6 +110,12 @@ export class PlanService {
     const plan = await prisma.dailyPlan.findUniqueOrThrow({ where: { id } });
     validatePlanTransition(plan.status, status);
     return prisma.dailyPlan.update({ where: { id }, data: { status } });
+  }
+
+  /** 硬删除日计划（直接删；不存在抛 P2025 → 404） */
+  async deleteDailyPlan(id: string) {
+    await prisma.dailyPlan.delete({ where: { id } });
+    return { deleted: 1 };
   }
 
   // ─── AI 月度计划拆解 ───

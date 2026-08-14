@@ -50,6 +50,13 @@ export class GoalController {
     } catch (err) { next(err); }
   }
 
+  async deleteLifeGoal(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await goalService.deleteLifeGoal(id(req));
+      res.json({ data: result });
+    } catch (err) { next(err); }
+  }
+
   // YearlyGoal
   async listYearlyGoals(req: Request, res: Response, next: NextFunction) {
     try {
@@ -94,6 +101,13 @@ export class GoalController {
     try {
       const goal = await goalService.updateYearlyGoalProgress(id(req), req.body.currentValue);
       res.json({ data: goal });
+    } catch (err) { next(err); }
+  }
+
+  async deleteYearlyGoal(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await goalService.deleteYearlyGoal(id(req));
+      res.json({ data: result });
     } catch (err) { next(err); }
   }
 

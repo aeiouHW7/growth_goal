@@ -46,6 +46,12 @@ export class GoalService {
     });
   }
 
+  /** 硬删除人生目标（无子级，直接删；不存在抛 P2025 → 404） */
+  async deleteLifeGoal(id: string) {
+    await prisma.lifeGoal.delete({ where: { id } });
+    return { deleted: 1 };
+  }
+
   // YearlyGoal
   async listYearlyGoals(userId: string, filters?: { lifeGoalId?: string; year?: number }) {
     return prisma.yearlyGoal.findMany({ where: { userId, ...filters }, orderBy: { year: "asc" } });
@@ -74,6 +80,20 @@ export class GoalService {
 
   async updateYearlyGoalProgress(id: string, currentValue: string) {
     return prisma.yearlyGoal.update({ where: { id }, data: { currentValue } });
+  }
+
+  /**
+   * 硬删除年度目标（级联删其 MonthlyPlan → DailyPlan，事务原子）。
+   * 不存在时 yearlyGoal.delete 抛 P2025，事务回滚 → 404。
+   */
+  async deleteYearlyGoal(id: string) {
+    return prisma.$transaction(async (tx) => {
+      const plans = await tx.monthlyPlan.findMany({ where: { yearlyGoalId: id }, select: { id: true } });
+      const daily = await tx.dailyPlan.deleteMany({ where: { monthlyPlanId: { in: plans.map((p) => p.id) } } });
+      const monthly = await tx.monthlyPlan.deleteMany({ where: { yearlyGoalId: id } });
+      await tx.yearlyGoal.delete({ where: { id } });
+      return { deleted: daily.count + monthly.count + 1 };
+    });
   }
 
   // ─── AI 目标拆解 ───

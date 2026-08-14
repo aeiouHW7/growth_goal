@@ -29,6 +29,24 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
   return json.data as T;
 }
 
+async function put<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message || json.error.code);
+  return json.data as T;
+}
+
+async function del<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, { method: 'DELETE' });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message || json.error.code);
+  return json.data as T;
+}
+
 export interface User {
   id: string; nickname?: string; age: number; occupation: string; industry: string;
   city?: string; weekdayAvailableHours: number; weekendAvailableHours: number;
@@ -225,7 +243,21 @@ export const ARCHIVE_API = {
 export const api = {
   getUser: () => get<User>('/user'),
   getLifeGoals: () => get<LifeGoal[]>('/goals/life'),
+  createLifeGoal: (data: { title: string; description?: string; timeHorizon?: string; sortOrder?: number }) =>
+    post<LifeGoal>('/goals/life', data),
+  updateLifeGoal: (id: string, data: { title?: string; description?: string; timeHorizon?: string; sortOrder?: number }) =>
+    put<LifeGoal>(`/goals/life/${id}`, data),
+  updateLifeGoalStatus: (id: string, status: string) =>
+    patch<LifeGoal>(`/goals/life/${id}/status`, { status }),
+  deleteLifeGoal: (id: string) => del<{ deleted: number }>(`/goals/life/${id}`),
   getYearlyGoals: (year?: number) => get<YearlyGoal[]>(`/goals/yearly${year ? `?year=${year}` : ''}`),
+  createYearlyGoal: (data: { lifeGoalId?: string; title: string; description?: string; year: number; metricType: string; targetValue: string; startValue?: string }) =>
+    post<YearlyGoal>('/goals/yearly', data),
+  updateYearlyGoal: (id: string, data: { title?: string; description?: string; targetValue?: string; startValue?: string }) =>
+    put<YearlyGoal>(`/goals/yearly/${id}`, data),
+  updateYearlyGoalStatus: (id: string, status: string) =>
+    patch<YearlyGoal>(`/goals/yearly/${id}/status`, { status }),
+  deleteYearlyGoal: (id: string) => del<{ deleted: number }>(`/goals/yearly/${id}`),
   getMonthlyPlans: (year?: number, month?: number, yearlyGoalId?: string) => {
     const params = new URLSearchParams();
     if (year) params.set('year', String(year));
@@ -234,6 +266,11 @@ export const api = {
     const qs = params.toString();
     return get<MonthlyPlan[]>(`/plans/monthly${qs ? '?' + qs : ''}`);
   },
+  createMonthlyPlan: (data: { yearlyGoalId?: string; title: string; description?: string; month: number; year: number; metricType: string; targetValue: string; startValue?: string }) =>
+    post<MonthlyPlan>('/plans/monthly', data),
+  updateMonthlyPlan: (id: string, data: { title?: string; description?: string; targetValue?: string }) =>
+    put<MonthlyPlan>(`/plans/monthly/${id}`, data),
+  deleteMonthlyPlan: (id: string) => del<{ deleted: number }>(`/plans/monthly/${id}`),
   getDailyPlans: (date?: string) => get<DailyPlan[]>(`/plans/daily${date ? '?date=' + date : ''}`),
   getDailyReview: (date: string) => get<Review>(`/reviews/daily/${date}`),
   getAnalysis: (id: string) => get<AIAnalysis>(`/analysis/${id}`),
@@ -255,6 +292,9 @@ export const api = {
   // 日计划 Web 输入
   createDailyPlan: (data: { title: string; date: string; metricType: string; targetValue: string; monthlyPlanId?: string }) =>
     post<DailyPlan>('/plans/daily', data),
+  updateDailyPlan: (id: string, data: { title?: string; description?: string; targetValue?: string; currentValue?: string }) =>
+    put<DailyPlan>(`/plans/daily/${id}`, data),
   updateDailyPlanStatus: (id: string, status: string) =>
     patch<DailyPlan>(`/plans/daily/${id}/status`, { status }),
+  deleteDailyPlan: (id: string) => del<{ deleted: number }>(`/plans/daily/${id}`),
 };
