@@ -58,6 +58,26 @@ const editInput: React.CSSProperties = {
   fontSize: 12, minWidth: 0,
 };
 
+function getPct(current?: string, target?: string, start?: string): number {
+  const cur = parseFloat(current || '0');
+  const tgt = parseFloat(target || '1');
+  const st = start ? parseFloat(start) : undefined;
+  if (!tgt || isNaN(cur)) return 0;
+  let pct: number;
+  if (st != null && !isNaN(st) && tgt !== st) {
+    pct = Math.min((cur - st) / (tgt - st) * 100, 100);
+  } else {
+    pct = (cur / tgt) * 100;
+  }
+  return Math.max(0, Math.round(pct));
+}
+
+function pctClass(pct: number): 'green' | 'yellow' | 'red' {
+  if (pct >= 100) return 'green';
+  if (pct >= 50) return 'yellow';
+  return 'red';
+}
+
 function NodeEditForm({ node, draftTitle, setDraftTitle, draftTarget, setDraftTarget, draftTimeHorizon, setDraftTimeHorizon, draftStatus, setDraftStatus, busy, onSave, onCancel }: {
   node: GoalNodeData;
   draftTitle: string;
@@ -108,26 +128,6 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
   const hasChildren = node.children && node.children.length > 0;
   const isDone = node.status === 'COMPLETED' || node.status === 'ABANDONED';
   const editable = node.type === 'life' || node.type === 'yearly' || node.type === 'monthly';
-
-  const getPct = (current?: string, target?: string, start?: string): number => {
-    const cur = parseFloat(current || '0');
-    const tgt = parseFloat(target || '1');
-    const st = start ? parseFloat(start) : undefined;
-    if (!tgt || isNaN(cur)) return 0;
-    let pct: number;
-    if (st != null && !isNaN(st) && tgt !== st) {
-      pct = Math.min((cur - st) / (tgt - st) * 100, 100);
-    } else {
-      pct = (cur / tgt) * 100;
-    }
-    return Math.max(0, Math.round(pct));
-  };
-
-  const pctClass = (pct: number) => {
-    if (pct >= 100) return 'green';
-    if (pct >= 50) return 'yellow';
-    return 'red';
-  };
 
   const pct = node.progress ? getPct(node.progress.current, node.progress.target, node.progress.start) : 0;
 
@@ -301,7 +301,347 @@ interface Props {
   viewMode?: ViewMode;
 }
 
-function TimeView({ yearlyList, monthlyMap, filter }: { yearlyList: YearlyGoal[]; monthlyMap: Record<string, MonthlyPlan[]>; filter: Filter }) {
+function TimeEditForm({ node, draftTitle, setDraftTitle, draftTarget, setDraftTarget, draftStatus, setDraftStatus, busy, onSave, onCancel }: {
+  node: { id: string; title: string; type: 'yearly' | 'monthly'; status: string; timeLabel: string };
+  draftTitle: string;
+  setDraftTitle: (v: string) => void;
+  draftTarget: string;
+  setDraftTarget: (v: string) => void;
+  draftStatus: string;
+  setDraftStatus: (v: string) => void;
+  busy: boolean;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const statuses = statusOptions(node.status);
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
+      <input value={draftTitle} onChange={e => setDraftTitle(e.target.value)}
+        placeholder="标题" style={{ ...editInput, flex: 1, minWidth: 120 }} />
+      <input value={draftTarget} onChange={e => setDraftTarget(e.target.value)}
+        placeholder="目标值" style={{ ...editInput, width: 90 }} />
+      <input value={node.timeLabel} disabled
+        title={node.type === 'yearly' ? '年份不可修改' : '月份不可修改'}
+        style={{ ...editInput, width: 72, color: 'var(--text-muted)', background: '#f3f4f6' }} />
+      {node.type === 'yearly' && (
+        <select value={draftStatus} onChange={e => setDraftStatus(e.target.value)}
+          style={{ ...editInput, width: 84 }}>
+          {statuses.map(s => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
+        </select>
+      )}
+      <button onClick={onSave} disabled={busy} style={primaryBtn}>{busy ? '…' : '保存'}</button>
+      <button onClick={onCancel} disabled={busy} style={actionBtn}>取消</button>
+    </span>
+  );
+}
+
+function TimeYearlyRow({ yg, onChanged }: { yg: YearlyGoal; onChanged: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(yg.title);
+  const [draftTarget, setDraftTarget] = useState(yg.targetValue);
+  const [draftStatus, setDraftStatus] = useState(yg.status);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const isDone = yg.status === 'COMPLETED' || yg.status === 'ABANDONED';
+  const pct = getPct(yg.currentValue, yg.targetValue, yg.startValue);
+
+  function startEdit() {
+    setDraftTitle(yg.title);
+    setDraftTarget(yg.targetValue);
+    setDraftStatus(yg.status);
+    setErr('');
+    setEditing(true);
+  }
+
+  async function save() {
+    const t = draftTitle.trim();
+    if (!t) { setErr('标题不能为空'); return; }
+    if (!draftTarget.trim()) { setErr('目标值不能为空'); return; }
+    setBusy(true); setErr('');
+    try {
+      await api.updateYearlyGoal(yg.id, { title: t, targetValue: draftTarget.trim() });
+      if (draftStatus !== yg.status) await api.updateYearlyGoalStatus(yg.id, draftStatus);
+      setEditing(false);
+      onChanged();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '保存失败');
+      onChanged();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    if (!window.confirm(`确定删除该年度目标「${yg.title}」？其下月度计划与日计划将一并删除。`)) return;
+    setBusy(true); setErr('');
+    try {
+      await api.deleteYearlyGoal(yg.id);
+      onChanged();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '删除失败');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className={`goal-node ${isDone ? 'done' : ''}`}>
+        {editing ? (
+          <TimeEditForm
+            node={{ id: yg.id, title: yg.title, type: 'yearly', status: yg.status, timeLabel: `${yg.year}年` }}
+            draftTitle={draftTitle}
+            setDraftTitle={setDraftTitle}
+            draftTarget={draftTarget}
+            setDraftTarget={setDraftTarget}
+            draftStatus={draftStatus}
+            setDraftStatus={setDraftStatus}
+            busy={busy}
+            onSave={save}
+            onCancel={() => { setEditing(false); setErr(''); }}
+          />
+        ) : (
+          <>
+            <span className="goal-title-text">{yg.title}</span>
+            <StatusBadge status={yg.status} />
+            <span className="goal-year-tag">{yg.year}</span>
+            <span className="goal-start-value">{yg.startValue}</span>
+            <div className="goal-tree-bar">
+              <div className="progress-bar">
+                <div className={`progress-fill ${pctClass(pct)}`} style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+            <span className="goal-target-value">{yg.targetValue}</span>
+            <span className="goal-value-text">{pct}%</span>
+            <span onClick={e => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+              <button onClick={startEdit} disabled={busy} style={actionBtn}>编辑</button>
+              <button onClick={remove} disabled={busy} style={dangerBtn}>删除</button>
+            </span>
+          </>
+        )}
+      </div>
+      {err && <div style={{ fontSize: 12, color: '#ef4444', padding: '2px 8px' }}>{err}</div>}
+    </div>
+  );
+}
+
+function TimeMonthlyRow({ mp, onChanged }: { mp: MonthlyPlan; onChanged: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(mp.title);
+  const [draftTarget, setDraftTarget] = useState(mp.targetValue);
+  const [draftStatus, setDraftStatus] = useState(mp.status);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const isDone = mp.status === 'COMPLETED' || mp.status === 'ABANDONED';
+  const pct = getPct(mp.currentValue, mp.targetValue);
+
+  function startEdit() {
+    setDraftTitle(mp.title);
+    setDraftTarget(mp.targetValue);
+    setDraftStatus(mp.status);
+    setErr('');
+    setEditing(true);
+  }
+
+  async function save() {
+    const t = draftTitle.trim();
+    if (!t) { setErr('标题不能为空'); return; }
+    setBusy(true); setErr('');
+    try {
+      await api.updateMonthlyPlan(mp.id, { title: t, targetValue: draftTarget.trim() });
+      setEditing(false);
+      onChanged();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '保存失败');
+      onChanged();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    if (!window.confirm(`确定删除该月度计划「${mp.title}」？其下日计划将一并删除。`)) return;
+    setBusy(true); setErr('');
+    try {
+      await api.deleteMonthlyPlan(mp.id);
+      onChanged();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '删除失败');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className={`goal-node ${isDone ? 'done' : ''}`}>
+        {editing ? (
+          <TimeEditForm
+            node={{ id: mp.id, title: mp.title, type: 'monthly', status: mp.status, timeLabel: `${mp.month}月` }}
+            draftTitle={draftTitle}
+            setDraftTitle={setDraftTitle}
+            draftTarget={draftTarget}
+            setDraftTarget={setDraftTarget}
+            draftStatus={draftStatus}
+            setDraftStatus={setDraftStatus}
+            busy={busy}
+            onSave={save}
+            onCancel={() => { setEditing(false); setErr(''); }}
+          />
+        ) : (
+          <>
+            <span className="goal-title-text">{mp.title}</span>
+            <StatusBadge status={mp.status} />
+            <span className="goal-year-tag">{mp.month}月</span>
+            <div className="goal-tree-bar">
+              <div className="progress-bar">
+                <div className={`progress-fill ${pctClass(pct)}`} style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+            <span className="goal-target-value">{mp.targetValue}</span>
+            <span className="goal-value-text">{pct}%</span>
+            <span onClick={e => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+              <button onClick={startEdit} disabled={busy} style={actionBtn}>编辑</button>
+              <button onClick={remove} disabled={busy} style={dangerBtn}>删除</button>
+            </span>
+          </>
+        )}
+      </div>
+      {err && <div style={{ fontSize: 12, color: '#ef4444', padding: '2px 8px' }}>{err}</div>}
+    </div>
+  );
+}
+
+function TimeYearlyAddForm({ year, lifeGoals, onDone }: { year: number; lifeGoals: LifeGoal[]; onDone: () => void }) {
+  const [lifeGoalId, setLifeGoalId] = useState(lifeGoals[0]?.id || '');
+  const [title, setTitle] = useState('');
+  const [metricType, setMetricType] = useState('DURATION');
+  const [targetValue, setTargetValue] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  async function submit() {
+    const t = title.trim();
+    const v = targetValue.trim();
+    if (!t || !v) { setErr('标题与目标值为必填'); return; }
+    if (!lifeGoalId) { setErr('请选择关联的人生目标'); return; }
+    setBusy(true); setErr('');
+    try {
+      await api.createYearlyGoal({ lifeGoalId, title: t, year, metricType, targetValue: v });
+      onDone();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '创建失败');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="goal-add-row" onClick={e => e.stopPropagation()}>
+      <span style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+        {lifeGoals.length > 1 && (
+          <select value={lifeGoalId} onChange={e => setLifeGoalId(e.target.value)} style={{ ...editInput, width: 120 }}>
+            {lifeGoals.map(lg => <option key={lg.id} value={lg.id}>{lg.title}</option>)}
+          </select>
+        )}
+        <input value={title} onChange={e => { setTitle(e.target.value); setErr(''); }} placeholder="年度目标标题"
+          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          style={{ ...editInput, flex: 1, minWidth: 140 }} />
+        <select value={metricType} onChange={e => setMetricType(e.target.value)} style={{ ...editInput, width: 84 }}>
+          {Object.entries(METRIC_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <input value={targetValue} onChange={e => { setTargetValue(e.target.value); setErr(''); }} placeholder="目标值"
+          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          style={{ ...editInput, width: 80 }} />
+        <button onClick={submit} disabled={busy} style={primaryBtn}>{busy ? '…' : '保存'}</button>
+        <button onClick={onDone} disabled={busy} style={actionBtn}>取消</button>
+        {err && <span style={{ fontSize: 12, color: '#ef4444' }}>{err}</span>}
+      </span>
+    </div>
+  );
+}
+
+function TimeYearlyAddToggle({ year, lifeGoals, onDone }: { year: number; lifeGoals: LifeGoal[]; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  if (open) return <TimeYearlyAddForm year={year} lifeGoals={lifeGoals} onDone={() => { setOpen(false); onDone(); }} />;
+  return (
+    <div className="goal-add-row">
+      <button className="goal-add-btn" onClick={e => { e.stopPropagation(); setOpen(true); }}>＋ 新增年度目标</button>
+    </div>
+  );
+}
+
+function TimeMonthlyAddForm({ year, yearlyGoals, onDone }: { year: number; yearlyGoals: YearlyGoal[]; onDone: () => void }) {
+  const [yearlyGoalId, setYearlyGoalId] = useState(yearlyGoals[0]?.id || '');
+  const [title, setTitle] = useState('');
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [metricType, setMetricType] = useState('DURATION');
+  const [targetValue, setTargetValue] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  async function submit() {
+    const t = title.trim();
+    const v = targetValue.trim();
+    if (!t || !v) { setErr('标题与目标值为必填'); return; }
+    if (!yearlyGoalId) { setErr('请选择关联的年度目标'); return; }
+    setBusy(true); setErr('');
+    try {
+      await api.createMonthlyPlan({ yearlyGoalId, title: t, month, year, metricType, targetValue: v });
+      onDone();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '创建失败');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="goal-add-row" onClick={e => e.stopPropagation()}>
+      <span style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+        {yearlyGoals.length > 1 && (
+          <select value={yearlyGoalId} onChange={e => setYearlyGoalId(e.target.value)} style={{ ...editInput, width: 120 }}>
+            {yearlyGoals.map(yg => <option key={yg.id} value={yg.id}>{yg.title}</option>)}
+          </select>
+        )}
+        <input value={title} onChange={e => { setTitle(e.target.value); setErr(''); }} placeholder="月度计划标题"
+          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          style={{ ...editInput, flex: 1, minWidth: 140 }} />
+        <input value={month} onChange={e => setMonth(parseInt(e.target.value || '0', 10))} type="number" min={1} max={12}
+          style={{ ...editInput, width: 60 }} />
+        <select value={metricType} onChange={e => setMetricType(e.target.value)} style={{ ...editInput, width: 84 }}>
+          {Object.entries(METRIC_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <input value={targetValue} onChange={e => { setTargetValue(e.target.value); setErr(''); }} placeholder="目标值"
+          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          style={{ ...editInput, width: 80 }} />
+        <button onClick={submit} disabled={busy} style={primaryBtn}>{busy ? '…' : '保存'}</button>
+        <button onClick={onDone} disabled={busy} style={actionBtn}>取消</button>
+        {err && <span style={{ fontSize: 12, color: '#ef4444' }}>{err}</span>}
+      </span>
+    </div>
+  );
+}
+
+function TimeMonthlyAddToggle({ year, yearlyGoals, onDone }: { year: number; yearlyGoals: YearlyGoal[]; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  if (open) return <TimeMonthlyAddForm year={year} yearlyGoals={yearlyGoals} onDone={() => { setOpen(false); onDone(); }} />;
+  return (
+    <div className="goal-add-row">
+      <button className="goal-add-btn" onClick={e => { e.stopPropagation(); setOpen(true); }}>＋ 新增月度计划</button>
+    </div>
+  );
+}
+
+function TimeView({ yearlyList, monthlyMap, filter, lifeGoals, onChanged }: {
+  yearlyList: YearlyGoal[];
+  monthlyMap: Record<string, MonthlyPlan[]>;
+  filter: Filter;
+  lifeGoals: LifeGoal[];
+  onChanged: () => void;
+}) {
   // Group yearly goals by year
   const byYear: Record<number, YearlyGoal[]> = {};
   for (const yg of yearlyList) {
@@ -312,26 +652,6 @@ function TimeView({ yearlyList, monthlyMap, filter }: { yearlyList: YearlyGoal[]
 
   const isActive = (s: string) => s === 'ACTIVE' || s === 'IN_PROGRESS';
   const isDone = (s: string) => s === 'COMPLETED' || s === 'ABANDONED';
-
-  const getPct = (current?: string, target?: string, start?: string): number => {
-    const cur = parseFloat(current || '0');
-    const tgt = parseFloat(target || '1');
-    const st = start ? parseFloat(start) : undefined;
-    if (!tgt || isNaN(cur)) return 0;
-    let pct: number;
-    if (st != null && !isNaN(st) && tgt !== st) {
-      pct = Math.min((cur - st) / (tgt - st) * 100, 100);
-    } else {
-      pct = (cur / tgt) * 100;
-    }
-    return Math.max(0, Math.round(pct));
-  };
-
-  const pctClass = (pct: number) => {
-    if (pct >= 100) return 'green';
-    if (pct >= 50) return 'yellow';
-    return 'red';
-  };
 
   const [expandedYears, setExpandedYears] = useState<Record<number, boolean>>(() => {
     const init: Record<number, boolean> = {};
@@ -361,26 +681,12 @@ function TimeView({ yearlyList, monthlyMap, filter }: { yearlyList: YearlyGoal[]
             </div>
             {isExpanded && (
               <div className="time-year-body">
-                {goals.map(yg => {
-                  const pct = getPct(yg.currentValue, yg.targetValue, yg.startValue);
-                  return (
-                    <div key={yg.id} className={`goal-node ${isDone(yg.status) ? 'done' : ''}`}>
-                      <span className="goal-title-text">{yg.title}</span>
-                      <StatusBadge status={yg.status} />
-                      <span className="goal-year-tag">{yg.year}</span>
-                      <span className="goal-start-value">{yg.startValue}</span>
-                      <div className="goal-tree-bar">
-                        <div className="progress-bar">
-                          <div className={`progress-fill ${pctClass(pct)}`} style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                      <span className="goal-target-value">{yg.targetValue}</span>
-                      <span className="goal-value-text">{pct}%</span>
-                    </div>
-                  );
-                })}
-                {/* Group monthly plans by month */}
+                <TimeYearlyAddToggle year={year} lifeGoals={lifeGoals} onDone={onChanged} />
+                {goals.map(yg => (
+                  <TimeYearlyRow key={yg.id} yg={yg} onChanged={onChanged} />
+                ))}
                 {(() => {
+                  // Group monthly plans by month
                   const allMps = goals.flatMap(yg => (monthlyMap[yg.id] || []));
                   const byMonth: Record<number, MonthlyPlan[]> = {};
                   allMps.forEach(mp => {
@@ -392,26 +698,13 @@ function TimeView({ yearlyList, monthlyMap, filter }: { yearlyList: YearlyGoal[]
                       <div className="time-month-header">
                         <span>{month}月计划</span>
                       </div>
-                      {byMonth[month].map(mp => {
-                        const pct = getPct(mp.currentValue, mp.targetValue);
-                        return (
-                          <div key={mp.id} className={`goal-node ${isDone(mp.status) ? 'done' : ''}`}>
-                            <span className="goal-title-text">{mp.title}</span>
-                            <StatusBadge status={mp.status} />
-                            <span className="goal-year-tag">{mp.month}月</span>
-                            <div className="goal-tree-bar">
-                              <div className="progress-bar">
-                                <div className={`progress-fill ${pctClass(pct)}`} style={{ width: `${pct}%` }} />
-                              </div>
-                            </div>
-                            <span className="goal-target-value">{mp.targetValue}</span>
-                            <span className="goal-value-text">{pct}%</span>
-                          </div>
-                        );
-                      })}
+                      {byMonth[month].map(mp => (
+                        <TimeMonthlyRow key={mp.id} mp={mp} onChanged={onChanged} />
+                      ))}
                     </div>
                   ));
                 })()}
+                <TimeMonthlyAddToggle year={year} yearlyGoals={goals} onDone={onChanged} />
               </div>
             )}
           </div>
@@ -475,7 +768,7 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
 
   if (viewMode === 'time') {
     const allYearly = Object.values(yearlyMap).flat();
-    return <TimeView yearlyList={allYearly} monthlyMap={monthlyMap} filter={filter} />;
+    return <TimeView yearlyList={allYearly} monthlyMap={monthlyMap} filter={filter} lifeGoals={lifeGoals} onChanged={load} />;
   }
 
   return (
