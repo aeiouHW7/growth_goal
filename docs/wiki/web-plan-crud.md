@@ -7,7 +7,7 @@ Web 端对目标体系（人生目标/年度目标/月度计划/日计划）全�
 
 ## 能力
 - **后端 DELETE**：`/goals/life/:id`、`/goals/yearly/:id`（级联删 Monthly→Daily）、`/plans/monthly/:id`（级联 Daily）、`/plans/daily/:id`，事务原子
-- **目标链页**：Life/Yearly/Monthly 就地编辑（标题/目标值/状态）+ 新增 + 删除（confirm）
+- **目标链页**：Life/Yearly/Monthly 就地编辑（标题/目标值/状态）+ 新增 + 删除（confirm），层级/时间双视图均支持增删改
 - **计划页**：月度计划编辑/新增/删除；日计划补编辑
 - `api.ts`：全实体 create/update/delete 写方法
 
