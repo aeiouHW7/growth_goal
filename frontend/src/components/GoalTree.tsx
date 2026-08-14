@@ -107,7 +107,7 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
 
   const hasChildren = node.children && node.children.length > 0;
   const isDone = node.status === 'COMPLETED' || node.status === 'ABANDONED';
-  const editable = node.type === 'life' || node.type === 'yearly';
+  const editable = node.type === 'life' || node.type === 'yearly' || node.type === 'monthly';
 
   const getPct = (current?: string, target?: string, start?: string): number => {
     const cur = parseFloat(current || '0');
