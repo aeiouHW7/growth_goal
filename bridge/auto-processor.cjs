@@ -914,12 +914,13 @@ async function runAnalysis(userId, session, fullInput, signal) {
   try {
     // 用复盘日期的上下文（不是今天的）
     const ctxDate = session.reviewDate || todayStr();
-    const [plansRes, patternsRes, biasesRes, capsRes, reviewsRes] = await Promise.all([
+    const [plansRes, patternsRes, biasesRes, capsRes, reviewsRes, reflectionsRes] = await Promise.all([
       fetch('GET', `/api/plans/daily?date=${ctxDate}`).catch(() => ({ data: [] })),
       fetch('GET', '/api/analysis/patterns').catch(() => ({ data: [] })),
       fetch('GET', '/api/analysis/biases').catch(() => ({ data: [] })),
       fetch('GET', '/api/analysis/capabilities').catch(() => ({ data: [] })),
       fetch('GET', `/api/reviews/daily?from=${new Date(Date.now()-7*86400000).toISOString().slice(0,10)}&to=${ctxDate}`).catch(() => ({ data: [] })),
+      fetch('GET', '/api/analysis/reflections').catch(() => ({ data: [] })),
     ]);
 
     const plansText = (plansRes.data || []).map(p => `• ${p.title} (${p.status})`).join('\n') || '暂无';
@@ -927,6 +928,7 @@ async function runAnalysis(userId, session, fullInput, signal) {
     const biasesText = (biasesRes.data || []).map(b => `• ${b.biasType || b.type}: ${b.triggerPhrase}`).join('\n') || '暂无';
     const capsText = (capsRes.data || []).map(c => `• ${c.dimension}: ${c.score}`).join('\n') || '暂无';
     const recentText = (reviewsRes.data || []).slice(-5).map(r => `${(r.date||'').slice(5,10)}: ${(r.rawInput||'').slice(0,60)}`).join('\n') || '暂无';
+    const reflectionsText = (reflectionsRes.data || []).map(r => `• ${(r.issueDescription || '').slice(0, 100)}`).join('\n') || '';
 
     // Build the analysis via Claude CLI
     const userPrompt = `你是一个复盘分析师。根据用户的今日复盘输入，生成结构化分析报告。
@@ -941,6 +943,7 @@ async function runAnalysis(userId, session, fullInput, signal) {
 - 行为模式:\n${patternsText}
 - 认知偏误:\n${biasesText}
 - 能力评分:\n${capsText}
+- 用户近期反馈（低分反思，分析时参考）:\n${reflectionsText || '无'}
 - 用户画像: 新能源公司AI产品经理（知识库+客服），副业含延吉美容院/小红书情侣号/AI视频/AI编程，目标逐步脱离主业，工作日可用约3.7h（早6:30-8:40、晚21:00-22:30），核心习惯早起+体态训练，有经前疲劳期
 - 充沛率: ${session.energyRate != null ? session.energyRate : '根据精力诊断推断'}
 - 体态训练(用户自评): ${session.postureCompleted != null ? (session.postureCompleted ? '完成' : '未完成') : '待收集'}

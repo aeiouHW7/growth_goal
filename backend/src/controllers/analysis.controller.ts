@@ -80,6 +80,15 @@ export class AnalysisController {
     } catch (err) { next(err); }
   }
 
+  /** GET /api/analysis/reflections — 最近低分反思（分析注入用） */
+  async reflections(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = await getUserId();
+      const data = await analysisService.getReflections(userId);
+      res.json({ data });
+    } catch (err) { next(err); }
+  }
+
   // ===== self-growth-analyst 引擎端点 =====
 
   /** GET /api/analysis/patterns — 当前活跃模式/反复障碍列表 */

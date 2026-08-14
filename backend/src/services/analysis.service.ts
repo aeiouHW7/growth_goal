@@ -74,6 +74,25 @@ export class AnalysisService {
     });
   }
 
+  /** 最近低分反思（供分析注入，带 userId 过滤） */
+  async getReflections(userId: string) {
+    return prisma.aIReflection.findMany({
+      where: {
+        feedback: {
+          aiAnalysis: {
+            OR: [
+              { dailyReview: { userId } },
+              { weeklyReview: { userId } },
+              { monthlyReview: { userId } },
+            ],
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    });
+  }
+
   /**
    * 对两条建议消息去重判断（中文/短文本语义相似度）
    * - 短串是长串的子串 → 重复

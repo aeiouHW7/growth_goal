@@ -7,6 +7,7 @@ const c = new AnalysisController();
 router.post("/generate", c.generate.bind(c));
 router.post("/run/:reviewId", c.runAnalysis.bind(c));
 router.get("/suggestions", c.suggestions.bind(c));
+router.get("/reflections", c.reflections.bind(c));
 router.get("/patterns", c.getPatterns.bind(c));
 router.get("/patterns/recurring", c.getRecurringPatterns.bind(c));
 router.post("/patterns/track", c.trackPatterns.bind(c));
