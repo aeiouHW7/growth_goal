@@ -152,6 +152,8 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
       } else if (node.type === 'yearly') {
         await api.updateYearlyGoal(node.id, { title: t, targetValue: draftTarget.trim() });
         if (draftStatus !== node.status) await api.updateYearlyGoalStatus(node.id, draftStatus);
+      } else if (node.type === 'monthly') {
+        await api.updateMonthlyPlan(node.id, { title: t, targetValue: draftTarget.trim() });
       }
       setEditing(false);
       onChanged();
@@ -164,13 +166,16 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
   }
 
   async function remove() {
-    const kind = node.type === 'life' ? '人生目标' : '年度目标';
-    const hint = node.type === 'yearly' ? '其下月度计划与日计划将一并删除。' : '该目标下的年度目标不会删除。';
+    const kind = node.type === 'life' ? '人生目标' : node.type === 'monthly' ? '月度计划' : '年度目标';
+    const hint = node.type === 'yearly' ? '其下月度计划与日计划将一并删除。'
+      : node.type === 'monthly' ? '其下日计划将一并删除。'
+      : '该目标下的年度目标不会删除。';
     if (!window.confirm(`确定删除该${kind}「${node.title}」？${hint}`)) return;
     setBusy(true); setErr('');
     try {
       if (node.type === 'life') await api.deleteLifeGoal(node.id);
       else if (node.type === 'yearly') await api.deleteYearlyGoal(node.id);
+      else if (node.type === 'monthly') await api.deleteMonthlyPlan(node.id);
       onChanged();
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : '删除失败');
