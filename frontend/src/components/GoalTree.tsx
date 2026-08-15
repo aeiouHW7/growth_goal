@@ -116,7 +116,7 @@ function NodeEditForm({ node, draftTitle, setDraftTitle, draftTarget, setDraftTa
 }
 
 function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: number; onChanged: () => void }) {
-  const [expanded, setExpanded] = useState(depth < 2);
+  const [expanded, setExpanded] = useState(true);
   const [editing, setEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState(node.title);
   const [draftTarget, setDraftTarget] = useState(node.progress?.target || '');
