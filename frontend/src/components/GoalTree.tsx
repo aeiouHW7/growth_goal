@@ -15,6 +15,9 @@ interface GoalNodeData {
   status: string;
   timeLabel?: string;
   progress?: { current?: string; target?: string; start?: string };
+  parentId?: string | null;
+  lifeGoalId?: string;
+  year?: number;
   children?: GoalNodeData[];
 }
 
@@ -127,9 +130,59 @@ function NodeEditForm({ node, draftTitle, setDraftTitle, draftTarget, setDraftTa
   );
 }
 
-function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: number; onChanged: () => void }) {
+/** 「设为子目标 / 设为顶层」表单：选择父目标（排除自身与后代，避免成环） */
+function ReparentForm({ node, allYearly, descendants, onDone }: {
+  node: GoalNodeData;
+  allYearly: YearlyGoal[];
+  descendants: Record<string, string[]>;
+  onDone: () => void;
+}) {
+  const [parentId, setParentId] = useState(node.parentId || '');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const excluded = new Set<string>([node.id, ...(descendants[node.id] || [])]);
+  const candidates = allYearly
+    .filter(y => !excluded.has(y.id))
+    .sort((a, b) => a.year - b.year || a.title.localeCompare(b.title));
+
+  async function submit() {
+    setBusy(true); setErr('');
+    try {
+      await api.updateYearlyGoal(node.id, { parentId: parentId || null });
+      onDone();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : '设置失败');
+      setBusy(false);
+    }
+  }
+
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
+      <select value={parentId} onChange={e => { setParentId(e.target.value); setErr(''); }} style={{ ...editInput, width: 200 }}>
+        <option value="">（顶层 / 无父级）</option>
+        {candidates.map(c => (
+          <option key={c.id} value={c.id}>{c.title}（{c.year}年）</option>
+        ))}
+      </select>
+      <button onClick={submit} disabled={busy} style={primaryBtn}>{busy ? '…' : '保存'}</button>
+      <button onClick={onDone} disabled={busy} style={actionBtn}>取消</button>
+      {err && <span style={{ fontSize: 12, color: '#ef4444' }}>{err}</span>}
+    </span>
+  );
+}
+
+function GoalNode({ node, depth, onChanged, allYearly, descendants }: {
+  node: GoalNodeData;
+  depth: number;
+  onChanged: () => void;
+  allYearly: YearlyGoal[];
+  descendants: Record<string, string[]>;
+}) {
   const [expanded, setExpanded] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [addingChild, setAddingChild] = useState(false);
+  const [reparenting, setReparenting] = useState(false);
   const [draftTitle, setDraftTitle] = useState(node.title);
   const [draftTarget, setDraftTarget] = useState(node.progress?.target || '');
   const [draftTimeHorizon, setDraftTimeHorizon] = useState(node.timeLabel || '');
@@ -138,6 +191,7 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
   const [err, setErr] = useState('');
 
   const hasChildren = node.children && node.children.length > 0;
+  const subCount = (node.children || []).filter(c => c.type === 'yearly').length;
   const isDone = node.status === 'COMPLETED' || node.status === 'ABANDONED'
     || node.status === 'FAILED' || node.status === 'CANCELLED';
   const editable = node.type === 'life' || node.type === 'yearly' || node.type === 'monthly' || node.type === 'daily';
@@ -185,7 +239,8 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
       : node.type === 'yearly' ? '年度目标'
       : node.type === 'monthly' ? '月度计划'
       : '日计划';
-    const hint = node.type === 'yearly' ? '其下月度计划与日计划将一并删除。'
+    const hint = node.type === 'yearly'
+      ? (subCount > 0 ? `其下 ${subCount} 个子目标及月度/日计划将一并删除。` : '其下月度计划与日计划将一并删除。')
       : node.type === 'monthly' ? '其下日计划将一并删除。'
       : node.type === 'daily' ? ''
       : '该目标下的年度目标不会删除。';
@@ -228,6 +283,9 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
             <span className="goal-title-text">{node.title}</span>
             <StatusBadge status={node.status} />
             {node.timeLabel && <span className="goal-year-tag">{node.timeLabel}</span>}
+            {node.type === 'yearly' && subCount > 0 && (
+              <span className="goal-child-count">子目标 {subCount}</span>
+            )}
             {node.progress && (
               <>
                 <span className="goal-start-value">{node.progress.start}</span>
@@ -242,6 +300,12 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
             )}
             {editable && (
               <span onClick={e => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                {node.type === 'yearly' && (
+                  <>
+                    <button onClick={() => { setAddingChild(v => !v); setReparenting(false); }} disabled={busy} style={actionBtn}>拆子目标</button>
+                    <button onClick={() => { setReparenting(v => !v); setAddingChild(false); }} disabled={busy} style={actionBtn}>设父级</button>
+                  </>
+                )}
                 <button onClick={startEdit} disabled={busy} style={actionBtn}>编辑</button>
                 <button onClick={remove} disabled={busy} style={dangerBtn}>删除</button>
               </span>
@@ -250,10 +314,30 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
         )}
       </div>
       {err && <div style={{ fontSize: 12, color: '#ef4444', padding: '2px 8px' }}>{err}</div>}
+      {addingChild && node.type === 'yearly' && (
+        <div className="goal-add-row">
+          <YearlyAddForm
+            lifeGoalId={node.lifeGoalId}
+            parentId={node.id}
+            defaultYear={node.year}
+            onDone={() => { setAddingChild(false); onChanged(); }}
+          />
+        </div>
+      )}
+      {reparenting && node.type === 'yearly' && (
+        <div className="goal-add-row">
+          <ReparentForm
+            node={node}
+            allYearly={allYearly}
+            descendants={descendants}
+            onDone={() => { setReparenting(false); onChanged(); }}
+          />
+        </div>
+      )}
       {expanded && hasChildren && (
         <div className="goal-children">
           {node.children!.map(child => (
-            <GoalNode key={child.id} node={child} depth={depth + 1} onChanged={onChanged} />
+            <GoalNode key={child.id} node={child} depth={depth + 1} onChanged={onChanged} allYearly={allYearly} descendants={descendants} />
           ))}
         </div>
       )}
@@ -261,9 +345,11 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
   );
 }
 
-function YearlyAddForm({ lifeGoalId, onDone }: { lifeGoalId: string; onDone: () => void }) {
+function YearlyAddForm({ lifeGoalId, parentId, defaultYear, onDone }: {
+  lifeGoalId?: string; parentId?: string; defaultYear?: number; onDone: () => void;
+}) {
   const [title, setTitle] = useState('');
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState(defaultYear ?? new Date().getFullYear());
   const [metricType, setMetricType] = useState('DURATION');
   const [targetValue, setTargetValue] = useState('');
   const [busy, setBusy] = useState(false);
@@ -275,7 +361,11 @@ function YearlyAddForm({ lifeGoalId, onDone }: { lifeGoalId: string; onDone: () 
     if (!t || !v) { setErr('标题与目标值为必填'); return; }
     setBusy(true); setErr('');
     try {
-      await api.createYearlyGoal({ lifeGoalId, title: t, year, metricType, targetValue: v });
+      await api.createYearlyGoal({
+        lifeGoalId: lifeGoalId || undefined,
+        parentId: parentId || undefined,
+        title: t, year, metricType, targetValue: v,
+      });
       onDone();
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : '创建失败');
@@ -734,9 +824,85 @@ function TimeView({ yearlyList, monthlyMap, filter, lifeGoals, onChanged }: {
   );
 }
 
+/** 按 parentId 组织子目标（任意深度） */
+function computeChildrenOf(yearly: YearlyGoal[]): Record<string, YearlyGoal[]> {
+  const childrenOf: Record<string, YearlyGoal[]> = {};
+  yearly.forEach(y => {
+    if (y.parentId) {
+      (childrenOf[y.parentId] = childrenOf[y.parentId] || []).push(y);
+    }
+  });
+  return childrenOf;
+}
+
+/** 计算每个目标的所有后代 id（用于级联删除提示与防成环） */
+function computeDescendantMap(childrenOf: Record<string, YearlyGoal[]>): Record<string, string[]> {
+  const desc: Record<string, string[]> = {};
+  Object.keys(childrenOf).forEach(root => {
+    const seen: string[] = [];
+    const queue = [...(childrenOf[root] || []).map(c => c.id)];
+    while (queue.length) {
+      const cur = queue.shift()!;
+      if (seen.includes(cur)) continue;
+      seen.push(cur);
+      (childrenOf[cur] || []).forEach(c => queue.push(c.id));
+    }
+    desc[root] = seen;
+  });
+  return desc;
+}
+
+function buildYearlyNode(yg: YearlyGoal, childrenOf: Record<string, YearlyGoal[]>, monthlyMap: Record<string, MonthlyPlan[]>, dailyMap: Record<string, DailyPlan[]>, match: (s: string) => boolean): GoalNodeData {
+  const subChildren = (childrenOf[yg.id] || [])
+    .map(child => buildYearlyNode(child, childrenOf, monthlyMap, dailyMap, match));
+  const monthlyNodes = (monthlyMap[yg.id] || [])
+    .filter(mp => match(mp.status))
+    .map(mp => ({
+      id: mp.id,
+      title: mp.title,
+      type: 'monthly' as const,
+      status: mp.status,
+      timeLabel: `${mp.month}月`,
+      progress: { current: mp.currentValue, target: mp.targetValue },
+      children: (dailyMap[mp.id] || [])
+        .filter(dp => match(dp.status))
+        .map(dp => ({
+          id: dp.id,
+          title: dp.title,
+          type: 'daily' as const,
+          status: dp.status,
+          timeLabel: formatDailyDate(dp.date),
+          progress: { current: dp.currentValue, target: dp.targetValue },
+        })),
+    }));
+  return {
+    id: yg.id,
+    title: yg.title,
+    type: 'yearly',
+    status: yg.status,
+    timeLabel: String(yg.year),
+    parentId: yg.parentId,
+    lifeGoalId: yg.lifeGoalId,
+    year: yg.year,
+    progress: { current: yg.currentValue, target: yg.targetValue, start: yg.startValue },
+    children: [...subChildren, ...monthlyNodes],
+  };
+}
+
+/** 过滤层级树：自身匹配或存在匹配的子目标则保留（避免父被过滤导致子树孤立） */
+function pruneYearlyTree(node: GoalNodeData, match: (s: string) => boolean): GoalNodeData | null {
+  const yearlyKids = (node.children || []).filter(c => c.type === 'yearly');
+  const otherKids = (node.children || []).filter(c => c.type !== 'yearly');
+  const prunedYearly = yearlyKids.map(k => pruneYearlyTree(k, match)).filter(Boolean) as GoalNodeData[];
+  if (match(node.status) || prunedYearly.length > 0) {
+    return { ...node, children: [...prunedYearly, ...otherKids] };
+  }
+  return null;
+}
+
 export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
   const [lifeGoals, setLifeGoals] = useState<LifeGoal[] | null | undefined>(undefined);
-  const [yearlyMap, setYearlyMap] = useState<Record<string, YearlyGoal[]>>({});
+  const [allYearly, setAllYearly] = useState<YearlyGoal[]>([]);
   const [monthlyMap, setMonthlyMap] = useState<Record<string, MonthlyPlan[]>>({});
   const [dailyMap, setDailyMap] = useState<Record<string, DailyPlan[]>>({});
 
@@ -746,21 +912,12 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
         setLifeGoals(lifeGoals);
         if (!lifeGoals || lifeGoals.length === 0) return;
 
-        // Load yearly goals for each life goal
-        const yearlyPromises = lifeGoals.map(lg =>
-          api.getYearlyGoals().then(yearly => ({ lgId: lg.id, yearly }))
-        );
-        const yearlyResults = await Promise.all(yearlyPromises);
-        const yMap: Record<string, YearlyGoal[]> = {};
-        const allYearly: YearlyGoal[] = [];
-        yearlyResults.forEach(r => {
-          yMap[r.lgId] = r.yearly;
-          allYearly.push(...r.yearly);
-        });
-        setYearlyMap(yMap);
+        // 一次性加载全部年度目标（含子目标），前端按 parentId 组父子树
+        const yearly = await api.getYearlyGoals();
+        setAllYearly(yearly);
 
         // Load monthly plans for each yearly goal (filtered by yearlyGoalId)
-        const monthlyPromises = allYearly.map(yg =>
+        const monthlyPromises = yearly.map(yg =>
           api.getMonthlyPlans(yg.year, undefined, yg.id).then(monthly => ({ ygId: yg.id, monthly }))
         );
         const monthlyResults = await Promise.all(monthlyPromises);
@@ -797,83 +954,59 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
   // DailyPlan 使用 PlanStatus：PENDING/IN_PROGRESS 视为进行中，其余完成类视为 done
   const isActiveDaily = (s: string) => s === 'PENDING' || s === 'IN_PROGRESS';
   const isDoneDaily = (s: string) => s === 'COMPLETED' || s === 'PARTIAL' || s === 'FAILED' || s === 'CANCELLED';
-
-  const filteredLGs = lifeGoals.filter(lg => {
+  const match = (s: string) => {
     if (filter === 'all') return true;
-    if (filter === 'active') return isActive(lg.status);
-    return isDone(lg.status);
-  });
+    if (filter === 'active') return isActive(s) || isActiveDaily(s);
+    return isDone(s) || isDoneDaily(s);
+  };
 
   if (viewMode === 'time') {
-    const allYearly = Object.values(yearlyMap).flat();
     return <TimeView yearlyList={allYearly} monthlyMap={monthlyMap} filter={filter} lifeGoals={lifeGoals} onChanged={load} />;
   }
 
+  const childrenOf = computeChildrenOf(allYearly);
+  const descendants = computeDescendantMap(childrenOf);
+
+  const lifeBlocks = lifeGoals.map(lg => {
+    const yearNodes = allYearly
+      .filter(y => y.lifeGoalId === lg.id && !y.parentId)
+      .map(yg => pruneYearlyTree(buildYearlyNode(yg, childrenOf, monthlyMap, dailyMap, match), match))
+      .filter(Boolean) as GoalNodeData[];
+    if (filter !== 'all' && !match(lg.status) && yearNodes.length === 0) return null;
+
+    const lifeNode: GoalNodeData = {
+      id: lg.id,
+      title: lg.title,
+      type: 'life',
+      status: lg.status,
+      timeLabel: lg.timeHorizon || '10-20年',
+      children: yearNodes,
+    };
+
+    return (
+      <div key={lg.id}>
+        <GoalNode node={lifeNode} depth={0} onChanged={load} allYearly={allYearly} descendants={descendants} />
+        <YearlyAddToggle lifeGoalId={lg.id} onDone={load} />
+      </div>
+    );
+  }).filter(Boolean);
+
+  const unlinkedNodes = allYearly
+    .filter(y => !y.parentId && !y.lifeGoalId)
+    .map(yg => pruneYearlyTree(buildYearlyNode(yg, childrenOf, monthlyMap, dailyMap, match), match))
+    .filter(Boolean) as GoalNodeData[];
+
   return (
     <div>
-      {filteredLGs.map(lg => {
-        const yearly = yearlyMap[lg.id] || [];
-        const isLifeDone = isDone(lg.status);
-
-        const filteredYearly = yearly.filter(yg => {
-          if (filter === 'all') return true;
-          if (filter === 'active') return isActive(yg.status);
-          return isDone(yg.status);
-        });
-
-        if (filter !== 'all' && filteredYearly.length === 0 && !isLifeDone) return null;
-
-        const treeNode: GoalNodeData = {
-          id: lg.id,
-          title: lg.title,
-          type: 'life',
-          status: lg.status,
-          timeLabel: lg.timeHorizon || '10-20年',
-          children: filteredYearly.map(yg => ({
-            id: yg.id,
-            title: yg.title,
-            type: 'yearly' as const,
-            status: yg.status,
-            timeLabel: String(yg.year),
-            progress: { current: yg.currentValue, target: yg.targetValue, start: yg.startValue },
-            children: (monthlyMap[yg.id] || [])
-              .filter(mp => {
-                if (filter === 'all') return true;
-                if (filter === 'active') return isActive(mp.status);
-                return isDone(mp.status);
-              })
-              .map(mp => ({
-                id: mp.id,
-                title: mp.title,
-                type: 'monthly' as const,
-                status: mp.status,
-                timeLabel: `${mp.month}月`,
-                progress: { current: mp.currentValue, target: mp.targetValue },
-                children: (dailyMap[mp.id] || [])
-                  .filter(dp => {
-                    if (filter === 'all') return true;
-                    if (filter === 'active') return isActiveDaily(dp.status);
-                    return isDoneDaily(dp.status);
-                  })
-                  .map(dp => ({
-                    id: dp.id,
-                    title: dp.title,
-                    type: 'daily' as const,
-                    status: dp.status,
-                    timeLabel: formatDailyDate(dp.date),
-                    progress: { current: dp.currentValue, target: dp.targetValue },
-                  })),
-              })),
-          })),
-        };
-
-        return (
-          <div key={lg.id}>
-            <GoalNode node={treeNode} depth={0} onChanged={load} />
-            <YearlyAddToggle lifeGoalId={lg.id} onDone={load} />
-          </div>
-        );
-      })}
+      {lifeBlocks}
+      {unlinkedNodes.length > 0 && (
+        <div className="goal-tree-root">
+          <div className="goal-tree-section-title">未关联人生目标</div>
+          {unlinkedNodes.map(node => (
+            <GoalNode key={node.id} node={node} depth={0} onChanged={load} allYearly={allYearly} descendants={descendants} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

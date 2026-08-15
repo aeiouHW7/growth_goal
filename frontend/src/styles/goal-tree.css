@@ -120,6 +120,26 @@
   margin-left: 20px;
 }
 
+/* 子目标计数徽标 */
+.goal-child-count {
+  font-size: 11px;
+  color: var(--accent, #6366f1);
+  background: var(--bg-accent, #eef2ff);
+  border-radius: 10px;
+  padding: 1px 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* 未关联人生目标分组标题 */
+.goal-tree-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  padding: 4px 8px;
+  margin-bottom: 6px;
+}
+
 /* ─── Time View ─── */
 .time-year-section {
   margin-bottom: 12px;

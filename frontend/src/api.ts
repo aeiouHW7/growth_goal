@@ -59,7 +59,7 @@ export interface LifeGoal {
 }
 
 export interface YearlyGoal {
-  id: string; lifeGoalId?: string; title: string; description?: string;
+  id: string; lifeGoalId?: string; parentId?: string | null; title: string; description?: string;
   year: number; metricType: string; targetValue: string; currentValue?: string;
   startValue?: string; status: string;
 }
@@ -250,10 +250,18 @@ export const api = {
   updateLifeGoalStatus: (id: string, status: string) =>
     patch<LifeGoal>(`/goals/life/${id}/status`, { status }),
   deleteLifeGoal: (id: string) => del<{ deleted: number }>(`/goals/life/${id}`),
-  getYearlyGoals: (year?: number) => get<YearlyGoal[]>(`/goals/yearly${year ? `?year=${year}` : ''}`),
-  createYearlyGoal: (data: { lifeGoalId?: string; title: string; description?: string; year: number; metricType: string; targetValue: string; startValue?: string }) =>
+  getYearlyGoals: (year?: number, parentId?: string | null) => {
+    const params = new URLSearchParams();
+    if (year) params.set('year', String(year));
+    // parentId= 表示顶层目标；parentId=<id> 表示某目标的子目标；缺省返回全部
+    if (parentId !== undefined) params.set('parentId', parentId ?? '');
+    const qs = params.toString();
+    return get<YearlyGoal[]>(`/goals/yearly${qs ? '?' + qs : ''}`);
+  },
+  getYearlyGoalChildren: (id: string) => get<YearlyGoal[]>(`/goals/yearly/${id}/children`),
+  createYearlyGoal: (data: { lifeGoalId?: string; parentId?: string; title: string; description?: string; year: number; metricType: string; targetValue: string; startValue?: string }) =>
     post<YearlyGoal>('/goals/yearly', data),
-  updateYearlyGoal: (id: string, data: { title?: string; description?: string; targetValue?: string; startValue?: string }) =>
+  updateYearlyGoal: (id: string, data: { title?: string; description?: string; targetValue?: string; startValue?: string; parentId?: string | null }) =>
     put<YearlyGoal>(`/goals/yearly/${id}`, data),
   updateYearlyGoalStatus: (id: string, status: string) =>
     patch<YearlyGoal>(`/goals/yearly/${id}/status`, { status }),

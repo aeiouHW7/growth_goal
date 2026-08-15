@@ -13,6 +13,7 @@ router.delete("/life/:id", c.deleteLifeGoal.bind(c));
 
 // YearlyGoal
 router.get("/yearly", c.listYearlyGoals.bind(c));
+router.get("/yearly/:id/children", c.listYearlyGoalChildren.bind(c));
 router.post("/yearly", c.createYearlyGoal.bind(c));
 router.put("/yearly/:id", c.updateYearlyGoal.bind(c));
 router.patch("/yearly/:id/status", c.updateYearlyGoalStatus.bind(c));

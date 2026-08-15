@@ -9,7 +9,7 @@ jest.mock("../prisma", () => ({
   prisma: {
     user: { findFirst: jest.fn() },
     lifeGoal: { delete: jest.fn() },
-    yearlyGoal: { delete: jest.fn() },
+    yearlyGoal: { findMany: jest.fn(), deleteMany: jest.fn(), delete: jest.fn() },
     monthlyPlan: { findMany: jest.fn(), deleteMany: jest.fn(), delete: jest.fn() },
     dailyPlan: { deleteMany: jest.fn(), delete: jest.fn() },
     $transaction: jest.fn(),
@@ -42,43 +42,70 @@ describe("GoalService.deleteLifeGoal", () => {
 describe("GoalService.deleteYearlyGoal（级联）", () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it("事务内先删其 DailyPlan → MonthlyPlan → 自身", async () => {
+  it("事务内先删其子目标/月度/日计划再删自身", async () => {
+    (prisma.yearlyGoal.findMany as jest.Mock).mockResolvedValue([]); // 无子目标
     (prisma.monthlyPlan.findMany as jest.Mock).mockResolvedValue([{ id: "m1" }, { id: "m2" }]);
     (prisma.dailyPlan.deleteMany as jest.Mock).mockResolvedValue({ count: 3 });
     (prisma.monthlyPlan.deleteMany as jest.Mock).mockResolvedValue({ count: 2 });
-    (prisma.yearlyGoal.delete as jest.Mock).mockResolvedValue({ id: "y1" });
+    (prisma.yearlyGoal.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
     mockTransaction();
 
     const result = await new GoalService().deleteYearlyGoal("y1");
 
+    expect(prisma.yearlyGoal.findMany).toHaveBeenCalledWith({
+      where: { parentId: "y1" }, select: { id: true },
+    });
     expect(prisma.dailyPlan.deleteMany).toHaveBeenCalledWith({
       where: { monthlyPlanId: { in: ["m1", "m2"] } },
     });
     expect(prisma.monthlyPlan.deleteMany).toHaveBeenCalledWith({
-      where: { yearlyGoalId: "y1" },
+      where: { yearlyGoalId: { in: ["y1"] } },
     });
-    expect(prisma.yearlyGoal.delete).toHaveBeenCalledWith({ where: { id: "y1" } });
+    expect(prisma.yearlyGoal.deleteMany).toHaveBeenCalledWith({
+      where: { id: { in: ["y1"] } },
+    });
     expect(result).toEqual({ deleted: 3 + 2 + 1 });
   });
 
-  it("不存在（P2025）时传播异常 → 由错误处理器映射 404", async () => {
+  it("级联删除两层子目标（y1 → c1 → c2）", async () => {
+    (prisma.yearlyGoal.findMany as jest.Mock)
+      .mockResolvedValueOnce([{ id: "c1" }])
+      .mockResolvedValueOnce([{ id: "c2" }])
+      .mockResolvedValueOnce([]);
     (prisma.monthlyPlan.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.dailyPlan.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
     (prisma.monthlyPlan.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
-    (prisma.yearlyGoal.delete as jest.Mock).mockRejectedValue(p2025());
+    (prisma.yearlyGoal.deleteMany as jest.Mock).mockResolvedValue({ count: 3 });
     mockTransaction();
 
-    await expect(new GoalService().deleteYearlyGoal("y1")).rejects.toMatchObject({ code: "P2025" });
+    const result = await new GoalService().deleteYearlyGoal("y1");
+
+    expect(prisma.yearlyGoal.deleteMany).toHaveBeenCalledWith({
+      where: { id: { in: ["y1", "c1", "c2"] } },
+    });
+    expect(result).toEqual({ deleted: 3 });
+  });
+
+  it("不存在时抛 NOT_FOUND → 由错误处理器映射 404", async () => {
+    (prisma.yearlyGoal.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.monthlyPlan.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.dailyPlan.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
+    (prisma.monthlyPlan.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
+    (prisma.yearlyGoal.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
+    mockTransaction();
+
+    await expect(new GoalService().deleteYearlyGoal("y1")).rejects.toMatchObject({ status: 404, code: "NOT_FOUND" });
   });
 
   it("事务回滚：子级删除失败时整体拒绝，父级不删除", async () => {
+    (prisma.yearlyGoal.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.monthlyPlan.findMany as jest.Mock).mockResolvedValue([{ id: "m1" }]);
     (prisma.dailyPlan.deleteMany as jest.Mock).mockRejectedValue(new Error("db down"));
     mockTransaction();
 
     await expect(new GoalService().deleteYearlyGoal("y1")).rejects.toThrow("db down");
     expect(prisma.monthlyPlan.deleteMany).not.toHaveBeenCalled();
-    expect(prisma.yearlyGoal.delete).not.toHaveBeenCalled();
+    expect(prisma.yearlyGoal.deleteMany).not.toHaveBeenCalled();
   });
 });
 
@@ -134,10 +161,11 @@ describe("DELETE 端点（supertest，mock prisma）", () => {
   });
 
   it("DELETE /api/goals/yearly/:id → 404（不存在，级联事务回滚）", async () => {
+    (prisma.yearlyGoal.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.monthlyPlan.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.dailyPlan.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
     (prisma.monthlyPlan.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
-    (prisma.yearlyGoal.delete as jest.Mock).mockRejectedValue(p2025());
+    (prisma.yearlyGoal.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
     mockTransaction();
 
     const res = await request(app).delete("/api/goals/yearly/nope");

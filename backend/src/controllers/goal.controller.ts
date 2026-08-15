@@ -61,24 +61,37 @@ export class GoalController {
   async listYearlyGoals(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = await getUserId();
-      const { lifeGoalId, year } = req.query;
+      const { lifeGoalId, year, parentId } = req.query;
+      // parentId= 或 parentId=null → 仅查顶层目标；parentId=<id> → 查某目标的子目标；缺省 → 查全部
+      const parentIdFilter = parentId === undefined ? undefined
+        : (parentId === "" || parentId === "null") ? null
+        : parentId as string;
       const goals = await goalService.listYearlyGoals(userId, {
         lifeGoalId: lifeGoalId as string | undefined,
         year: year ? parseInt(year as string, 10) : undefined,
+        parentId: parentIdFilter,
       });
       res.json({ data: goals });
+    } catch (err) { next(err); }
+  }
+
+  async listYearlyGoalChildren(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = await getUserId();
+      const children = await goalService.listYearlyGoals(userId, { parentId: id(req) });
+      res.json({ data: children });
     } catch (err) { next(err); }
   }
 
   async createYearlyGoal(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = await getUserId();
-      const { lifeGoalId, title, description, year, metricType, targetValue, startValue } = req.body;
+      const { lifeGoalId, parentId, title, description, year, metricType, targetValue, startValue } = req.body;
       if (!title || !year || !metricType || !targetValue) {
         res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "title/year/metricType/targetValue 为必填项" } });
         return;
       }
-      const goal = await goalService.createYearlyGoal({ userId, lifeGoalId, title, description, year, metricType, targetValue, startValue });
+      const goal = await goalService.createYearlyGoal({ userId, lifeGoalId, parentId, title, description, year, metricType, targetValue, startValue });
       res.status(201).json({ data: goal });
     } catch (err) { next(err); }
   }

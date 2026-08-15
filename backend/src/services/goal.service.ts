@@ -1,4 +1,4 @@
-import { GoalStatus, MetricType } from "@prisma/client";
+import { GoalStatus, MetricType, Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 import { validateMetric } from "../utils/metric-validator";
 import { LifeArchiveService } from "./life-archive.service";
@@ -53,20 +53,84 @@ export class GoalService {
   }
 
   // YearlyGoal
-  async listYearlyGoals(userId: string, filters?: { lifeGoalId?: string; year?: number }) {
-    return prisma.yearlyGoal.findMany({ where: { userId, ...filters }, orderBy: { year: "asc" } });
+
+  /** 收集指定目标的所有后代目标 id（含间接后代，BFS）。用于级联删除与环检测。 */
+  private async collectDescendantGoalIds(tx: Prisma.TransactionClient, parentId: string): Promise<string[]> {
+    const result: string[] = [];
+    const queue = [parentId];
+    while (queue.length > 0) {
+      const cur = queue.shift()!;
+      const direct = await tx.yearlyGoal.findMany({ where: { parentId: cur }, select: { id: true } });
+      for (const g of direct) {
+        result.push(g.id);
+        queue.push(g.id);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * 校验 parentId 是否可作为 goalId 的父目标：
+   * 存在、属于同一用户、非自身、不形成环（不能把目标设为其子目标的父）。
+   */
+  private async validateParentYearlyGoal(goalId: string, parentId: string) {
+    if (parentId === goalId) {
+      throw Object.assign(new Error("不能把目标设为自己的子目标"), { status: 409, code: "PARENT_CYCLE" });
+    }
+    const [goal, parent] = await Promise.all([
+      prisma.yearlyGoal.findUnique({ where: { id: goalId }, select: { userId: true } }),
+      prisma.yearlyGoal.findUnique({ where: { id: parentId }, select: { userId: true } }),
+    ]);
+    if (!parent) throw Object.assign(new Error("父目标不存在"), { status: 404, code: "PARENT_NOT_FOUND" });
+    if (!goal || parent.userId !== goal.userId) {
+      throw Object.assign(new Error("父目标不属于当前用户"), { status: 403, code: "PARENT_FORBIDDEN" });
+    }
+    // 环检测：从 parent 逐级向上，若经过 goalId 则成环
+    const ancestors = await this.collectDescendantGoalIds(prisma, goalId);
+    if (ancestors.includes(parentId)) {
+      throw Object.assign(new Error("不能把目标设为其子目标的子目标（会形成循环）"), { status: 409, code: "PARENT_CYCLE" });
+    }
+  }
+
+  async listYearlyGoals(userId: string, filters?: { lifeGoalId?: string; year?: number; parentId?: string | null }) {
+    const where: Prisma.YearlyGoalWhereInput = { userId };
+    if (filters?.lifeGoalId !== undefined) where.lifeGoalId = filters.lifeGoalId;
+    if (filters?.year !== undefined) where.year = filters.year;
+    if (filters !== undefined && "parentId" in filters) where.parentId = filters.parentId ?? null;
+    return prisma.yearlyGoal.findMany({ where, orderBy: [{ year: "asc" }, { createdAt: "asc" }] });
   }
 
   async createYearlyGoal(data: {
-    userId: string; lifeGoalId?: string; title: string; description?: string;
+    userId: string; lifeGoalId?: string; parentId?: string; title: string; description?: string;
     year: number; metricType: MetricType; targetValue: string; startValue?: string;
   }) {
     validateMetric(data.metricType, data.targetValue);
-    return prisma.yearlyGoal.create({ data });
+    const { parentId, ...rest } = data;
+    const createData: Prisma.YearlyGoalUncheckedCreateInput = { ...rest };
+    if (parentId) {
+      // 创建时自身尚无 id，仅校验父目标存在且同用户
+      const parent = await prisma.yearlyGoal.findUnique({ where: { id: parentId }, select: { userId: true } });
+      if (!parent) throw Object.assign(new Error("父目标不存在"), { status: 404, code: "PARENT_NOT_FOUND" });
+      if (parent.userId !== data.userId) {
+        throw Object.assign(new Error("父目标不属于当前用户"), { status: 403, code: "PARENT_FORBIDDEN" });
+      }
+      createData.parentId = parentId;
+    }
+    return prisma.yearlyGoal.create({ data: createData });
   }
 
-  async updateYearlyGoal(id: string, data: { title?: string; description?: string; targetValue?: string; startValue?: string }) {
-    return prisma.yearlyGoal.update({ where: { id }, data });
+  async updateYearlyGoal(id: string, data: { title?: string; description?: string; targetValue?: string; startValue?: string; parentId?: string | null }) {
+    const { parentId, ...rest } = data;
+    const updateData: Prisma.YearlyGoalUpdateInput = { ...rest };
+    if ("parentId" in data && parentId !== undefined) {
+      if (parentId === null || parentId === "") {
+        updateData.parent = { disconnect: true };
+      } else {
+        await this.validateParentYearlyGoal(id, parentId);
+        updateData.parent = { connect: { id: parentId } };
+      }
+    }
+    return prisma.yearlyGoal.update({ where: { id }, data: updateData });
   }
 
   async updateYearlyGoalStatus(id: string, status: GoalStatus) {
@@ -83,16 +147,21 @@ export class GoalService {
   }
 
   /**
-   * 硬删除年度目标（级联删其 MonthlyPlan → DailyPlan，事务原子）。
-   * 不存在时 yearlyGoal.delete 抛 P2025，事务回滚 → 404。
+   * 硬删除年度目标（级联删其子目标（任意深度）→ MonthlyPlan → DailyPlan，事务原子）。
+   * 不存在时 tx.yearlyGoal.deleteMany 计数为 0 → 抛 NOT_FOUND → 404。
    */
   async deleteYearlyGoal(id: string) {
     return prisma.$transaction(async (tx) => {
-      const plans = await tx.monthlyPlan.findMany({ where: { yearlyGoalId: id }, select: { id: true } });
-      const daily = await tx.dailyPlan.deleteMany({ where: { monthlyPlanId: { in: plans.map((p) => p.id) } } });
-      const monthly = await tx.monthlyPlan.deleteMany({ where: { yearlyGoalId: id } });
-      await tx.yearlyGoal.delete({ where: { id } });
-      return { deleted: daily.count + monthly.count + 1 };
+      const descendantIds = await this.collectDescendantGoalIds(tx, id);
+      const allGoalIds = [id, ...descendantIds];
+      const monthly = await tx.monthlyPlan.findMany({ where: { yearlyGoalId: { in: allGoalIds } }, select: { id: true } });
+      const daily = await tx.dailyPlan.deleteMany({ where: { monthlyPlanId: { in: monthly.map((m) => m.id) } } });
+      const monthlyDeleted = await tx.monthlyPlan.deleteMany({ where: { yearlyGoalId: { in: allGoalIds } } });
+      const goalDeleted = await tx.yearlyGoal.deleteMany({ where: { id: { in: allGoalIds } } });
+      if (goalDeleted.count === 0) {
+        throw Object.assign(new Error("目标不存在"), { status: 404, code: "NOT_FOUND" });
+      }
+      return { deleted: daily.count + monthlyDeleted.count + goalDeleted.count };
     });
   }
 

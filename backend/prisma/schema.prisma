@@ -100,6 +100,7 @@ model YearlyGoal {
   id           String     @id @default(uuid())
   userId       String
   lifeGoalId   String?
+  parentId     String?
   title        String
   description  String?
   year         Int
@@ -114,6 +115,8 @@ model YearlyGoal {
 
   user         User         @relation(fields: [userId], references: [id])
   lifeGoal     LifeGoal?    @relation(fields: [lifeGoalId], references: [id])
+  parent       YearlyGoal?  @relation("YearlyGoalHierarchy", fields: [parentId], references: [id])
+  children     YearlyGoal[] @relation("YearlyGoalHierarchy")
   monthlyPlans MonthlyPlan[]
 }
 
