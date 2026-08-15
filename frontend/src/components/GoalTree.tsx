@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
-import type { LifeGoal, YearlyGoal, MonthlyPlan } from '../api';
+import type { LifeGoal, YearlyGoal, MonthlyPlan, DailyPlan } from '../api';
 import { StatusBadge } from './StatusBadge';
 import { LoadingState } from './EmptyState';
 import '../styles/goal-tree.css';
@@ -11,11 +11,21 @@ type ViewMode = 'hierarchy' | 'time';
 interface GoalNodeData {
   id: string;
   title: string;
-  type: 'life' | 'yearly' | 'monthly';
+  type: 'life' | 'yearly' | 'monthly' | 'daily';
   status: string;
   timeLabel?: string;
   progress?: { current?: string; target?: string; start?: string };
   children?: GoalNodeData[];
+}
+
+function formatDailyDate(date: string): string {
+  const parts = date.slice(0, 10).split('-');
+  if (parts.length === 3) {
+    const m = parseInt(parts[1], 10);
+    const d = parseInt(parts[2], 10);
+    if (!isNaN(m) && !isNaN(d)) return `${m}月${d}日`;
+  }
+  return date;
 }
 
 const GOAL_STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -101,14 +111,16 @@ function NodeEditForm({ node, draftTitle, setDraftTitle, draftTarget, setDraftTa
         <input value={draftTimeHorizon} onChange={e => setDraftTimeHorizon(e.target.value)}
           placeholder="时间跨度" style={{ ...editInput, width: 90 }} />
       )}
-      {node.type === 'yearly' && (
+      {(node.type === 'yearly' || node.type === 'daily') && (
         <input value={draftTarget} onChange={e => setDraftTarget(e.target.value)}
           placeholder="目标值" style={{ ...editInput, width: 90 }} />
       )}
-      <select value={draftStatus} onChange={e => setDraftStatus(e.target.value)}
-        style={{ ...editInput, width: 84 }}>
-        {statuses.map(s => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
-      </select>
+      {node.type !== 'daily' && (
+        <select value={draftStatus} onChange={e => setDraftStatus(e.target.value)}
+          style={{ ...editInput, width: 84 }}>
+          {statuses.map(s => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
+        </select>
+      )}
       <button onClick={onSave} disabled={busy} style={primaryBtn}>{busy ? '…' : '保存'}</button>
       <button onClick={onCancel} disabled={busy} style={actionBtn}>取消</button>
     </span>
@@ -126,8 +138,9 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
   const [err, setErr] = useState('');
 
   const hasChildren = node.children && node.children.length > 0;
-  const isDone = node.status === 'COMPLETED' || node.status === 'ABANDONED';
-  const editable = node.type === 'life' || node.type === 'yearly' || node.type === 'monthly';
+  const isDone = node.status === 'COMPLETED' || node.status === 'ABANDONED'
+    || node.status === 'FAILED' || node.status === 'CANCELLED';
+  const editable = node.type === 'life' || node.type === 'yearly' || node.type === 'monthly' || node.type === 'daily';
 
   const pct = node.progress ? getPct(node.progress.current, node.progress.target, node.progress.start) : 0;
 
@@ -143,7 +156,7 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
   async function save() {
     const t = draftTitle.trim();
     if (!t) { setErr('标题不能为空'); return; }
-    if (node.type === 'yearly' && !draftTarget.trim()) { setErr('目标值不能为空'); return; }
+    if ((node.type === 'yearly' || node.type === 'daily') && !draftTarget.trim()) { setErr('目标值不能为空'); return; }
     setBusy(true); setErr('');
     try {
       if (node.type === 'life') {
@@ -154,6 +167,8 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
         if (draftStatus !== node.status) await api.updateYearlyGoalStatus(node.id, draftStatus);
       } else if (node.type === 'monthly') {
         await api.updateMonthlyPlan(node.id, { title: t, targetValue: draftTarget.trim() });
+      } else if (node.type === 'daily') {
+        await api.updateDailyPlan(node.id, { title: t, targetValue: draftTarget.trim() });
       }
       setEditing(false);
       onChanged();
@@ -166,9 +181,13 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
   }
 
   async function remove() {
-    const kind = node.type === 'life' ? '人生目标' : node.type === 'monthly' ? '月度计划' : '年度目标';
+    const kind = node.type === 'life' ? '人生目标'
+      : node.type === 'yearly' ? '年度目标'
+      : node.type === 'monthly' ? '月度计划'
+      : '日计划';
     const hint = node.type === 'yearly' ? '其下月度计划与日计划将一并删除。'
       : node.type === 'monthly' ? '其下日计划将一并删除。'
+      : node.type === 'daily' ? ''
       : '该目标下的年度目标不会删除。';
     if (!window.confirm(`确定删除该${kind}「${node.title}」？${hint}`)) return;
     setBusy(true); setErr('');
@@ -176,6 +195,7 @@ function GoalNode({ node, depth, onChanged }: { node: GoalNodeData; depth: numbe
       if (node.type === 'life') await api.deleteLifeGoal(node.id);
       else if (node.type === 'yearly') await api.deleteYearlyGoal(node.id);
       else if (node.type === 'monthly') await api.deleteMonthlyPlan(node.id);
+      else if (node.type === 'daily') await api.deleteDailyPlan(node.id);
       onChanged();
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : '删除失败');
@@ -718,6 +738,7 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
   const [lifeGoals, setLifeGoals] = useState<LifeGoal[] | null | undefined>(undefined);
   const [yearlyMap, setYearlyMap] = useState<Record<string, YearlyGoal[]>>({});
   const [monthlyMap, setMonthlyMap] = useState<Record<string, MonthlyPlan[]>>({});
+  const [dailyMap, setDailyMap] = useState<Record<string, DailyPlan[]>>({});
 
   const load = () => {
     api.getLifeGoals()
@@ -748,6 +769,20 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
           mMap[r.ygId] = r.monthly;
         });
         setMonthlyMap(mMap);
+
+        // Load daily plans for each monthly plan (filtered by monthlyPlanId).
+        // 后端 GET /plans/daily 支持 monthlyPlanId 过滤，按月度逐次查询，避免按天 N+1 或全量加载。
+        const allMonthly = monthlyResults.flatMap(r => r.monthly);
+        const dailyResults = await Promise.all(
+          allMonthly.map(mp =>
+            api.getDailyPlans(undefined, mp.id)
+              .then(daily => ({ mpId: mp.id, daily }))
+              .catch(() => ({ mpId: mp.id, daily: [] as DailyPlan[] }))
+          )
+        );
+        const dMap: Record<string, DailyPlan[]> = {};
+        dailyResults.forEach(r => { dMap[r.mpId] = r.daily; });
+        setDailyMap(dMap);
       })
       .catch(() => setLifeGoals(null));
   };
@@ -759,6 +794,9 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
 
   const isActive = (s: string) => s === 'ACTIVE' || s === 'IN_PROGRESS';
   const isDone = (s: string) => s === 'COMPLETED' || s === 'ABANDONED';
+  // DailyPlan 使用 PlanStatus：PENDING/IN_PROGRESS 视为进行中，其余完成类视为 done
+  const isActiveDaily = (s: string) => s === 'PENDING' || s === 'IN_PROGRESS';
+  const isDoneDaily = (s: string) => s === 'COMPLETED' || s === 'PARTIAL' || s === 'FAILED' || s === 'CANCELLED';
 
   const filteredLGs = lifeGoals.filter(lg => {
     if (filter === 'all') return true;
@@ -811,6 +849,20 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
                 status: mp.status,
                 timeLabel: `${mp.month}月`,
                 progress: { current: mp.currentValue, target: mp.targetValue },
+                children: (dailyMap[mp.id] || [])
+                  .filter(dp => {
+                    if (filter === 'all') return true;
+                    if (filter === 'active') return isActiveDaily(dp.status);
+                    return isDoneDaily(dp.status);
+                  })
+                  .map(dp => ({
+                    id: dp.id,
+                    title: dp.title,
+                    type: 'daily' as const,
+                    status: dp.status,
+                    timeLabel: formatDailyDate(dp.date),
+                    progress: { current: dp.currentValue, target: dp.targetValue },
+                  })),
               })),
           })),
         };

@@ -71,7 +71,7 @@ export interface MonthlyPlan {
 }
 
 export interface DailyPlan {
-  id: string; title: string; date: string; metricType: string;
+  id: string; monthlyPlanId?: string; title: string; date: string; metricType: string;
   targetValue: string; currentValue?: string; status: string;
 }
 
@@ -271,7 +271,13 @@ export const api = {
   updateMonthlyPlan: (id: string, data: { title?: string; description?: string; targetValue?: string }) =>
     put<MonthlyPlan>(`/plans/monthly/${id}`, data),
   deleteMonthlyPlan: (id: string) => del<{ deleted: number }>(`/plans/monthly/${id}`),
-  getDailyPlans: (date?: string) => get<DailyPlan[]>(`/plans/daily${date ? '?date=' + date : ''}`),
+  getDailyPlans: (date?: string, monthlyPlanId?: string) => {
+    const params = new URLSearchParams();
+    if (date) params.set('date', date);
+    if (monthlyPlanId) params.set('monthlyPlanId', monthlyPlanId);
+    const qs = params.toString();
+    return get<DailyPlan[]>(`/plans/daily${qs ? '?' + qs : ''}`);
+  },
   getDailyReview: (date: string) => get<Review>(`/reviews/daily/${date}`),
   getAnalysis: (id: string) => get<AIAnalysis>(`/analysis/${id}`),
   getProgressOverview: () => get<ProgressOverview>('/progress/overview'),
