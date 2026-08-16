@@ -96,7 +96,8 @@ export class GoalService {
     const where: Prisma.YearlyGoalWhereInput = { userId };
     if (filters?.lifeGoalId !== undefined) where.lifeGoalId = filters.lifeGoalId;
     if (filters?.year !== undefined) where.year = filters.year;
-    if (filters !== undefined && "parentId" in filters) where.parentId = filters.parentId ?? null;
+    // parentId undefined → 查全部（含子目标）；null → 仅顶层；id → 子目标
+    if (filters?.parentId !== undefined) where.parentId = filters.parentId;
     return prisma.yearlyGoal.findMany({ where, orderBy: [{ year: "asc" }, { createdAt: "asc" }] });
   }
 
