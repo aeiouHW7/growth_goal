@@ -87,8 +87,9 @@ export class GoalController {
     try {
       const userId = await getUserId();
       const { lifeGoalId, parentId, title, description, year, metricType, targetValue, startValue } = req.body;
-      if (!title || !year || !metricType || !targetValue) {
-        res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "title/year/metricType/targetValue 为必填项" } });
+      // metricType/targetValue 已非必填：目标数值从表单移除，service 层兜底 NUMERIC/1
+      if (!title || !year) {
+        res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "title/year 为必填项" } });
         return;
       }
       const goal = await goalService.createYearlyGoal({ userId, lifeGoalId, parentId, title, description, year, metricType, targetValue, startValue });

@@ -51,10 +51,13 @@ export class PlanService {
 
   async createMonthlyPlan(data: {
     userId: string; yearlyGoalId?: string; title: string; description?: string;
-    month: number; year: number; metricType: MetricType; targetValue: string; startValue?: string;
+    month: number; year: number; metricType?: MetricType; targetValue?: string; startValue?: string;
   }) {
-    validateMetric(data.metricType, data.targetValue);
-    return prisma.monthlyPlan.create({ data });
+    // 计划数值已从表单移除，缺省时兜底为 NUMERIC/1，保持数据库与旧逻辑兼容
+    const metricType = data.metricType ?? MetricType.NUMERIC;
+    const targetValue = data.targetValue ?? "1";
+    validateMetric(metricType, targetValue);
+    return prisma.monthlyPlan.create({ data: { ...data, metricType, targetValue } });
   }
 
   async updateMonthlyPlan(id: string, data: { title?: string; description?: string; targetValue?: string }) {
@@ -96,10 +99,13 @@ export class PlanService {
 
   async createDailyPlan(data: {
     userId: string; monthlyPlanId?: string; title: string; description?: string;
-    date: string; metricType: MetricType; targetValue: string;
+    date: string; metricType?: MetricType; targetValue?: string;
   }) {
-    validateMetric(data.metricType, data.targetValue);
-    return prisma.dailyPlan.create({ data: { ...data, date: validateDateString(data.date) } });
+    // 计划数值已从表单移除，缺省时兜底为 NUMERIC/1，保持数据库与旧逻辑兼容
+    const metricType = data.metricType ?? MetricType.NUMERIC;
+    const targetValue = data.targetValue ?? "1";
+    validateMetric(metricType, targetValue);
+    return prisma.dailyPlan.create({ data: { ...data, metricType, targetValue, date: validateDateString(data.date) } });
   }
 
   async updateDailyPlan(id: string, data: { title?: string; description?: string; targetValue?: string; currentValue?: string }) {
@@ -167,14 +173,16 @@ export class PlanService {
     userId: string,
     plans: Array<{
       yearlyGoalId: string; title: string; description?: string;
-      month: number; year: number; metricType: MetricType; targetValue: string;
+      month: number; year: number; metricType?: MetricType; targetValue?: string;
     }>,
   ) {
     const created = [];
     for (const plan of plans) {
-      validateMetric(plan.metricType, plan.targetValue);
+      const metricType = plan.metricType ?? MetricType.NUMERIC;
+      const targetValue = plan.targetValue ?? "1";
+      validateMetric(metricType, targetValue);
       const p = await prisma.monthlyPlan.create({
-        data: { userId, ...plan, status: GoalStatus.ACTIVE },
+        data: { userId, ...plan, metricType, targetValue, status: GoalStatus.ACTIVE },
       });
       created.push(p);
     }

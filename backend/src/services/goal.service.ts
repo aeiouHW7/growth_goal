@@ -102,11 +102,14 @@ export class GoalService {
 
   async createYearlyGoal(data: {
     userId: string; lifeGoalId?: string; parentId?: string; title: string; description?: string;
-    year: number; metricType: MetricType; targetValue: string; startValue?: string;
+    year: number; metricType?: MetricType; targetValue?: string; startValue?: string;
   }) {
-    validateMetric(data.metricType, data.targetValue);
-    const { parentId, ...rest } = data;
-    const createData: Prisma.YearlyGoalUncheckedCreateInput = { ...rest };
+    const { parentId, metricType, targetValue, ...rest } = data;
+    // 目标数值已从表单移除，缺省时兜底为 NUMERIC/1，保持数据库与旧逻辑兼容
+    const effectiveMetric = metricType ?? MetricType.NUMERIC;
+    const effectiveTarget = targetValue ?? "1";
+    validateMetric(effectiveMetric, effectiveTarget);
+    const createData: Prisma.YearlyGoalUncheckedCreateInput = { ...rest, metricType: effectiveMetric, targetValue: effectiveTarget };
     if (parentId) {
       // 创建时自身尚无 id，仅校验父目标存在且同用户
       const parent = await prisma.yearlyGoal.findUnique({ where: { id: parentId }, select: { userId: true } });
@@ -247,20 +250,22 @@ export class GoalService {
     userId: string,
     goals: Array<{
       title: string; description?: string; year: number;
-      metricType: MetricType; targetValue: string; startValue?: string;
+      metricType?: MetricType; targetValue?: string; startValue?: string;
     }>,
   ) {
     const created = [];
     for (const goal of goals) {
-      validateMetric(goal.metricType, goal.targetValue);
+      const metricType = goal.metricType ?? MetricType.NUMERIC;
+      const targetValue = goal.targetValue ?? "1";
+      validateMetric(metricType, targetValue);
       const g = await prisma.yearlyGoal.create({
         data: {
           userId,
           title: goal.title,
           description: goal.description,
           year: goal.year,
-          metricType: goal.metricType,
-          targetValue: goal.targetValue,
+          metricType,
+          targetValue,
           startValue: goal.startValue,
           status: GoalStatus.ACTIVE,
         },

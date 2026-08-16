@@ -8,15 +8,17 @@ const VALID_METRIC_PATTERNS: Record<string, RegExp> = {
   STAGE: /.+→.+/,
 };
 
-export function validateMetric(metricType: MetricType | string, targetValue: string): void {
+export function validateMetric(metricType: MetricType | string, targetValue?: string): void {
   const pattern = VALID_METRIC_PATTERNS[metricType];
   if (!pattern) {
     throw Object.assign(new Error(`不支持的度量类型: ${metricType}`), {
       status: 400, code: "VALIDATION_ERROR",
     });
   }
-  if (!pattern.test(targetValue)) {
-    throw Object.assign(new Error(`度量值 "${targetValue}" 格式不匹配 ${metricType}`), {
+  // targetValue 缺省时兜底为 "1"，配合上层 "数值可省略" 的简化目标
+  const value = targetValue ?? "1";
+  if (!pattern.test(value)) {
+    throw Object.assign(new Error(`度量值 "${value}" 格式不匹配 ${metricType}`), {
       status: 400, code: "VALIDATION_ERROR",
     });
   }

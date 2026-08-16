@@ -29,15 +29,6 @@ function avgCapabilityScore(report?: { capabilityDeltas?: CapabilityDelta[] } | 
   return Math.round((sum / deltas.length) * 10) / 10;
 }
 
-function getDotColor(value?: string, target?: string): string {
-  const cur = parseFloat(value || '0');
-  const tgt = parseFloat(target || '1');
-  if (!tgt || isNaN(cur)) return 'gray';
-  const pct = cur / tgt;
-  if (pct >= 1) return 'green';
-  return 'yellow';
-}
-
 function getWeekDateRangeForMonth(year: number, month: number) {
   const today = new Date();
   const refDate = (today.getFullYear() === year && today.getMonth() + 1 === month)
@@ -202,31 +193,20 @@ export function PlansPage() {
     return () => { cancelled = true; };
   }, [year, month, dimension, selectedDay, pinnedDay]);
 
-  const monthlyPlanItems = (monthlyPlans || []).map(mp => {
-    const cur = parseFloat(mp.currentValue || '0');
-    const tgt = parseFloat(mp.targetValue || '0');
-    return {
-      id: mp.id,
-      title: mp.title,
-      dotColor: getDotColor(mp.currentValue, mp.targetValue),
-      meta: `目标: ${mp.targetValue}`,
-      targetValue: mp.targetValue,
-      progress: tgt > 0 ? Math.min(Math.round(cur / tgt * 100), 100) : 0,
-      status: mp.status,
-    };
-  });
+  // 目标数值已从展示移除：只保留标题、日期标签与状态，dot 用中性灰
+  const monthlyPlanItems = (monthlyPlans || []).map(mp => ({
+    id: mp.id,
+    title: mp.title,
+    dotColor: 'gray',
+    status: mp.status,
+  }));
 
-  const dailyPlanItems = dailyPlans.map(dp => {
-    const cur = parseFloat(dp.currentValue || '0');
-    const tgt = parseFloat(dp.targetValue || '0');
-    return {
-      title: dp.title,
-      dotColor: getDotColor(dp.currentValue, dp.targetValue),
-      meta: dp.date ? new Date(dp.date).getDate() + '日' : '',
-      progress: tgt > 0 ? Math.min(Math.round(cur / tgt * 100), 100) : 0,
-      status: dp.status,
-    };
-  });
+  const dailyPlanItems = dailyPlans.map(dp => ({
+    title: dp.title,
+    dotColor: 'gray',
+    meta: dp.date ? new Date(dp.date).getDate() + '日' : '',
+    status: dp.status,
+  }));
 
   const getPlanPanelTitle = () => {
     const mode = rightMode();

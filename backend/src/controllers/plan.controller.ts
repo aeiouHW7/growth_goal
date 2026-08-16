@@ -34,8 +34,9 @@ export class PlanController {
     try {
       const userId = await getUserId();
       const { yearlyGoalId, title, description, month, year, metricType, targetValue, startValue } = req.body;
-      if (!title || !month || !year || !metricType || !targetValue) {
-        res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "title/month/year/metricType/targetValue 为必填项" } });
+      // metricType/targetValue 已非必填：计划数值从表单移除，service 层兜底 NUMERIC/1
+      if (!title || !month || !year) {
+        res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "title/month/year 为必填项" } });
         return;
       }
       const plan = await planService.createMonthlyPlan({ userId, yearlyGoalId, title, description, month, year, metricType, targetValue, startValue });
@@ -88,8 +89,9 @@ export class PlanController {
     try {
       const userId = await getUserId();
       const { monthlyPlanId, title, description, date, metricType, targetValue } = req.body;
-      if (!title || !date || !metricType || !targetValue) {
-        res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "title/date/metricType/targetValue 为必填项" } });
+      // metricType/targetValue 已非必填：计划数值从表单移除，service 层兜底 NUMERIC/1
+      if (!title || !date) {
+        res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "title/date 为必填项" } });
         return;
       }
       const plan = await planService.createDailyPlan({ userId, monthlyPlanId, title, description, date, metricType, targetValue });

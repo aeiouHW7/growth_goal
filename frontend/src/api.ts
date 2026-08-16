@@ -259,7 +259,7 @@ export const api = {
     return get<YearlyGoal[]>(`/goals/yearly${qs ? '?' + qs : ''}`);
   },
   getYearlyGoalChildren: (id: string) => get<YearlyGoal[]>(`/goals/yearly/${id}/children`),
-  createYearlyGoal: (data: { lifeGoalId?: string; parentId?: string; title: string; description?: string; year: number; metricType: string; targetValue: string; startValue?: string }) =>
+  createYearlyGoal: (data: { lifeGoalId?: string; parentId?: string; title: string; description?: string; year: number; metricType?: string; targetValue?: string; startValue?: string }) =>
     post<YearlyGoal>('/goals/yearly', data),
   updateYearlyGoal: (id: string, data: { title?: string; description?: string; targetValue?: string; startValue?: string; parentId?: string | null }) =>
     put<YearlyGoal>(`/goals/yearly/${id}`, data),
@@ -274,7 +274,7 @@ export const api = {
     const qs = params.toString();
     return get<MonthlyPlan[]>(`/plans/monthly${qs ? '?' + qs : ''}`);
   },
-  createMonthlyPlan: (data: { yearlyGoalId?: string; title: string; description?: string; month: number; year: number; metricType: string; targetValue: string; startValue?: string }) =>
+  createMonthlyPlan: (data: { yearlyGoalId?: string; title: string; description?: string; month: number; year: number; metricType?: string; targetValue?: string; startValue?: string }) =>
     post<MonthlyPlan>('/plans/monthly', data),
   updateMonthlyPlan: (id: string, data: { title?: string; description?: string; targetValue?: string }) =>
     put<MonthlyPlan>(`/plans/monthly/${id}`, data),
@@ -304,7 +304,7 @@ export const api = {
   submitFeedback: (analysisId: string, data: { userScore: number; excellentReason?: string; failReason?: string }) =>
     post<AIAnalysisFeedback>(`/analysis/${analysisId}/feedback`, data),
   // 日计划 Web 输入
-  createDailyPlan: (data: { title: string; date: string; metricType: string; targetValue: string; monthlyPlanId?: string }) =>
+  createDailyPlan: (data: { title: string; date: string; metricType?: string; targetValue?: string; monthlyPlanId?: string }) =>
     post<DailyPlan>('/plans/daily', data),
   updateDailyPlan: (id: string, data: { title?: string; description?: string; targetValue?: string; currentValue?: string }) =>
     put<DailyPlan>(`/plans/daily/${id}`, data),
