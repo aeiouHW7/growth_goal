@@ -352,6 +352,24 @@ function startPeriodicReminder() {
   setInterval(checkPeriodicReminder, 60 * 1000);
 }
 
+/** 轮询复盘分析结果，完成后推送分析卡片（AnalysisRunner 是异步 fire-and-forget） */
+async function pollAndPush(reviewId, type, a, b) {
+  for (let i = 0; i < 24; i++) {  // 最多约 2 分钟
+    await new Promise(r => setTimeout(r, 5000));
+    try {
+      const chk = type === 'monthly'
+        ? await fetch('GET', `/api/reviews/monthly/${a}/${b}`)
+        : await fetch('GET', `/api/reviews/weekly/${a}/${b}`);
+      const analysis = chk?.data?.aiAnalyses?.[0];
+      if (analysis?.structuredReport) {
+        await sendAnalysisCards(analysis.structuredReport);
+        return;
+      }
+    } catch { /* 重试 */ }
+  }
+  await sendFeishu('⚠️ 总结分析生成超时，请稍后重试。');
+}
+
 async function handleStartSummary() {
   const now = new Date();
   try {
@@ -373,6 +391,7 @@ async function handleStartSummary() {
       }
       await fetch('POST', `/api/analysis/run/${createRes.data.id}`);
       await sendFeishu('✅ 月总结生成中，完成后推送分析卡片');
+      pollAndPush(createRes.data.id, 'monthly', year, month);
       return;
     }
 
@@ -395,6 +414,7 @@ async function handleStartSummary() {
     }
     await fetch('POST', `/api/analysis/run/${createRes.data.id}`);
     await sendFeishu('✅ 周总结生成中，完成后推送分析卡片');
+    pollAndPush(createRes.data.id, 'weekly', range.year, range.week);
   } catch {
     await sendFeishu('总结服务暂不可用，请稍后再试。');
   }
