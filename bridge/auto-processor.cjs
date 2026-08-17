@@ -100,6 +100,36 @@ function fetch(method, path, body) {
   });
 }
 
+/** 从苹果日历读取当天事件（复盘上下文），返回 ["标题 时间", ...] */
+function getCalendarEvents() {
+  return new Promise(resolve => {
+    const script = `
+tell application "Calendar"
+  set out to ""
+  set todayStart to current date
+  set time of todayStart to 0
+  set todayEnd to todayStart + 1 * days
+  repeat with cal in calendars
+    set evts to (every event of cal whose start date >= todayStart and start date < todayEnd)
+    repeat with e in evts
+      set out to out & (summary of e) & " | " & (time string of (start date of e)) & linefeed
+    end repeat
+  end repeat
+  return out
+end tell`;
+    const proc = spawn('osascript', ['-e', script], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    // 超时保护：osascript 首次访问日历会弹 mac 权限提示，可能卡住；8s 未返回则忽略日历
+    const timer = setTimeout(() => { try { proc.kill(); } catch { /* 忽略 */ } resolve([]); }, 8000);
+    proc.stdout.on('data', d => out += d);
+    proc.on('error', () => { clearTimeout(timer); resolve([]); });
+    proc.on('close', () => {
+      clearTimeout(timer);
+      resolve(out.trim().split('\n').filter(Boolean).map(l => l.trim()).slice(0, 20));
+    });
+  });
+}
+
 function sendFeishu(text) {
   return new Promise(resolve => {
     // Spawn lark-cli's run.js directly via node to avoid cmd.exe argument mangling
@@ -944,6 +974,9 @@ async function runAnalysis(userId, session, fullInput, signal) {
     ]);
 
     const plansText = (plansRes.data || []).map(p => `• ${p.title} (${p.status})`).join('\n') || '暂无';
+    // 从苹果日历读取当天安排（复盘上下文；无权限/空则忽略）
+    const calendarEvents = await getCalendarEvents().catch(() => []);
+    const calendarEventsText = calendarEvents.length ? calendarEvents.join('\n') : '';
     const patternsText = (patternsRes.data || []).map(p => `• ${p.pattern} (${p.frequency}次)`).join('\n') || '暂无';
     const biasesText = (biasesRes.data || []).map(b => `• ${b.biasType || b.type}: ${b.triggerPhrase}`).join('\n') || '暂无';
     const capsText = (capsRes.data || []).map(c => `• ${c.dimension}: ${c.score}`).join('\n') || '暂无';
@@ -959,6 +992,7 @@ async function runAnalysis(userId, session, fullInput, signal) {
 
 上下文:
 - 今日计划:\n${plansText}
+- 苹果日历安排:\n${calendarEventsText || '无'}
 - 最近复盘:\n${recentText}
 - 行为模式:\n${patternsText}
 - 认知偏误:\n${biasesText}
