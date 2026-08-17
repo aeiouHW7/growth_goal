@@ -100,17 +100,20 @@ function fetch(method, path, body) {
   });
 }
 
-/** 从苹果日历读取当天事件（复盘上下文），返回 ["标题 时间", ...] */
-function getCalendarEvents() {
+/** 从苹果日历读取指定日期的事件（复盘上下文），返回 ["标题 时间", ...] */
+function getCalendarEvents(year, month, day) {
   return new Promise(resolve => {
     const script = `
 tell application "Calendar"
   set out to ""
-  set todayStart to current date
-  set time of todayStart to 0
-  set todayEnd to todayStart + 1 * days
+  set targetStart to current date
+  set year of targetStart to ${year}
+  set month of targetStart to ${month}
+  set day of targetStart to ${day}
+  set time of targetStart to 0
+  set targetEnd to targetStart + 1 * days
   repeat with cal in calendars
-    set evts to (every event of cal whose start date >= todayStart and start date < todayEnd)
+    set evts to (every event of cal whose start date >= targetStart and start date < targetEnd)
     repeat with e in evts
       set out to out & (summary of e) & " | " & (time string of (start date of e)) & linefeed
     end repeat
@@ -974,8 +977,9 @@ async function runAnalysis(userId, session, fullInput, signal) {
     ]);
 
     const plansText = (plansRes.data || []).map(p => `• ${p.title} (${p.status})`).join('\n') || '暂无';
-    // 从苹果日历读取当天安排（复盘上下文；无权限/空则忽略）
-    const calendarEvents = await getCalendarEvents().catch(() => []);
+    // 从苹果日历读取复盘日期的事件（复盘上下文；无权限/空则忽略）
+    const [cy, cm, cd] = ctxDate.split('-').map(Number);
+    const calendarEvents = await getCalendarEvents(cy, cm, cd).catch(() => []);
     const calendarEventsText = calendarEvents.length ? calendarEvents.join('\n') : '';
     const patternsText = (patternsRes.data || []).map(p => `• ${p.pattern} (${p.frequency}次)`).join('\n') || '暂无';
     const biasesText = (biasesRes.data || []).map(b => `• ${b.biasType || b.type}: ${b.triggerPhrase}`).join('\n') || '暂无';
