@@ -10,11 +10,12 @@ import { prisma } from "../prisma";
 import { PatternService } from "./pattern.service";
 import { BiasDetectionService } from "./bias-detection.service";
 import { CapabilityService } from "./capability.service";
+import { sanitizeJsonControlChars } from "../utils/json-sanitize";
 
 const ANALYSIS_REQUIREMENTS = `
 1. **偏误分析** — 回顾用户输入中的表达方式，判断是否存在以下偏误：计划谬误（过度乐观）、自我美化（模糊表述）、基本归因错误（外归因）、确认偏误（只找支持自己的论据）、损失厌恶（怕损失>想获得）、事后合理化（为过去找理由）、现状偏差（懒得改）、聚类错觉（以偏概全）。每条偏误必须引用用户原文作为 triggerPhrase，输出到 detectedBiases
 
-2. **执行诊断（Fogg 模型）** — 对于"知道该做但没做"的问题，判断是动机(M)不足、能力(A)不足还是提示(P)不足，输出到 executionDiagnosis.issues 和 foggDiagnosis。写 issues 时注意每条表述要具体一致（如"运动计划未执行（连续第3天）"），方便后续识别为同一问题的重复出现
+2. **执行诊断（Fogg 模型）** — 对于"知道该做但没做"的问题，判断是动机(M)不足、能力(A)不足还是提示(P)不足，输出到 executionDiagnosis.issues 和 foggDiagnosis。写 issues 时注意每条表述要具体一致（如"运动计划未执行（连续第3天）"），方便后续识别为同一问题的重复出现。**重要**：碎碎念中的"准备做/打算做/一会再看/有空再看"等是**意图表达**，不代表实际未执行。除非用户明确写了"没做/没完成/没看/没学"，否则**不得**仅凭计划措辞判定"未执行"或"P缺失"；对完成情况不明的项，应写"完成情况未记录，待确认"，不要断言为未执行。
 
 3. **模式对照** — 对照「行为模式」列表中已知的反复障碍。如果本次的某条 issue 和列表中的模式相似，在 detectedPatterns 中记录，frequency 直接使用列表中的已有次数+1
 
@@ -23,6 +24,13 @@ const ANALYSIS_REQUIREMENTS = `
 5. **洞察（三段式）** — unaware：他没意识到的言外之意（不推测情绪，只说"你说了A，可能在想B"）；pattern：模式判断（反复障碍/新话题）；missing：与目标相关的行动是否缺失
 
 6. **充沛率评估** — 根据用户输入的睡眠质量、日间精力、情绪状态、产出效率综合推断今日充沛率（1-100），不允许留空。输出到 energyRate
+
+7. **跨日关联核对（重要）** — 仔细对照「最近复盘」中出现的"计划/意图"（准备做、打算做、一会再看、想学、下次等），然后检查**今日碎碎念**里有没有对应的"完成/做到/做了"表述（如"昨天练了口语""今天把 mobile 下完了"）。规则：
+   a. 今日明确确认某项已完成 → 在 insight.pattern 标注"昨日计划→今日已确认完成"，**不得**判为"未执行/P缺失"；
+   b. 今日完全没提及 → 写"昨日 X 完成情况未提及，待确认"，不判为未执行；
+   c. 只有用户明确写"没做/没完成/没看/没学"才判为未执行。
+
+8. **追问生成** — 若今日碎碎念存在"准备/打算/一会再看/想学但未定"的意图，且今日**没有**提及对应完成情况，生成 0-2 个追问（followUpQuestions，每个 {question, reason}），口语化一句话问结果（如"昨晚说要看英语，后来看了吗？"）。若意图已确认完成，不要追问。
 `;
 
 const JSON_SCHEMA = `{
@@ -38,7 +46,8 @@ const JSON_SCHEMA = `{
   "energyRate": 0,
   "signalScore": 0,
   "insight": { "unaware": "", "pattern": "", "missing": "" },
-  "suggestions": [{ "type": "positive|warning|critical", "message": "" }]
+  "suggestions": [{ "type": "positive|warning|critical", "message": "" }],
+  "followUpQuestions": [{ "question": "", "reason": "" }]
 }`;
 
 export class AnalysisRunner {
@@ -167,7 +176,8 @@ ${JSON_SCHEMA}
       }
       jsonStr = analysisText.slice(firstBrace, lastBrace + 1);
     }
-    const report = JSON.parse(jsonStr);
+    // 清洗字符串内未转义的控制字符，避免 JSON.parse 失败
+    const report = JSON.parse(sanitizeJsonControlChars(jsonStr));
 
     // 6. 保存分析报告（事务保护，只保证 AIAnalysis 写入原子性）
     const patternService = new PatternService();
@@ -185,6 +195,23 @@ ${JSON_SCHEMA}
       });
     });
 
+    // 6.5 把 AI 生成的追问写入复盘的 followUpLog（最多保留 2 条待回答，供下次复盘提示用户确认）
+    const newQuestions = Array.isArray(report.followUpQuestions)
+      ? report.followUpQuestions
+          .filter((q: any) => q && typeof q.question === "string" && q.question.trim())
+          .map((q: any) => ({ question: q.question.trim(), answer: undefined }))
+      : [];
+    if (newQuestions.length > 0) {
+      const existingLog = ((review.followUpLog as any) || []) as any[];
+      const pendingCount = existingLog.filter((e: any) => !e.answer).length;
+      const slots = Math.max(0, 2 - pendingCount);
+      const merged = [...existingLog, ...newQuestions.slice(0, slots)].slice(0, 2);
+      await prisma.dailyReview.update({
+        where: { id: review.id },
+        data: { followUpLog: merged as any },
+      });
+    }
+
     // 7. 追踪 pattern/bias/capability（独立于事务执行，失败不影响主报告）
     await Promise.allSettled([
       patternService.trackIssuesFromAnalysis(userId, report).catch((e) => {
@@ -200,15 +227,18 @@ ${JSON_SCHEMA}
   }
 
   private callClaude(prompt: string): Promise<string> {
+    const claudePath = process.env.CLAUDE_CLI_PATH || 'claude';
     return new Promise((resolve, reject) => {
-      const proc = spawn('claude', ['-p', '-'], {
+      const proc = spawn(claudePath, ['-p', '-'], {
         stdio: ['pipe', 'pipe', 'pipe'],
+        shell: true,
       });
       let out = '', errOut = '';
+      // DeepSeek API 偶发慢、prompt 变长后调用可能超过 120s，放宽到 240s
       const timer = setTimeout(() => {
         proc.kill();
-        reject(new Error('Claude CLI timeout after 120s'));
-      }, 120000);
+        reject(new Error('Claude CLI timeout after 240s'));
+      }, 240000);
 
       proc.stdout.on('data', d => out += d);
       proc.stderr.on('data', d => errOut += d);

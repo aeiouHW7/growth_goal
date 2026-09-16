@@ -6,3 +6,23 @@ dist/
 # 数据库文件（用户数据，不跟踪）
 *.db
 backups/
+
+# daily-review-digest 中间产物（飞书图片资源极大，不入库）
+lark-im-resources/
+.claude/skills/daily-review-digest/work/
+
+# ---------- 个人内容（公开仓库，一律不提交） ----------
+# 注意：gitignore 不支持行内注释，注释必须独立成行
+# 数字镜像：含个人职场 / 薪资 / 弱点 / 关系
+.claude/skills/yanyu/
+# 第三方克隆（本地用即可）
+.claude/skills/create-yourself/
+references/yourself-skill/
+# 碎碎念同步分析报告
+docs/feishu-sync-report-*.md
+# 个人沟通原则 / 读书笔记 / 职场复盘
+docs/wiki/communication-principles.md
+docs/wiki/book-peak-experience.md
+docs/wiki/retros/workplace-definition-power-*.md
+# 授权二维码（临时垃圾）
+lark-auth-qrcode*.png
