@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import { sanitizeJsonControlChars } from "./json-sanitize";
 
 const CLAUDE_TIMEOUT_MS = 120_000;
 
@@ -67,7 +68,7 @@ export async function callClaude<T = Record<string, unknown>>(
       const jsonMatch = stdout.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         try {
-          resolve(JSON.parse(jsonMatch[0]) as T);
+          resolve(JSON.parse(sanitizeJsonControlChars(jsonMatch[0])) as T);
         } catch {
           reject(new Error("Failed to parse Claude response as JSON"));
         }

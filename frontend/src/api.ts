@@ -37,7 +37,7 @@ export interface User {
 
 export interface LifeGoal {
   id: string; title: string; description?: string; timeHorizon?: string;
-  status: string; sortOrder?: number; completedAt?: string;
+  status: string; sortOrder?: number; completedAt?: string; createdAt?: string;
 }
 
 export interface YearlyGoal {
@@ -191,10 +191,50 @@ export const ARCHIVE_API = {
   refreshSummary: () => post<{ summary: string }>('/life-archive/summary/refresh', {}),
 };
 
+export type Priority = 'P0' | 'P1' | 'P2' | 'P3';
+
+/** Priority ranking for yearly goals — matches goal titles */
+export const PRIORITY_MAP: Record<string, Priority> = {
+  '投资赚钱': 'P0',
+  '产品工作晋升': 'P0',
+  'AI Coding公司项目探索': 'P1',
+  '投资分析应用': 'P1',
+  'Obsidian第二大脑': 'P2',
+  '公众号启动': 'P2',
+  '健身增肌': 'P3',
+  '李鸿章电影项目': 'P3',
+};
+
+export const PRIORITY_ORDER: Priority[] = ['P0', 'P1', 'P2', 'P3'];
+export const PRIORITY_COLOR: Record<Priority, string> = {
+  'P0': '#ef4444',
+  'P1': '#f59e0b',
+  'P2': '#6366f1',
+  'P3': '#9ca3af',
+};
+
+export function getPriority(title: string): Priority {
+  return PRIORITY_MAP[title] || 'P3';
+}
+
+export function sortByPriority<T extends { title: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const pa = PRIORITY_ORDER.indexOf(getPriority(a.title));
+    const pb = PRIORITY_ORDER.indexOf(getPriority(b.title));
+    return pa - pb;
+  });
+}
+
 export const api = {
   getUser: () => get<User>('/user'),
   getLifeGoals: () => get<LifeGoal[]>('/goals/life'),
-  getYearlyGoals: (year?: number) => get<YearlyGoal[]>(`/goals/yearly${year ? `?year=${year}` : ''}`),
+  getYearlyGoals: (year?: number, lifeGoalId?: string) => {
+    const params = new URLSearchParams();
+    if (year) params.set('year', String(year));
+    if (lifeGoalId) params.set('lifeGoalId', lifeGoalId);
+    const qs = params.toString();
+    return get<YearlyGoal[]>(`/goals/yearly${qs ? '?' + qs : ''}`);
+  },
   getMonthlyPlans: (year?: number, month?: number, yearlyGoalId?: string) => {
     const params = new URLSearchParams();
     if (year) params.set('year', String(year));

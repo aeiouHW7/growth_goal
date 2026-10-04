@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
-import type { LifeGoal, YearlyGoal, MonthlyPlan, Suggestion, DailyPlan } from '../api';
+import { api, getPriority, sortByPriority, PRIORITY_COLOR } from '../api';
+import type { LifeGoal, YearlyGoal, MonthlyPlan, Suggestion, DailyPlan, Priority } from '../api';
 import { Card } from '../components/Card';
 import { UserPopover } from '../components/UserPopover';
 import { EmptyState, LoadingState, ErrorState } from '../components/EmptyState';
@@ -110,21 +110,50 @@ export function OverviewPage() {
         <UserPopover />
       </div>
 
-      {/* Life Goal */}
-      <Card title="人生总目标" action={<span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 400 }}>10-20年</span>}>
-        <div className="life-goal-title">{lifeGoal?.title || '设定你的人生目标'}</div>
-        {lifeGoal?.description && <div className="life-goal-sub">{lifeGoal.description}</div>}
-      </Card>
+      {/* Life Goals Hierarchy */}
+      {lifeGoals && lifeGoals.length > 0 && (() => {
+        const sortedLGs = [...lifeGoals].sort((a, b) => {
+          const aIsUltimate = a.timeHorizon?.includes('终极') ? 0 : 1;
+          const bIsUltimate = b.timeHorizon?.includes('终极') ? 0 : 1;
+          if (aIsUltimate !== bIsUltimate) return aIsUltimate - bIsUltimate;
+          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        });
+        return (
+        <Card title="目标层级" action={
+          <span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 400 }}>
+            {sortedLGs[0].timeHorizon || '终极目标'}
+          </span>
+        }>
+          {sortedLGs.map((lg, i) => (
+            <div key={lg.id} style={{ marginLeft: i * 24, marginTop: i > 0 ? 8 : 0, opacity: i === 0 ? 1 : 0.85 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
+                {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: 16 }}>└</span>}
+                <span className={`goal-dot ${lg.status === 'ACTIVE' ? 'green' : 'yellow'}`} />
+                <span className="goal-title" style={{ fontSize: i === 0 ? 16 : 14, fontWeight: i === 0 ? 600 : 400 }}>
+                  {lg.title}
+                </span>
+                <span style={{ fontSize: 11, color: 'var(--text-dim)', background: 'var(--bg-subtle)', padding: '1px 8px', borderRadius: 4 }}>
+                  {lg.timeHorizon || ''}
+                </span>
+              </div>
+              {i === 0 && <div style={{ fontSize: 12, color: 'var(--text-dim)', paddingLeft: 14, marginBottom: 4 }}>{lg.description}</div>}
+            </div>
+          ))}
+        </Card>
+        );
+      })()}
 
       {/* Active Yearly Goals */}
       <Card title="进行中的年度目标" action={<span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 400 }}>{currentYear}</span>}>
         {activeYearlyGoals.length === 0 ? (
           <div style={{ fontSize: 13, color: 'var(--text-dim)', padding: '8px 0' }}>暂无进行中的年度目标</div>
-        ) : activeYearlyGoals.map(goal => {
+        ) : sortByPriority(activeYearlyGoals).map(goal => {
           const pct = getPct(goal.currentValue, goal.targetValue, goal.startValue);
+          const pri = getPriority(goal.title);
           return (
             <div className="goal-item" key={goal.id}>
               <span className={`goal-dot ${pct >= 80 ? 'green' : 'yellow'}`} />
+              <span className="goal-priority" style={{ color: PRIORITY_COLOR[pri], fontSize: 10, fontWeight: 700, background: `${PRIORITY_COLOR[pri]}15`, padding: '0 5px', borderRadius: 3, flexShrink: 0 }}>{pri}</span>
               <span className="goal-title">{goal.title}</span>
               <span className="goal-value">{pct}%</span>
               <div className="goal-bar-wrap">

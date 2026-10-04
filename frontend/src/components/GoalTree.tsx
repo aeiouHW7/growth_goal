@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
-import type { LifeGoal, YearlyGoal, MonthlyPlan } from '../api';
+import { api, getPriority, sortByPriority, PRIORITY_COLOR } from '../api';
+import type { LifeGoal, YearlyGoal, MonthlyPlan, Priority } from '../api';
 import { StatusBadge } from './StatusBadge';
 import { LoadingState } from './EmptyState';
 import '../styles/goal-tree.css';
@@ -52,6 +52,11 @@ function GoalNode({ node, depth }: { node: GoalNodeData; depth: number }) {
       <div className={`goal-node ${isDone ? 'done' : ''}`} onClick={() => setExpanded(!expanded)}>
         {hasChildren && <span className="goal-expand-icon">{expanded ? '▼' : '▶'}</span>}
         {!hasChildren && <span className="goal-expand-icon" />}
+        {node.type === 'yearly' && (
+          <span className="goal-priority" style={{ color: PRIORITY_COLOR[getPriority(node.title)], fontSize: 10, fontWeight: 700, background: `${PRIORITY_COLOR[getPriority(node.title)]}15`, padding: '0 5px', borderRadius: 3, flexShrink: 0, marginRight: 4 }}>
+            {getPriority(node.title)}
+          </span>
+        )}
         <span className="goal-title-text">{node.title}</span>
         <StatusBadge status={node.status} />
         {node.timeLabel && <span className="goal-year-tag">{node.timeLabel}</span>}
@@ -217,7 +222,7 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
 
         // Load yearly goals for each life goal
         const yearlyPromises = lifeGoals.map(lg =>
-          api.getYearlyGoals().then(yearly => ({ lgId: lg.id, yearly }))
+          api.getYearlyGoals(undefined, lg.id).then(yearly => ({ lgId: lg.id, yearly }))
         );
         const yearlyResults = await Promise.all(yearlyPromises);
         const yMap: Record<string, YearlyGoal[]> = {};
@@ -250,11 +255,19 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
   const isActive = (s: string) => s === 'ACTIVE' || s === 'IN_PROGRESS';
   const isDone = (s: string) => s === 'COMPLETED' || s === 'ABANDONED';
 
-  const filteredLGs = lifeGoals.filter(lg => {
-    if (filter === 'all') return true;
-    if (filter === 'active') return isActive(lg.status);
-    return isDone(lg.status);
-  });
+  const filteredLGs = lifeGoals
+    .filter(lg => {
+      if (filter === 'all') return true;
+      if (filter === 'active') return isActive(lg.status);
+      return isDone(lg.status);
+    })
+    .sort((a, b) => {
+      // "终极目标" first, then by timeHorizon descending, then by creation
+      const aIsUltimate = a.timeHorizon?.includes('终极') ? 0 : 1;
+      const bIsUltimate = b.timeHorizon?.includes('终极') ? 0 : 1;
+      if (aIsUltimate !== bIsUltimate) return aIsUltimate - bIsUltimate;
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
 
   if (viewMode === 'time') {
     const allYearly = Object.values(yearlyMap).flat();
@@ -263,7 +276,7 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
 
   return (
     <div>
-      {filteredLGs.map(lg => {
+      {filteredLGs.map((lg, i) => {
         const yearly = yearlyMap[lg.id] || [];
         const isLifeDone = isDone(lg.status);
 
@@ -281,29 +294,79 @@ export function GoalTree({ filter, viewMode = 'hierarchy' }: Props) {
           type: 'life',
           status: lg.status,
           timeLabel: lg.timeHorizon || '10-20年',
-          children: filteredYearly.map(yg => ({
-            id: yg.id,
-            title: yg.title,
-            type: 'yearly' as const,
-            status: yg.status,
-            timeLabel: String(yg.year),
-            progress: { current: yg.currentValue, target: yg.targetValue, start: yg.startValue },
-            children: (monthlyMap[yg.id] || [])
-              .filter(mp => {
-                if (filter === 'all') return true;
-                if (filter === 'active') return isActive(mp.status);
-                return isDone(mp.status);
-              })
-              .map(mp => ({
-                id: mp.id,
-                title: mp.title,
-                type: 'monthly' as const,
-                status: mp.status,
-                timeLabel: `${mp.month}月`,
-                progress: { current: mp.currentValue, target: mp.targetValue },
-              })),
-          })),
+          // Nest yearly goals and any child LifeGoals
+          children: [
+            ...sortByPriority(filteredYearly).map(yg => ({
+              id: yg.id,
+              title: yg.title,
+              type: 'yearly' as const,
+              status: yg.status,
+              timeLabel: String(yg.year),
+              progress: { current: yg.currentValue, target: yg.targetValue, start: yg.startValue },
+              children: (monthlyMap[yg.id] || [])
+                .filter(mp => {
+                  if (filter === 'all') return true;
+                  if (filter === 'active') return isActive(mp.status);
+                  return isDone(mp.status);
+                })
+                .map(mp => ({
+                  id: mp.id,
+                  title: mp.title,
+                  type: 'monthly' as const,
+                  status: mp.status,
+                  timeLabel: `${mp.month}月`,
+                  progress: { current: mp.currentValue, target: mp.targetValue },
+                })),
+            })),
+          ],
         };
+
+        // If this is the first (ultimate) LifeGoal, nest subsequent LifeGoals under it
+        // Convention: first LifeGoal is the ultimate goal, rest are intermediate milestones
+        const childLGs = filteredLGs.slice(1);
+        if (i === 0 && childLGs.length > 0) {
+          for (const childLg of childLGs) {
+            const childYearly = yearlyMap[childLg.id] || [];
+            const filteredChildYearly = childYearly.filter(yg => {
+              if (filter === 'all') return true;
+              if (filter === 'active') return isActive(yg.status);
+              return isDone(yg.status);
+            });
+            treeNode.children!.push({
+              id: childLg.id,
+              title: childLg.title,
+              type: 'life' as const,
+              status: childLg.status,
+              timeLabel: childLg.timeHorizon || '10年',
+              children: sortByPriority(filteredChildYearly).map(yg => ({
+                id: yg.id,
+                title: yg.title,
+                type: 'yearly' as const,
+                status: yg.status,
+                timeLabel: String(yg.year),
+                progress: { current: yg.currentValue, target: yg.targetValue, start: yg.startValue },
+                children: (monthlyMap[yg.id] || [])
+                  .filter(mp => {
+                    if (filter === 'all') return true;
+                    if (filter === 'active') return isActive(mp.status);
+                    return isDone(mp.status);
+                  })
+                  .map(mp => ({
+                    id: mp.id,
+                    title: mp.title,
+                    type: 'monthly' as const,
+                    status: mp.status,
+                    timeLabel: `${mp.month}月`,
+                    progress: { current: mp.currentValue, target: mp.targetValue },
+                  })),
+              })),
+            });
+          }
+          return <GoalNode key={lg.id} node={treeNode} depth={0} />;
+        }
+
+        // Skip child LifeGoals that are already nested
+        if (i > 0) return null;
 
         return <GoalNode key={lg.id} node={treeNode} depth={0} />;
       })}
